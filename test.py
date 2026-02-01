@@ -1,106 +1,95 @@
 
+from django.db.models import Sum, Avg, Value, FloatField, F, Subquery, OuterRef
+from django.db.models.functions import Coalesce
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.core.paginator import Paginator
+from django.conf import settings
+import json
+
 class PlantMachineryLogBookCumulative2APIView(APIView):
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    """
+    Ultra-fast cumulative API for large datasets (MySQL safe)
+    """
 
     def get(self, request):
         fields = request.query_params.get('fields')
-        all_records = request.query_params.get('all')
-        order_by = request.query_params.get('order_by', '-id')
-
-        if not fields:
-            raise APIException({'request_status': 0, 'msg': 'fields is required'})
+        all_data = request.query_params.get('all')
+        order_by = request.query_params.get('order_by', 'plant_machinery_machine__id')
 
         try:
             fields = json.loads(fields)
-        except json.JSONDecodeError:
-            raise APIException({'request_status': 0, 'msg': 'Invalid JSON format for fields'})
+        except Exception:
+            return Response({"msg": "Invalid fields JSON", "request_status": 0})
 
         search = custom_filters(request, {}, ['fields'])
 
-        # ----------------------------------
-        # WINDOW EXPRESSIONS
-        # ----------------------------------
-        window_annotations = {}
-        aggregate_annotations = {}
+        base_qs = PlantMachineryLogBook.cmobjects.filter(*search)
+
+        annotations = {}
 
         for field, operation in fields.items():
+            # -----------------------------
+            # FIRST VALUE
+            # -----------------------------
             if operation == 'first_value':
-                window_annotations[f'{field}_first'] = Window(
-                    expression=FirstValue(field),
-                    partition_by=[F('plant_machinery_machine_id')],
-                    order_by=F('log_book_date').asc(),
+                annotations[field] = Subquery(
+                    PlantMachineryLogBook.cmobjects.filter(
+                        plant_machinery_machine=OuterRef('plant_machinery_machine'),
+                        log_book_date__isnull=False
+                    ).order_by('log_book_date')
+                    .values(field)[:1]
                 )
 
+            # -----------------------------
+            # LAST VALUE
+            # -----------------------------
             elif operation == 'last_value':
-                window_annotations[f'{field}_last'] = Window(
-                    expression=LastValue(field),
-                    partition_by=[F('plant_machinery_machine_id')],
-                    order_by=F('log_book_date').asc(),
+                annotations[field] = Subquery(
+                    PlantMachineryLogBook.cmobjects.filter(
+                        plant_machinery_machine=OuterRef('plant_machinery_machine'),
+                        log_book_date__isnull=False
+                    ).order_by('-log_book_date')
+                    .values(field)[:1]
                 )
 
+            # -----------------------------
+            # AGGREGATES
+            # -----------------------------
             elif operation == 'aggregate':
-                window_annotations[field] = Window(
-                    expression=Coalesce(
-                        Sum(field), Value(0), output_field=FloatField()
-                    ),
-                    partition_by=[F('plant_machinery_machine_id')],
+                annotations[field] = Coalesce(
+                    Sum(field), Value(0), output_field=FloatField()
                 )
 
             elif operation == 'average':
-                window_annotations[field] = Window(
-                    expression=Coalesce(
-                        Avg(field), Value(0), output_field=FloatField()
-                    ),
-                    partition_by=[F('plant_machinery_machine_id')],
+                annotations[field] = Coalesce(
+                    Avg(field), Value(0), output_field=FloatField()
                 )
 
-        # ----------------------------------
-        # ROW NUMBER (KEY FIX)
-        # ----------------------------------
-        qs = (
-            PlantMachineryLogBook.cmobjects
-            .filter(*search)
-            .select_related('plant_machinery_machine')
-            .annotate(
-                rn=Window(
-                    expression=RowNumber(),
-                    partition_by=[F('plant_machinery_machine_id')],
-                    order_by=F('log_book_date').desc(),
-                ),
-                **window_annotations
-            )
-            .filter(rn=1)   # 👈 ONE ROW PER MACHINE
-            .values(
-                'plant_machinery_machine__id',
-                'plant_machinery_machine__machine_number',
-                'plant_machinery_machine__equipment_description',
-                'plant_machinery_machine__registration_no',
-                'plant_machinery_machine__plant_machinery_group__machine_type',
-                'project',
-                *window_annotations.keys(),
-            )
-            .order_by(*order_by.split(','))
-        )
+        qs = base_qs.values(
+            'plant_machinery_machine__id',
+            'plant_machinery_machine__machine_number',
+            'plant_machinery_machine__equipment_description',
+            'plant_machinery_machine__registration_no',
+            'plant_machinery_machine__plant_machinery_group__machine_type',
+            'project'
+        ).annotate(**annotations).order_by(*order_by.split(","))
 
-        # ----------------------------------
-        # RESPONSE
-        # ----------------------------------
-        if all_records == 'true':
-            return Response({'results': list(qs)})
+        if all_data == 'true':
+            return Response({"results": qs})
 
-        paginator = Paginator(
-            qs,
-            int(request.query_params.get('page_size', settings.MIN_PAGE_SIZE))
-        )
-        page = paginator.get_page(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get("page_size", settings.MIN_PAGE_SIZE))
+        paginator = Paginator(qs, page_size)
+        page = paginator.get_page(request.query_params.get("page", 1))
 
         return Response({
-            'count': paginator.count,
-            'next': page.next_page_number() if page.has_next() else None,
-            'previous': page.previous_page_number() if page.has_previous() else None,
-            'results': list(page),
+            "count": paginator.count,
+            "next": page.next_page_number() if page.has_next() else None,
+            "previous": page.previous_page_number() if page.has_previous() else None,
+            "results": list(page),
         })
+
+
 
 
 
