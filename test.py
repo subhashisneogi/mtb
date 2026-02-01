@@ -1,3 +1,120 @@
+class PlantMachineryLogBookCumulative2APIView001(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        fields = request.query_params.get('fields')
+        all_records = request.query_params.get('all')
+        order_by = request.query_params.get('order_by', '-id')
+
+        if not fields:
+            raise APIException({'request_status': 0, 'msg': 'fields is required'})
+
+        try:
+            fields = json.loads(fields)
+        except json.JSONDecodeError:
+            raise APIException({'request_status': 0, 'msg': 'Invalid JSON format for fields'})
+
+        search = custom_filters(request, {}, ['fields'])
+
+        qs = (
+            PlantMachineryLogBook.cmobjects
+            .filter(*search)
+            .select_related('plant_machinery_machine')
+        )
+
+        # ----------------------------
+        # Aggregations (FAST)
+        # ----------------------------
+        annotations = {
+            'first_date': Min('log_book_date'),
+            'last_date': Max('log_book_date'),
+        }
+
+        for field, operation in fields.items():
+            if operation == 'aggregate':
+                annotations[field] = Coalesce(Sum(field), Value(0), output_field=FloatField())
+            elif operation == 'average':
+                annotations[field] = Coalesce(Avg(field), Value(0), output_field=FloatField())
+
+        base = (
+            qs.values(
+                'plant_machinery_machine__id',
+                'plant_machinery_machine__machine_number',
+                'plant_machinery_machine__equipment_description',
+                'plant_machinery_machine__registration_no',
+                'plant_machinery_machine__plant_machinery_group__machine_type',
+                'project',
+            )
+            .annotate(**annotations)
+        )
+
+        # ----------------------------
+        # Fetch first & last values (INDEXED)
+        # ----------------------------
+        first_map = {}
+        last_map = {}
+
+        first_rows = (
+            PlantMachineryLogBook.cmobjects
+            .filter(*search)
+            .values('plant_machinery_machine_id')
+            .annotate(first_date=Min('log_book_date'))
+        )
+
+        last_rows = (
+            PlantMachineryLogBook.cmobjects
+            .filter(*search)
+            .values('plant_machinery_machine_id')
+            .annotate(last_date=Max('log_book_date'))
+        )
+
+        if 'start_hrs' in fields:
+            for r in first_rows:
+                first_map[r['plant_machinery_machine_id']] = (
+                    PlantMachineryLogBook.cmobjects
+                    .filter(
+                        plant_machinery_machine_id=r['plant_machinery_machine_id'],
+                        log_book_date=r['first_date']
+                    )
+                    .values_list('start_hrs', flat=True)
+                    .first()
+                )
+
+            for r in last_rows:
+                last_map[r['plant_machinery_machine_id']] = (
+                    PlantMachineryLogBook.cmobjects
+                    .filter(
+                        plant_machinery_machine_id=r['plant_machinery_machine_id'],
+                        log_book_date=r['last_date']
+                    )
+                    .values_list('start_hrs', flat=True)
+                    .first()
+                )
+
+        # ----------------------------
+        # Merge (small dataset)
+        # ----------------------------
+        result = []
+        for row in base:
+            mid = row['plant_machinery_machine__id']
+            if 'start_hrs' in fields:
+                row['start_hrs_first'] = first_map.get(mid)
+                row['start_hrs_last'] = last_map.get(mid)
+            result.append(row)
+
+        if all_records == 'true':
+            return Response({'results': result})
+
+        paginator = Paginator(result, int(request.query_params.get('page_size', settings.MIN_PAGE_SIZE)))
+        page = paginator.get_page(request.query_params.get('page', 1))
+
+        return Response({
+            'count': paginator.count,
+            'next': page.next_page_number() if page.has_next() else None,
+            'previous': page.previous_page_number() if page.has_previous() else None,
+            'results': list(page),
+        })
 
 class PlantMachineryLogBookCumulative2APIView001(APIView):
     authentication_classes = (TokenAuthentication,)
