@@ -14,6 +14,79 @@ import json
 
 
 
+class PlantMachineryLogBookCumulative2APIViewBack(APIView):
+    """
+    API to fetch cumulative or starting values based on machine.
+    Works with MySQL strict mode (ONLY_FULL_GROUP_BY enabled).
+    """
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    def get(self, request):
+        fields = request.query_params.get('fields', None)
+        fetch_all = request.query_params.get('all', None)
+        order_by = request.query_params.get('order_by', '-id')
+        if not fields:
+            raise APIException({
+                "request_status": 0,
+                "msg": "fields parameter is required."
+            })
+        try:
+            fields = json.loads(fields)
+        except json.JSONDecodeError:
+            raise APIException({
+                "request_status": 0,
+                "msg": "Invalid JSON format for fields."
+            })
+        queryset = PlantMachineryLogBook.cmobjects.all()
+        search = custom_filters(request, {}, ['fields'])
+        queryset = queryset.filter(*search)
+        annotations = {}
+        for field, operation in fields.items():
+            annotation_name = f"{field}_value"
+            if operation == 'aggregate':
+                annotations[annotation_name] = Coalesce(Sum(field),Value(0),output_field=FloatField())
+            elif operation == 'average':
+                annotations[annotation_name] = Coalesce(Avg(field),Value(0),output_field=FloatField())
+            elif operation == 'first_value':
+                annotations[annotation_name] = Window(
+                    expression=FirstValue(field),
+                    partition_by=[F('plant_machinery_machine')],
+                    order_by=F('log_book_date').asc()
+                )
+            elif operation == 'last_value':
+                annotations[annotation_name] = Window(
+                    expression=LastValue(field),
+                    partition_by=[F('plant_machinery_machine')],
+                    order_by=F('log_book_date').asc()
+                )
+        queryset = queryset.annotate(**annotations)
+        queryset = queryset.order_by(*str(order_by).split(","))
+        if fetch_all == 'true':
+            return Response({
+                "results": list(queryset.values())
+            })
+        page_size = int(
+            request.query_params.get(
+                "page_size",
+                settings.MIN_PAGE_SIZE
+            )
+        )
+        paginator = Paginator(queryset, page_size)
+        page_number = request.query_params.get("page", 1)
+        page = paginator.get_page(page_number)
+        return Response({
+            "count": paginator.count,
+            "next": page.next_page_number() if page.has_next() else None,
+            "previous": page.previous_page_number() if page.has_previous() else None,
+            "results": list(page.object_list.values()),
+        })
+
+
+
+
+
+
+
 class PaymentMasterImportAPIView(APIView):
     """
     API for bulk import of PaymentMaster 
