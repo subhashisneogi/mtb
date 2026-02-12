@@ -133,7 +133,11 @@ class PlantMachineryLogBookCumulative2APIViewBack(APIView):
             "results": list(page),
         })
 
-
+indexes = [
+    models.Index(
+        fields=["plant_machinery_machine", "log_book_date"]
+    ),
+]
 
 
 
