@@ -1,15 +1,138 @@
-from django.db.models import (
-    Sum, Avg, FloatField, Value, F, Window
-)
-from django.db.models.functions import (
-    Coalesce, FirstValue, LastValue
-)
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.exceptions import APIException
-from django.core.paginator import Paginator
-from django.conf import settings
-import json
+
+
+class PlantMachineryLogBookCumulative2APIViewBack(APIView):
+    """
+    API to fetch cumulative or starting values based on machine.
+    """
+
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+
+        fields = request.query_params.get('fields', None)
+        all_records = request.query_params.get('all', None)
+        order_by = request.query_params.get('order_by', '-id')
+
+        if not fields:
+            raise APIException({'request_status': 0, 'msg': "Fields parameter is required."})
+
+        try:
+            fields = json.loads(fields)
+        except json.JSONDecodeError:
+            raise APIException({'request_status': 0, 'msg': "Invalid JSON format for fields."})
+
+        search = custom_filters(request, {}, ['fields'])
+
+        base_qs = PlantMachineryLogBook.cmobjects.filter(*search)
+
+        aggregation_fields = {}
+        window_fields = {}
+
+        # 🔹 Separate aggregate & window operations
+        for field, operation in fields.items():
+
+            if operation == 'aggregate':
+                aggregation_fields[field] = Coalesce(
+                    Sum(field),
+                    Value(0),
+                    output_field=FloatField()
+                )
+
+            elif operation == 'average':
+                aggregation_fields[field] = Coalesce(
+                    Avg(field),
+                    Value(0),
+                    output_field=FloatField()
+                )
+
+            elif operation == 'first_value':
+                window_fields[field] = Window(
+                    expression=FirstValue(field),
+                    partition_by=[F('plant_machinery_machine__id')],
+                    order_by=F('log_book_date').asc()
+                )
+
+            elif operation == 'last_value':
+                window_fields[field] = Window(
+                    expression=LastValue(field),
+                    partition_by=[F('plant_machinery_machine__id')],
+                    order_by=F('log_book_date').asc()
+                )
+
+        # # ❌ MySQL strict mode does not support mixing aggregate + window in same grouped query
+        # if aggregation_fields and window_fields:
+        #     raise APIException({
+        #         "request_status": 0,
+        #         "msg": "Cannot combine aggregation and window functions together in MySQL strict mode."
+        #     })
+
+        machine_fields = [
+            'plant_machinery_machine__id',
+            'plant_machinery_machine__machine_number',
+            'plant_machinery_machine__equipment_description',
+            'plant_machinery_machine__registration_no',
+            'plant_machinery_machine__plant_machinery_group__machine_type',
+            'project',
+        ]
+
+        # 🔹 CASE 1: Aggregation Query (GROUP BY)
+        if aggregation_fields:
+            result = (
+                base_qs
+                .values(*machine_fields)
+                .annotate(**aggregation_fields)
+                .order_by(*str(order_by).split(","))
+            )
+
+        # 🔹 CASE 2: Window Query (No GROUP BY)
+        elif window_fields:
+            result = (
+                base_qs
+                .annotate(**window_fields)
+                .values(*machine_fields, *window_fields.keys())
+                .distinct()
+                .order_by(*str(order_by).split(","))
+            )
+
+        else:
+            result = base_qs.values(*machine_fields)
+
+        # 🔹 Return All Records
+        if all_records == 'true':
+            return Response({'results': list(result)})
+
+        # 🔹 Pagination
+        page_size = int(request.query_params.get("page_size", settings.MIN_PAGE_SIZE))
+        paginator = Paginator(result, page_size)
+        page_number = request.query_params.get("page", 1)
+        page = paginator.get_page(page_number)
+
+        return Response(
+            {
+                "count": paginator.count,
+                "next": page.next_page_number() if page.has_next() else None,
+                "previous": page.previous_page_number() if page.has_previous() else None,
+                "results": list(page),
+            }
+        )
+
+
+DATABASES = {
+    'default': {
+        ...
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'"
+        }
+    }
+}
+
+
+
+
+
+
+
 
 class PlantMachineryLogBookCumulative3APIView(APIView):
     authentication_classes = (TokenAuthentication,)
