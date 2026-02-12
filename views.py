@@ -13,73 +13,126 @@ import json
 
 
 
-
 class PlantMachineryLogBookCumulative2APIViewBack(APIView):
     """
-    API to fetch cumulative or starting values based on machine.
-    Works with MySQL strict mode (ONLY_FULL_GROUP_BY enabled).
+    Optimized API to fetch cumulative / first / last values
+    machine-wise with GROUP BY support (MySQL strict mode safe).
     """
+
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
+
     def get(self, request):
-        fields = request.query_params.get('fields', None)
-        fetch_all = request.query_params.get('all', None)
-        order_by = request.query_params.get('order_by', '-id')
-        if not fields:
+
+        fields_param = request.query_params.get("fields", None)
+        fetch_all = request.query_params.get("all", None)
+        order_by = request.query_params.get("order_by", "-plant_machinery_machine__id")
+
+        if not fields_param:
             raise APIException({
                 "request_status": 0,
                 "msg": "fields parameter is required."
             })
+
+        # Parse JSON
         try:
-            fields = json.loads(fields)
+            fields = json.loads(fields_param)
         except json.JSONDecodeError:
             raise APIException({
                 "request_status": 0,
                 "msg": "Invalid JSON format for fields."
             })
-        queryset = PlantMachineryLogBook.cmobjects.all()
-        search = custom_filters(request, {}, ['fields'])
-        queryset = queryset.filter(*search)
-        annotations = {}
+
+        # Apply custom filters first (VERY IMPORTANT)
+        search = custom_filters(request, {}, ["fields"])
+
+        base_queryset = PlantMachineryLogBook.cmobjects.filter(*search)
+
+        aggregation_fields = {}
+
         for field, operation in fields.items():
-            annotation_name = f"{field}_value"
-            if operation == 'aggregate':
-                annotations[annotation_name] = Coalesce(Sum(field),Value(0),output_field=FloatField())
-            elif operation == 'average':
-                annotations[annotation_name] = Coalesce(Avg(field),Value(0),output_field=FloatField())
-            elif operation == 'first_value':
-                annotations[annotation_name] = Window(
-                    expression=FirstValue(field),
-                    partition_by=[F('plant_machinery_machine')],
-                    order_by=F('log_book_date').asc()
+
+            annotation_name = f"{operation}_{field}"
+
+            if operation == "aggregate":
+
+                aggregation_fields[annotation_name] = Coalesce(
+                    Sum(field),
+                    Value(0),
+                    output_field=FloatField()
                 )
-            elif operation == 'last_value':
-                annotations[annotation_name] = Window(
-                    expression=LastValue(field),
-                    partition_by=[F('plant_machinery_machine')],
-                    order_by=F('log_book_date').asc()
+
+            elif operation == "average":
+
+                aggregation_fields[annotation_name] = Coalesce(
+                    Avg(field),
+                    Value(0),
+                    output_field=FloatField()
                 )
-        queryset = queryset.annotate(**annotations)
-        queryset = queryset.order_by(*str(order_by).split(","))
-        if fetch_all == 'true':
+
+            elif operation == "first_value":
+
+                subquery = PlantMachineryLogBook.cmobjects.filter(
+                    plant_machinery_machine=OuterRef("plant_machinery_machine"),
+                    *search
+                ).order_by("log_book_date").values(field)[:1]
+
+                aggregation_fields[annotation_name] = Subquery(subquery)
+
+            elif operation == "last_value":
+
+                subquery = PlantMachineryLogBook.cmobjects.filter(
+                    plant_machinery_machine=OuterRef("plant_machinery_machine"),
+                    *search
+                ).order_by("-log_book_date").values(field)[:1]
+
+                aggregation_fields[annotation_name] = Subquery(subquery)
+
+            else:
+                raise APIException({
+                    "request_status": 0,
+                    "msg": f"Unsupported operation: {operation}"
+                })
+
+        # 🔥 Final grouped query (exact structure preserved)
+        result = base_queryset.values(
+            "plant_machinery_machine__id",
+            "plant_machinery_machine__machine_number",
+            "plant_machinery_machine__equipment_description",
+            "plant_machinery_machine__registration_no",
+            "plant_machinery_machine__plant_machinery_group__machine_type",
+            "project",
+        ).annotate(
+            **aggregation_fields
+        ).order_by(
+            *str(order_by).split(",")
+        )
+
+        # If all data requested
+        if fetch_all == "true":
             return Response({
-                "results": list(queryset.values())
+                "results": list(result)
             })
+
+        # Pagination
         page_size = int(
             request.query_params.get(
                 "page_size",
                 settings.MIN_PAGE_SIZE
             )
         )
-        paginator = Paginator(queryset, page_size)
+
+        paginator = Paginator(result, page_size)
         page_number = request.query_params.get("page", 1)
         page = paginator.get_page(page_number)
+
         return Response({
             "count": paginator.count,
             "next": page.next_page_number() if page.has_next() else None,
             "previous": page.previous_page_number() if page.has_previous() else None,
-            "results": list(page.object_list.values()),
+            "results": list(page),
         })
+
 
 
 
