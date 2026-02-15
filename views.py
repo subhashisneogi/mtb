@@ -1,3 +1,13 @@
+from django.db.models import Sum, Avg, F, Value, FloatField, Window
+from django.db.models.functions import Coalesce, FirstValue, LastValue
+from django.core.paginator import Paginator
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.exceptions import APIException
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
+import json
 
 
 class PlantMachineryLogBookCumulative2APIViewBack(APIView):
@@ -23,49 +33,45 @@ class PlantMachineryLogBookCumulative2APIViewBack(APIView):
             raise APIException({'request_status': 0, 'msg': "Invalid JSON format for fields."})
 
         search = custom_filters(request, {}, ['fields'])
-
         base_qs = PlantMachineryLogBook.cmobjects.filter(*search)
 
         aggregation_fields = {}
         window_fields = {}
+        rename_map = {}
 
-        # 🔹 Separate aggregate & window operations
+        # 🔹 Separate aggregate & window operations safely
         for field, operation in fields.items():
 
+            alias_name = f"{field}_calc"   # safe alias to avoid conflict
+            rename_map[alias_name] = field
+
             if operation == 'aggregate':
-                aggregation_fields[field] = Coalesce(
+                aggregation_fields[alias_name] = Coalesce(
                     Sum(field),
                     Value(0),
                     output_field=FloatField()
                 )
 
             elif operation == 'average':
-                aggregation_fields[field] = Coalesce(
+                aggregation_fields[alias_name] = Coalesce(
                     Avg(field),
                     Value(0),
                     output_field=FloatField()
                 )
 
             elif operation == 'first_value':
-                window_fields[field] = Window(
+                window_fields[alias_name] = Window(
                     expression=FirstValue(field),
                     partition_by=[F('plant_machinery_machine__id')],
                     order_by=F('log_book_date').asc()
                 )
 
             elif operation == 'last_value':
-                window_fields[field] = Window(
+                window_fields[alias_name] = Window(
                     expression=LastValue(field),
                     partition_by=[F('plant_machinery_machine__id')],
                     order_by=F('log_book_date').asc()
                 )
-
-        # # ❌ MySQL strict mode does not support mixing aggregate + window in same grouped query
-        # if aggregation_fields and window_fields:
-        #     raise APIException({
-        #         "request_status": 0,
-        #         "msg": "Cannot combine aggregation and window functions together in MySQL strict mode."
-        #     })
 
         machine_fields = [
             'plant_machinery_machine__id',
@@ -76,7 +82,7 @@ class PlantMachineryLogBookCumulative2APIViewBack(APIView):
             'project',
         ]
 
-        # 🔹 CASE 1: Aggregation Query (GROUP BY)
+        # 🔹 CASE 1: Aggregation Query (GROUP BY safe)
         if aggregation_fields:
             result = (
                 base_qs
@@ -98,13 +104,22 @@ class PlantMachineryLogBookCumulative2APIViewBack(APIView):
         else:
             result = base_qs.values(*machine_fields)
 
+        # Convert queryset to list so we can rename safely
+        result_list = list(result)
+
+        # 🔹 Rename alias back to original field names
+        for row in result_list:
+            for alias, original in rename_map.items():
+                if alias in row:
+                    row[original] = row.pop(alias)
+
         # 🔹 Return All Records
         if all_records == 'true':
-            return Response({'results': list(result)})
+            return Response({'results': result_list})
 
         # 🔹 Pagination
         page_size = int(request.query_params.get("page_size", settings.MIN_PAGE_SIZE))
-        paginator = Paginator(result, page_size)
+        paginator = Paginator(result_list, page_size)
         page_number = request.query_params.get("page", 1)
         page = paginator.get_page(page_number)
 
@@ -116,6 +131,7 @@ class PlantMachineryLogBookCumulative2APIViewBack(APIView):
                 "results": list(page),
             }
         )
+
 
 
 DATABASES = {
