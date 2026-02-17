@@ -169,6 +169,129 @@ class PaymentMasterImportAPIView(APIView):
             raise APIException(str(e))
 
 
+
+####
+import pandas as pd
+import numpy as np
+
+def get_value(row, column_name):
+    try:
+        value = row.get(column_name)
+        if isinstance(value, (pd.Series, np.ndarray)):
+            return value[0] if len(value) > 0 else None
+        return value
+    except Exception:
+        return None
+
+
+error_list = []
+
+for index, row in df.iterrows():
+
+    skip = False
+
+    # ---------------- SAFE VALUE EXTRACTION ----------------
+    vendor_value = get_value(row, 'vendor')
+    po_value = get_value(row, 'purchase_order')
+    cst_value = get_value(row, 'cst_no')
+    payment_through = get_value(row, 'payment_through')
+
+    # Convert to safe string (avoid numpy truth ambiguity)
+    vendor_code = str(vendor_value).strip() if vendor_value is not None else ''
+    po_number = str(po_value).strip() if po_value is not None else ''
+    cst_number = str(cst_value).strip() if cst_value is not None else ''
+    payment_through = str(payment_through).strip() if payment_through else ''
+
+    # Handle NaN
+    if vendor_code.lower() == 'nan':
+        vendor_code = ''
+    if po_number.lower() == 'nan':
+        po_number = ''
+    if cst_number.lower() == 'nan':
+        cst_number = ''
+
+    # ---------------- DATABASE LOOKUPS ----------------
+    vendor_id = None
+    purchase_order_id = None
+    cst_id = None
+
+    if vendor_code != '':
+        vendor = Vendor.objects.filter(code__iexact=vendor_code).first()
+        if vendor:
+            vendor_id = vendor.id
+
+    if po_number != '':
+        po = PurchaseOrder.objects.filter(po_number__iexact=po_number).first()
+        if po:
+            purchase_order_id = po.id
+
+    if cst_number != '':
+        cst = CST.objects.filter(cst_no__iexact=cst_number).first()
+        if cst:
+            cst_id = cst.id
+
+    # ---------------- VALIDATIONS ----------------
+
+    # Vendor validation
+    if vendor_code == '' or not vendor_id:
+        error_list.append(
+            f"Row {index+2}: Invalid Vendor '{vendor_code}'. Vendor not found."
+        )
+        skip = True
+
+    # CST validation
+    if payment_through.upper() == 'CST':
+        if cst_number == '':
+            error_list.append(
+                f"Row {index+2}: CST number is required when payment through CST."
+            )
+            skip = True
+        elif not cst_id:
+            error_list.append(
+                f"Row {index+2}: Invalid CST tag '{cst_number}'. Not found or vendor mismatch."
+            )
+            skip = True
+
+    # PO validation
+    if po_number != '' and not purchase_order_id:
+        error_list.append(
+            f"Row {index+2}: Invalid Purchase Order '{po_number}'. Not found or vendor mismatch."
+        )
+        skip = True
+
+    # Skip if any validation failed
+    if skip:
+        continue
+
+    # ---------------- SAVE INSTANCE ----------------
+    try:
+        instance = YourModel(
+            vendor_id=vendor_id,
+            purchase_order_id=purchase_order_id,
+            cst_id=cst_id,
+            payment_through=payment_through,
+        )
+
+        instance.save()
+
+    except Exception as e:
+        error_list.append(f"Row {index+2}: Save failed - {str(e)}")
+        continue
+
+
+# --------------- RETURN ERROR IF ANY ---------------
+if error_list:
+    return Response(
+        {"status": "error", "errors": error_list},
+        status=400
+    )
+
+return Response(
+    {"status": "success"},
+    status=200
+)
+
+
 class PlantMachineryLogBookCumulative2APIView(APIView):
     """
     API to fetch cumulative or starting values based on machine.
