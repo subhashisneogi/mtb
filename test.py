@@ -1,16 +1,3 @@
-import os
-import certifi
-import requests
-import pandas as pd
-import fuzzymatcher
-
-from django.db import transaction
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-
-
 class ValidateTcmsBlfUsers(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -80,7 +67,6 @@ class ValidateTcmsBlfUsers(APIView):
             "user__username",
             "state__name",
             "district__name",
-            "tcms_unit_id",
         )
 
         profiles_df = pd.DataFrame(list(profiles))
@@ -95,69 +81,6 @@ class ValidateTcmsBlfUsers(APIView):
 
         profiles_df["tcms_unit_id"] = profiles_df["tcms_unit_id"].astype(str)
 
-        # --------------------------------------------------
-        # STEP 3: EXACT MATCH USING tcms_unit_id
-        # --------------------------------------------------
-        exact_matches = profiles_df.merge(
-            api_df,
-            left_on="tcms_unit_id",
-            right_on="unit_id",
-            how="inner"
-        )
-
-        # --------------------------------------------------
-        # STEP 4: UPDATE EXACT MATCHES
-        # --------------------------------------------------
-        with transaction.atomic():
-
-            for _, row in exact_matches.iterrows():
-
-                profile_id = row["id"]
-
-                update_count = BlfProfile.cmobjects.filter(
-                    id=profile_id
-                ).update(
-                    is_tcms_user=True,
-                    tcms_unit_id=row["unit_id"],
-                    tcmo_no=row["tcmo_no"]
-                )
-
-                if update_count:
-                    updated_count += 1
-                    matched_users_ids.append(profile_id)
-
-                results.append({
-                    "profile_id": profile_id,
-                    "match_type": "exact",
-                    "match_score": 150.0,
-                    "user_update": "true"
-                })
-
-        # --------------------------------------------------
-        # STEP 5: REMOVE EXACT MATCHED RECORDS
-        # --------------------------------------------------
-        matched_unit_ids = exact_matches["unit_id"].tolist()
-
-        api_df_remaining = api_df[
-            ~api_df["unit_id"].isin(matched_unit_ids)
-        ]
-
-        profiles_df_remaining = profiles_df[
-            ~profiles_df["id"].isin(exact_matches["id"].tolist())
-        ]
-
-        if api_df_remaining.empty or profiles_df_remaining.empty:
-            return Response({
-                "count": len(results),
-                "updated_count": updated_count,
-                "results": results,
-                "matched_users_ids": list(set(matched_users_ids)),
-                "unmatched_users_ids": []
-            })
-
-        # --------------------------------------------------
-        # STEP 6: FUZZY MATCHING (WITHOUT ID)
-        # --------------------------------------------------
         fuzzy_matches = fuzzymatcher.link_table(
             api_df_remaining,
             profiles_df_remaining,
@@ -198,7 +121,7 @@ class ValidateTcmsBlfUsers(APIView):
 
                 match_score = round(float(raw_score) * 100, 2)
 
-                if profile_id and match_score >= 70:
+                if profile_id and match_score >= 0:
 
                     update_count = BlfProfile.cmobjects.filter(
                         id=profile_id
@@ -219,10 +142,6 @@ class ValidateTcmsBlfUsers(APIView):
                 else:
                     if profile_id:
                         unmatched_users_ids.append(profile_id)
-
-        # --------------------------------------------------
-        # FINAL RESPONSE
-        # --------------------------------------------------
         return Response({
             "count": len(results),
             "updated_count": updated_count,
