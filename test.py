@@ -1,3 +1,16 @@
+import os
+import certifi
+import requests
+import pandas as pd
+import fuzzymatcher
+
+from django.db import transaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+
+
 class ValidateTcmsBlfUsers(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -40,12 +53,10 @@ class ValidateTcmsBlfUsers(APIView):
             entity_details = entity.get("entity_details") or {}
 
             api_entities.append({
-                "unit_name": entity.get("name", "") or "",
-                "user_name": entity_details.get("user_name", "") or "",
-                "state": entity.get("state", "") or "",
-                "district": entity.get("district", "") or "",
-                "unit_id": str(entity.get("unit_id", "") or ""),
-                "tcmo_no": entity.get("tcmo_no", "") or "",
+                "unit_name": str(entity.get("name", "") or "").strip(),
+                "user_name": str(entity_details.get("user_name", "") or "").strip(),
+                "state": str(entity.get("state", "") or "").strip(),
+                "district": str(entity.get("district", "") or "").strip(),
             })
 
         if not api_entities:
@@ -79,11 +90,18 @@ class ValidateTcmsBlfUsers(APIView):
                 "message": "No BLF profiles found"
             })
 
-        profiles_df["tcms_unit_id"] = profiles_df["tcms_unit_id"].astype(str)
+        # Clean profile fields
+        profiles_df["entity_unit"] = profiles_df["entity_unit"].astype(str).str.strip()
+        profiles_df["user__username"] = profiles_df["user__username"].astype(str).str.strip()
+        profiles_df["state__name"] = profiles_df["state__name"].astype(str).str.strip()
+        profiles_df["district__name"] = profiles_df["district__name"].astype(str).str.strip()
 
+        # --------------------------------------------------
+        # STEP 3: FUZZY MATCHING (No ID Matching)
+        # --------------------------------------------------
         fuzzy_matches = fuzzymatcher.link_table(
-            api_df_remaining,
-            profiles_df_remaining,
+            api_df,
+            profiles_df,
             left_on=[
                 "unit_name",
                 "user_name",
@@ -107,7 +125,7 @@ class ValidateTcmsBlfUsers(APIView):
         fuzzy_matches["match_score"] = fuzzy_matches["match_score"].fillna(0.0)
 
         # --------------------------------------------------
-        # STEP 7: UPDATE FUZZY MATCHES
+        # STEP 4: UPDATE MATCHED USERS
         # --------------------------------------------------
         with transaction.atomic():
 
@@ -121,7 +139,8 @@ class ValidateTcmsBlfUsers(APIView):
 
                 match_score = round(float(raw_score) * 100, 2)
 
-                if profile_id and match_score >= 0:
+                # 🔥 IMPORTANT: Proper threshold
+                if profile_id and match_score >= 70:
 
                     update_count = BlfProfile.cmobjects.filter(
                         id=profile_id
@@ -132,16 +151,25 @@ class ValidateTcmsBlfUsers(APIView):
                     if update_count:
                         updated_count += 1
                         matched_users_ids.append(profile_id)
-
-                        results.append({
-                            "profile_id": profile_id,
-                            "match_type": "fuzzy",
-                            "match_score": match_score,
-                            "user_update": "true"
-                        })
+                        user_update = "true"
+                    else:
+                        user_update = "false"
                 else:
+                    user_update = "false"
                     if profile_id:
                         unmatched_users_ids.append(profile_id)
+
+                results.append({
+                    "profile_id": profile_id,
+                    "tracetea_entity_unit": row.get("entity_unit", ""),
+                    "tcms_entity_unit": row.get("unit_name", ""),
+                    "match_score": match_score,
+                    "user_update": user_update
+                })
+
+        # --------------------------------------------------
+        # FINAL RESPONSE
+        # --------------------------------------------------
         return Response({
             "count": len(results),
             "updated_count": updated_count,
