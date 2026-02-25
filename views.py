@@ -1,85 +1,52 @@
-def generate_chainage_code(instance):
-    """
-    Generate hierarchical chainage code for BOQChainageExecutiveSummeryData
-    """
 
-    BASE_CODE = "CG-01-CP"
-
-    # If no parent → base level
-    if not instance.parent:
-        return BASE_CODE
-
-    # If has parent → get parent executive code
-    parent_exec = BOQChainageExecutiveSummeryData.objects.filter(
-        wbs=instance.parent,
-        type="C"
-    ).first()
-
-    if parent_exec:
-        parent_code = parent_exec.value
-    else:
-        parent_code = BASE_CODE
-
-    # Find existing children count
-    existing_children = BOQChainageExecutiveSummeryData.objects.filter(
-        wbs__parent=instance.parent,
-        type="C"
-    ).count()
-
-    next_number = str(existing_children + 1).zfill(2)
-
-    return f"{parent_code}-{next_number}"
-
-
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from .models import WBSList, BOQChainage, BOQChainageExecutiveSummeryData
-from .utils import generate_chainage_code
+def get_root_wbs(wbs):
+    while wbs.parent is not None:
+        wbs = wbs.parent
+    return wbs
 
 
 @receiver(post_save, sender=WBSList)
 def signal_update_wbs_list(sender, instance, created, **kwargs):
 
-    if not created:
+    if not created or not instance.boq:
         return
 
-    print("Signal triggered for WBSList")
+    # 🔹 Find Root WBS (Top Most Parent)
+    root_wbs = get_root_wbs(instance)
 
-    if not instance.boq:
-        return
-
-    # CASE 1 → If Parent is NULL → Create BOQChainage
-    if instance.parent is None:
+    # 🔹 Case 1: If this is root itself
+    if instance == root_wbs:
 
         BOQChainage.objects.get_or_create(
             boq=instance.boq,
             wbs=instance,
+            organization=instance.organization,
             defaults={
-                "organization": instance.organization,
-                "planning_tender": instance.planning_tender,
-                "name": "STEP-1",
+                "name": f"CH-{instance.boq.id}-{instance.pk}",
                 "start": 0,
-                "end": 0,
+                "end": 1,
             }
         )
 
-    # CASE 2 → If Parent Exists → Create Executive Summary Data
+    # 🔹 Case 2: If this is child (any level)
     else:
 
-        auto_value = generate_chainage_code(instance)
-
-        BOQChainageExecutiveSummeryData.objects.get_or_create(
+        # Get root chainage
+        parent_chainage = BOQChainage.objects.filter(
             boq=instance.boq,
-            wbs=instance,
-            form=None,
-            defaults={
-                "organization": instance.organization,
-                "planning_tender": instance.planning_tender,
-                "type": "C",
-                "value": auto_value,
-            }
-        )
+            wbs=root_wbs
+        ).first()
 
+        if parent_chainage:
+            auto_value = generate_chainage_code(instance)
 
-
-
+            BOQChainageExecutiveSummeryData.objects.get_or_create(
+                boq=instance.boq,
+                wbs=instance,
+                form=parent_chainage,
+                defaults={
+                    "organization": instance.organization,
+                    "type": "C",
+                    "value": auto_value,
+                }
+            )
