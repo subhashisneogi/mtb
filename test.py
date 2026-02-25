@@ -1,179 +1,102 @@
-import os
-import certifi
-import requests
-import pandas as pd
-import fuzzymatcher
-
-from django.db import transaction
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
 
 
-class ValidateTcmsBlfUsers(APIView):
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+#models.py
+class WBSList(BaseAbstractStructure):
+    """
+    List for WBS for Tender/BOQ
+    """
+    CATEGORY = (
+        ('highway', 'Highway'),
+        ('structure', 'Structure'),
+        ('volumetric', 'Volumetric'),
+        ('others', 'Others'),
+    )
+    organization = models.ForeignKey(Organization, related_name='wbs_list_organization', on_delete=models.CASCADE)
+    category = models.CharField(max_length=100, choices=CATEGORY, default='highway')
+    by_order = models.IntegerField(default=1)
+    after_this = models.ForeignKey('self', related_name="+", on_delete=models.CASCADE, null=True, blank=True)
+    boq_code = models.CharField(max_length=255,null=True, blank=True)
+    boq_no = models.CharField(max_length=255,null=True, blank=True)
+    #wbs = models.ForeignKey(TenderWBSKeyScopes, related_name='wbs_list_wbs_key_scopes', on_delete=models.DO_NOTHING)
+    wbs = models.CharField(max_length=255)
+    planning_tender = models.ForeignKey(PlanningTender, related_name='boq_planning_tender', on_delete=models.CASCADE, null=True, blank=True)
+    boq = models.ForeignKey(BOQ, related_name='wbs_list_boq', on_delete=models.CASCADE,
+                             null=True, blank=True)
+    tender = models.ForeignKey(TenderMasterNew, related_name='wbs_list_tender', on_delete=models.CASCADE,
+                              null=True, blank=True)
+    parent = models.ForeignKey('self', related_name='wbs_list_parent', on_delete=models.CASCADE,
+                              null=True, blank=True)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='wbs_list_uom', on_delete=models.CASCADE,
+                              null=True, blank=True)
+    
+class BOQChainage(BaseAbstractStructure):
+    organization = models.ForeignKey(Organization, related_name='+', on_delete=models.CASCADE)
+    planning_tender = models.ForeignKey(PlanningTender, related_name='boq_chainage_planning_tender', on_delete=models.CASCADE, null=True, blank=True)
+    boq = models.ForeignKey(BOQ, related_name='+',on_delete=models.CASCADE, null=True, blank=True)
+    wbs = models.ForeignKey(WBSList, related_name='+',on_delete=models.CASCADE, null=True, blank=True)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    start = models.FloatField(blank=True, null=True, default=0)
+    end = models.FloatField(blank=True, null=True, default=0)
+    chainage_value = models.FloatField(blank=True, null=True, default=0)
 
-    def post(self, request, *args, **kwargs):
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if not self.start:
+            self.start = 0.
+        if not self.end:
+            self.end = 0.
+        self.chainage_value = float(self.end)-float(self.start)
+        super().save(*args, **kwargs)
 
-        results = []
-        updated_count = 0
-        matched_users_ids = []
-        unmatched_users_ids = []
+class BOQChainageExecutiveSummeryData(BaseAbstractStructure):
+    organization = models.ForeignKey(Organization, related_name='+', on_delete=models.CASCADE)
+    planning_tender = models.ForeignKey(PlanningTender, related_name='boq_chainage_executive_planning_tender', on_delete=models.CASCADE, null=True, blank=True)
+    boq = models.ForeignKey(BOQ, related_name='+',on_delete=models.CASCADE, null=True, blank=True)
+    wbs = models.ForeignKey(WBSList, related_name='+',on_delete=models.CASCADE, null=True, blank=True)
+    form = models.ForeignKey(BOQChainage, related_name='+',on_delete=models.CASCADE, blank=True, null=True)
+    value = models.CharField(max_length=200, blank=True, null=True)
+    type = models.CharField(max_length=200, blank=True, null=True)
 
-        api_url = os.getenv("TCMS_ENTITY_URL")
+    def __str__(self):
+        return str(self.value) + " (" + str(self.type) + ") "
 
-        if not api_url:
-            return Response(
-                {"error": "TCMS_ENTITY_URL not configured"},
-                status=500
+    class Meta:
+        db_table = "boq_chainage_executivesummery"
+
+
+#signals.py
+@receiver(post_save, sender=WBSList)
+def signal_update_wbs_list(sender, instance, **kwargs):
+    print("in signal WBSList")
+    change_lmpi_data(instance.id,instance.budgeted_quantity)
+    if instance.boq:
+        if instance.parent__is_null==False:
+            BOQChainage.objects.get_or_create(
+                boq=instance.boq,
+                defaults={
+                    "organization": instance.organization,
+                    "wbs": instance,
+                    "name": "STEP-1"
+                }
+            )
+        elif instance.parent:
+            raw_value=None
+            BOQChainageExecutiveSummeryData.objects.get_or_create(
+                boq=instance.boq,
+                wbs=instance,
+                defaults={
+                    "organization": instance.organization,
+                    "wbs": instance,
+                    "name": "STEP-1"
+                    "type" : "C", 
+                    "value":raw_value
+                } 
             )
 
-        # --------------------------------------------------
-        # STEP 1: Fetch TCMS Data
-        # --------------------------------------------------
-        try:
-            response = requests.get(
-                api_url,
-                verify=certifi.where(),
-                timeout=30
-            )
-            response.raise_for_status()
-            json_data = response.json()
-        except Exception as e:
-            return Response(
-                {"error": f"Failed to fetch TCMS data: {str(e)}"},
-                status=502
-            )
+logic is if parent is null then create BOQChainge else should create BOQChainageExecutiveSummeryData with auto generate value
 
-        api_entities = []
-
-        for entity in json_data.get("data", []):
-            entity_details = entity.get("entity_details") or {}
-
-            api_entities.append({
-                "unit_name": str(entity.get("name", "") or "").strip(),
-                "user_name": str(entity_details.get("user_name", "") or "").strip(),
-                "state": str(entity.get("state", "") or "").strip(),
-                "district": str(entity.get("district", "") or "").strip(),
-            })
-
-        if not api_entities:
-            return Response({
-                "count": 0,
-                "updated_count": 0,
-                "results": [],
-                "message": "No TCMS data found"
-            })
-
-        api_df = pd.DataFrame(api_entities)
-
-        # --------------------------------------------------
-        # STEP 2: Fetch Local Profiles
-        # --------------------------------------------------
-        profiles = BlfProfile.cmobjects.all().values(
-            "id",
-            "entity_unit",
-            "user__username",
-            "state__name",
-            "district__name",
-        )
-
-        profiles_df = pd.DataFrame(list(profiles))
-
-        if profiles_df.empty:
-            return Response({
-                "count": 0,
-                "updated_count": 0,
-                "results": [],
-                "message": "No BLF profiles found"
-            })
-
-        # Clean profile fields
-        profiles_df["entity_unit"] = profiles_df["entity_unit"].astype(str).str.strip()
-        profiles_df["user__username"] = profiles_df["user__username"].astype(str).str.strip()
-        profiles_df["state__name"] = profiles_df["state__name"].astype(str).str.strip()
-        profiles_df["district__name"] = profiles_df["district__name"].astype(str).str.strip()
-
-        # --------------------------------------------------
-        # STEP 3: FUZZY MATCHING (No ID Matching)
-        # --------------------------------------------------
-        fuzzy_matches = fuzzymatcher.link_table(
-            api_df,
-            profiles_df,
-            left_on=[
-                "unit_name",
-                "user_name",
-                "state",
-                "district",
-            ],
-            right_on=[
-                "entity_unit",
-                "user__username",
-                "state__name",
-                "district__name",
-            ],
-        )
-
-        fuzzy_matches = (
-            fuzzy_matches
-            .sort_values("match_score", ascending=False)
-            .drop_duplicates("unit_name")
-        )
-
-        fuzzy_matches["match_score"] = fuzzy_matches["match_score"].fillna(0.0)
-
-        # --------------------------------------------------
-        # STEP 4: UPDATE MATCHED USERS
-        # --------------------------------------------------
-        with transaction.atomic():
-
-            for _, row in fuzzy_matches.iterrows():
-
-                profile_id = row.get("id")
-                raw_score = row.get("match_score", 0.0)
-
-                if pd.isna(raw_score):
-                    raw_score = 0.0
-
-                match_score = round(float(raw_score) * 100, 2)
-
-                # 🔥 IMPORTANT: Proper threshold
-                if profile_id and match_score >= 70:
-
-                    update_count = BlfProfile.cmobjects.filter(
-                        id=profile_id
-                    ).update(
-                        is_tcms_user=True
-                    )
-
-                    if update_count:
-                        updated_count += 1
-                        matched_users_ids.append(profile_id)
-                        user_update = "true"
-                    else:
-                        user_update = "false"
-                else:
-                    user_update = "false"
-                    if profile_id:
-                        unmatched_users_ids.append(profile_id)
-
-                results.append({
-                    "profile_id": profile_id,
-                    "tracetea_entity_unit": row.get("entity_unit", ""),
-                    "tcms_entity_unit": row.get("unit_name", ""),
-                    "match_score": match_score,
-                    "user_update": user_update
-                })
-
-        # --------------------------------------------------
-        # FINAL RESPONSE
-        # --------------------------------------------------
-        return Response({
-            "count": len(results),
-            "updated_count": updated_count,
-            "results": results,
-            "matched_users_ids": list(set(matched_users_ids)),
-            "unmatched_users_ids": list(set(unmatched_users_ids)),
-        })
+please write proper signals and also write the 
+function to generate value for BOQChainageExecutiveSummeryData if type="C"
+auto code will be 
+if wbs parent is null then will start "CG-01-CP" then suffix will be 01, 02, 03 ex - "CG-01-CP-01"
+if has WBS parent then "CG-01-CP-01" + 01, 02, 03, ....
