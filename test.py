@@ -1,5 +1,3 @@
-
-
 #models.py
 class WBSList(BaseAbstractStructure):
     """
@@ -66,37 +64,23 @@ class BOQChainageExecutiveSummeryData(BaseAbstractStructure):
 
 #signals.py
 @receiver(post_save, sender=WBSList)
-def signal_update_wbs_list(sender, instance, **kwargs):
+def signal_update_wbs_list(sender, instance, created, **kwargs):
     print("in signal WBSList")
-    change_lmpi_data(instance.id,instance.budgeted_quantity)
-    if instance.boq:
-        if instance.parent__is_null==False:
-            BOQChainage.objects.get_or_create(
-                boq=instance.boq,
-                defaults={
-                    "organization": instance.organization,
-                    "wbs": instance,
-                    "name": "STEP-1"
-                }
-            )
+    if instance:
+        change_lmpi_data(instance.id,instance.budgeted_quantity)
+    if instance.boq and created:
+        if instance.parent is None:
+            BOQChainage.objects.get_or_create(boq=instance.boq, wbs=instance, organization=instance.organization, defaults={
+                "name": f"CH-{instance.boq.id}-{instance.pk}",  "start": 0,"end": 1,})
         elif instance.parent:
-            raw_value=None
-            BOQChainageExecutiveSummeryData.objects.get_or_create(
-                boq=instance.boq,
-                wbs=instance,
-                defaults={
-                    "organization": instance.organization,
-                    "wbs": instance,
-                    "name": "STEP-1"
-                    "type" : "C", 
-                    "value":raw_value
-                } 
-            )
+            parent_chainage_id = BOQChainage.cmobjects.filter(boq=instance.boq, wbs=instance.parent).values_list('id', flat=True).first()
+            auto_value = generate_chainage_code(instance)
+            print("parent_chainage_id ###", parent_chainage_id)
+            BOQChainageExecutiveSummeryData.objects.get_or_create(boq=instance.boq, wbs=instance, value__isnull=True,  
+                defaults={"organization": instance.organization, "type": "C", "value": auto_value, 'form_id' : parent_chainage_id})
+	
 
-logic is if parent is null then create BOQChainge else should create BOQChainageExecutiveSummeryData with auto generate value
 
-please write proper signals and also write the 
-function to generate value for BOQChainageExecutiveSummeryData if type="C"
-auto code will be 
-if wbs parent is null then will start "CG-01-CP" then suffix will be 01, 02, 03 ex - "CG-01-CP-01"
-if has WBS parent then "CG-01-CP-01" + 01, 02, 03, ....
+here have the BOQChainage which WBSList have parent is null
+and to get the BOQChainage instance which have multiple child WBSList
+one parent WBSList can have the multiple chiled WBSList 	
