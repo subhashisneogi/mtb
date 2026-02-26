@@ -1,6 +1,14 @@
 
 
-
+A (parent=None)   ← Not generating code for this
+ ├── B            ← First level under root → CG-01-CP-01
+ │    ├── C       → CG-01-CP-01-01
+ │    │    └── D  → CG-01-CP-01-01-01
+ │    └── E       → CG-01-CP-01-02
+ └── F            → CG-01-CP-02
+      ├── f1      → CG-01-CP-02-01
+      │    └── f11→ CG-01-CP-02-01-01
+      └── f2      → CG-01-CP-02-02
 from django.db import transaction
 
 
