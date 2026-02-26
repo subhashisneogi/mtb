@@ -1,3 +1,65 @@
+from django.db import transaction
+from django.db.models import Max
+import re
+
+
+def generate_chainage_code(instance):
+    """
+    Optimized hierarchical chainage code generator
+    Deletion-safe
+    Production-ready
+    """
+
+    BASE_CODE = "CG-01-CP"
+
+    with transaction.atomic():
+
+        # 🔹 ROOT LEVEL (WBS.parent IS NULL)
+        if instance.parent is None:
+
+            last_root = (
+                BOQChainageExecutiveSummeryData.cmobjects
+                .filter(wbs__parent__isnull=True, type="C")
+                .order_by("-id")
+                .only("value")
+                .first()
+            )
+
+            if last_root and last_root.value:
+                last_number = int(last_root.value.split("-")[-1])
+                next_number = str(last_number + 1).zfill(2)
+            else:
+                next_number = "01"
+
+            return f"{BASE_CODE}-{next_number}"
+
+        # 🔹 CHILD LEVEL
+        parent_exec = (
+            BOQChainageExecutiveSummeryData.cmobjects
+            .filter(wbs=instance.parent, type="C")
+            .only("value")
+            .first()
+        )
+
+        parent_code = parent_exec.value if parent_exec else BASE_CODE
+
+        last_child = (
+            BOQChainageExecutiveSummeryData.cmobjects
+            .filter(wbs__parent=instance.parent, type="C")
+            .order_by("-id")
+            .only("value")
+            .first()
+        )
+
+        if last_child and last_child.value:
+            last_number = int(last_child.value.split("-")[-1])
+            next_number = str(last_number + 1).zfill(2)
+        else:
+            next_number = "01"
+
+        return f"{parent_code}-{next_number}"
+
+
 
 def get_root_index(root_wbs):
     return WBSList.objects.filter(
