@@ -81,6 +81,26 @@ def signal_update_wbs_list(sender, instance, created, **kwargs):
 	
 
 
-here have the BOQChainage which WBSList have parent is null
-and to get the BOQChainage instance which have multiple child WBSList
-one parent WBSList can have the multiple chiled WBSList 	
+def generate_chainage_code(instance):
+    """
+    Generate chainage BOQ code for BOQChainageExecutiveSummeryData value
+    """
+    BASE_CODE = "CG-01-CP"
+    if not instance.parent:
+        return BASE_CODE
+    parent_exec = BOQChainageExecutiveSummeryData.cmobjects.filter(
+        wbs=instance.parent,
+        type="C"
+    ).first()
+    if parent_exec:
+        parent_code = parent_exec.value
+    else:
+        parent_code = BASE_CODE
+    existing_children = BOQChainageExecutiveSummeryData.cmobjects.filter(
+        wbs__parent=instance.parent,
+        type="C"
+    ).count()
+    next_number = str(existing_children + 1).zfill(2)
+    return f"{parent_code}-{next_number}"
+
+above code is working fine but need samll changes , which WBSList has parant__isnull=True will be CG-01-CP-01
