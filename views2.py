@@ -1,374 +1,75 @@
-
-def to_python_value(value):
-    if isinstance(value, np.ndarray):
-        return value.item() if value.size > 0 else None
-    if isinstance(value, np.generic):
-        return value.item()
-    if isinstance(value, pd.Timestamp):
-        return value.date()
-    return value
-
-
-class PaymentMasterImportAPIView(APIView):
-    """
-    API for bulk import of PaymentMaster 
-    """
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request, *args, **kwargs):
-        try:
-            with transaction.atomic():
-
-                count_data = {'add': 0, 'edit': 0}
-
-                organization_id = request.query_params.get('organization_id')
-                project_id = request.query_params.get('project_id')
-                site_id = request.query_params.get('site_id')
-                store_id = request.query_params.get('store_id')
-                file_name = request.data.get('file_name')
-                field_map = request.data.get('field_map', {})
-
-                if not all([organization_id, project_id, site_id, file_name]):
-                    raise APIException("Required parameters missing")
-
-                file_path = os.path.join('media/excel', file_name)
-
-                if not os.path.exists(file_path):
-                    raise APIException("File not found")
-
-                sheet_xlsx = pd.read_excel(file_path)
-
-                if sheet_xlsx.empty:
-                    raise APIException("Empty file")
-
-                sheet_xlsx = sheet_xlsx.fillna("").applymap(
-                    lambda x: x.strip() if isinstance(x, str) else x
-                )
-
-                def get_value(row, key):
-                    column = field_map.get(key)
-                    if not column:
-                        return None
-                    value = row.get(column)
-                    return to_python_value(value)
-
-                def handle_date(value):
-                    if not value:
-                        return None
-                    return pd.to_datetime(value, errors='coerce').date()
-
-                def handle_float(value, default=0.0):
-                    if not value:
-                        return default
-                    try:
-                        return float(value)
-                    except:
-                        return default
-
-                def handle_str(value):
-                    if not value:
-                        return None
-                    return str(value).strip()
-
-                def format_choice_field(value, choices):
-                    if not value:
-                        return None
-                    value_str = str(value).strip().lower()
-                    choice_map = {c[0].lower(): c[0] for c in choices}
-                    return choice_map.get(value_str)
-
-                # Convert queryset to set (safe membership check)
-                pending_request_code_list = set(
-                    PaymentMaster.cmobjects.filter(
-                        status='pending',
-                        organization_id=organization_id,
-                        store_id=store_id,
-                        project_id=project_id,
-                        site_id=site_id,
-                    ).annotate(
-                        request_code_lower=Lower('request_code')
-                    ).values_list('request_code_lower', flat=True)
-                )
-
-                error_list = []
-
-                for index, row in sheet_xlsx.iterrows():
-
-                    request_code = get_value(row, 'request_code')
-                    request_code = str(request_code).strip() if request_code else ''
-
-                    if request_code != '' and request_code.lower() not in pending_request_code_list:
-                        error_list.append(
-                            f"Row {index+2}: {request_code} not in pending status"
-                        )
-                        continue
-
-                    vendor_id = get_value(row, 'vendor_id')
-                    vendor_id = int(vendor_id) if vendor_id else None
-
-                    cst_id = get_value(row, 'cst_id')
-                    cst_id = int(cst_id) if cst_id else None
-
-                    purchase_order_id = get_value(row, 'purchase_order_id')
-                    purchase_order_id = int(purchase_order_id) if purchase_order_id else None
-
-                    payment_through = format_choice_field(
-                        get_value(row, 'payment_through'),
-                        PaymentMaster.PAYMENT_THROUGH_CHOICE
-                    ) or 'Non-CST'
-
-                    data = {
-                        'vendor_id': vendor_id,
-                        'cst_id': cst_id,
-                        'cst_no': handle_str(get_value(row, 'cst_no')) if payment_through == 'Non-CST' else None,
-                        'remarks': get_value(row, 'remarks'),
-                        'amount': float(handle_float(get_value(row, 'amount'), 0.0)),
-                        'purpose': get_value(row, 'purpose'),
-                        'payment_against': format_choice_field(
-                            get_value(row, 'payment_against') or 'PO',
-                            PaymentMaster.PAYMENT_AGAINST_CHOICE
-                        ) or 'PO',
-                        'payment_no': get_value(row, 'payment_no'),
-                        'purchase_order_id': purchase_order_id,
-                        'date': handle_date(get_value(row, 'date')),
-                        'payment_through': payment_through,
-                        'is_advance_payment': format_choice_field(
-                            get_value(row, 'is_advance_payment'),
-                            PaymentMaster.ADVANCE_PAYMENT_CHOICE
-                        ),
-                    }
-
-                    instance, created = PaymentMaster.cmobjects.update_or_create(
-                        organization_id=organization_id,
-                        store_id=store_id,
-                        project_id=project_id,
-                        site_id=site_id,
-                        request_code=request_code,
-                        latest=True,
-                        defaults=data
-                    )
-
-                    if created:
-                        instance.created_by_id = request.user.id
-                        count_data['add'] += 1
-                    else:
-                        instance.updated_by_id = request.user.id
-                        count_data['edit'] += 1
-
-                    instance.save()
-
-                return Response({
-                    "results": count_data,
-                    "errors": error_list,
-                    "msg": "Successfully imported",
-                    "request_status": 1
-                }, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            raise APIException(str(e))
+A (root)
+ ├── B
+ │     ├── C
+ │     │     └── D
+ │     └── E
+ └── F
+ 
+A → CG-01-CP-01
+B → CG-01-CP-01-01
+C → CG-01-CP-01-01-01
+D → CG-01-CP-01-01-01-01
+E → CG-01-CP-01-02
+F → CG-01-CP-02
 
 
+def get_parent_code(instance):
 
-####
-import pandas as pd
-import numpy as np
+    if instance.parent is None:
+        return "CG-01-CP"
 
-def get_value(row, column_name):
-    try:
-        value = row.get(column_name)
-        if isinstance(value, (pd.Series, np.ndarray)):
-            return value[0] if len(value) > 0 else None
-        return value
-    except Exception:
-        return None
+    parent_summary = BOQChainageExecutiveSummeryData.objects.filter(
+        boq=instance.boq,
+        wbs=instance.parent
+    ).first()
 
+    if parent_summary:
+        return parent_summary.value
 
-error_list = []
+    return None
+	
+from django.db.models import Max
 
-for index, row in df.iterrows():
+def get_next_serial(instance):
 
-    skip = False
-
-    # ---------------- SAFE VALUE EXTRACTION ----------------
-    vendor_value = get_value(row, 'vendor')
-    po_value = get_value(row, 'purchase_order')
-    cst_value = get_value(row, 'cst_no')
-    payment_through = get_value(row, 'payment_through')
-
-    # Convert to safe string (avoid numpy truth ambiguity)
-    vendor_code = str(vendor_value).strip() if vendor_value is not None else ''
-    po_number = str(po_value).strip() if po_value is not None else ''
-    cst_number = str(cst_value).strip() if cst_value is not None else ''
-    payment_through = str(payment_through).strip() if payment_through else ''
-
-    # Handle NaN
-    if vendor_code.lower() == 'nan':
-        vendor_code = ''
-    if po_number.lower() == 'nan':
-        po_number = ''
-    if cst_number.lower() == 'nan':
-        cst_number = ''
-
-    # ---------------- DATABASE LOOKUPS ----------------
-    vendor_id = None
-    purchase_order_id = None
-    cst_id = None
-
-    if vendor_code != '':
-        vendor = Vendor.objects.filter(code__iexact=vendor_code).first()
-        if vendor:
-            vendor_id = vendor.id
-
-    if po_number != '':
-        po = PurchaseOrder.objects.filter(po_number__iexact=po_number).first()
-        if po:
-            purchase_order_id = po.id
-
-    if cst_number != '':
-        cst = CST.objects.filter(cst_no__iexact=cst_number).first()
-        if cst:
-            cst_id = cst.id
-
-    # ---------------- VALIDATIONS ----------------
-
-    # Vendor validation
-    if vendor_code == '' or not vendor_id:
-        error_list.append(
-            f"Row {index+2}: Invalid Vendor '{vendor_code}'. Vendor not found."
-        )
-        skip = True
-
-    # CST validation
-    if payment_through.upper() == 'CST':
-        if cst_number == '':
-            error_list.append(
-                f"Row {index+2}: CST number is required when payment through CST."
-            )
-            skip = True
-        elif not cst_id:
-            error_list.append(
-                f"Row {index+2}: Invalid CST tag '{cst_number}'. Not found or vendor mismatch."
-            )
-            skip = True
-
-    # PO validation
-    if po_number != '' and not purchase_order_id:
-        error_list.append(
-            f"Row {index+2}: Invalid Purchase Order '{po_number}'. Not found or vendor mismatch."
-        )
-        skip = True
-
-    # Skip if any validation failed
-    if skip:
-        continue
-
-    # ---------------- SAVE INSTANCE ----------------
-    try:
-        instance = YourModel(
-            vendor_id=vendor_id,
-            purchase_order_id=purchase_order_id,
-            cst_id=cst_id,
-            payment_through=payment_through,
-        )
-
-        instance.save()
-
-    except Exception as e:
-        error_list.append(f"Row {index+2}: Save failed - {str(e)}")
-        continue
-
-
-# --------------- RETURN ERROR IF ANY ---------------
-if error_list:
-    return Response(
-        {"status": "error", "errors": error_list},
-        status=400
+    siblings = BOQChainageExecutiveSummeryData.objects.filter(
+        boq=instance.boq,
+        wbs__parent=instance.parent
     )
 
-return Response(
-    {"status": "success"},
-    status=200
-)
+    last_value = siblings.aggregate(Max('value'))['value__max']
 
+    if last_value:
+        last_serial = int(last_value.split('-')[-1])
+        next_serial = last_serial + 1
+    else:
+        next_serial = 1
 
-class PlantMachineryLogBookCumulative2APIView(APIView):
-    """
-    API to fetch cumulative or starting values based on machine.
-    """
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
-    def get(self, request):
-        fields = request.query_params.get('fields', None)
-        all_data = request.query_params.get('all', None)
-        order_by = request.query_params.get('order_by', '-id')
-        if fields:
-            try:
-                fields = json.loads(fields)
-            except json.JSONDecodeError:
-                raise APIException(
-                    {'request_status': 0, 'msg': "Invalid JSON format for fields."}
-                )
+    return f"{next_serial:02d}"
+	
+def generate_chainage_code(instance):
+
+    base_code = "CG-01-CP"
+
+    # ROOT LEVEL
+    if instance.parent is None:
+
+        roots = BOQChainageExecutiveSummeryData.objects.filter(
+            boq=instance.boq,
+            wbs__parent__isnull=True
+        )
+
+        last_value = roots.aggregate(Max('value'))['value__max']
+
+        if last_value:
+            last_serial = int(last_value.split('-')[-1])
+            next_serial = last_serial + 1
         else:
-            fields = {}
-        aggregation_fields = {}
-        for field, operation in fields.items():
-            exp = None
-            if operation == 'aggregate':
-                exp = Coalesce(
-                    Sum(field),
-                    Value(0),
-                    output_field=FloatField()
-                )
-            elif operation == 'average':
-                exp = Coalesce(
-                    Avg(field),
-                    Value(0),
-                    output_field=FloatField()
-                )
-            elif operation == 'first_value':
-                exp = Window(
-                    expression=FirstValue(field),
-                    partition_by=[F('plant_machinery_machine__id')],
-                    order_by=F('log_book_date').asc()
-                )
-            elif operation == 'last_value':
-                exp = Window(
-                    expression=FirstValue(field),
-                    partition_by=[F('plant_machinery_machine__id')],
-                    order_by=F('log_book_date').desc()
-                )
-            if exp is not None:
-                aggregation_fields[f"{field}_calculated"] = exp
-        search = custom_filters(request, {}, ['fields'])
-        queryset = PlantMachineryLogBook.cmobjects.filter(*search)
-        if aggregation_fields:
-            queryset = queryset.annotate(**aggregation_fields)
-        queryset = queryset.values(
-            'plant_machinery_machine__id',
-            'plant_machinery_machine__machine_number',
-            'plant_machinery_machine__equipment_description',
-            'plant_machinery_machine__registration_no',
-            'plant_machinery_machine__plant_machinery_group__machine_type',
-            'project',
-            *aggregation_fields.keys()
-        )
-        queryset = queryset.distinct().order_by(
-            *str(order_by).split(",")
-        )
-        if all_data == 'true':
-            return Response({'results': list(queryset)})
+            next_serial = 1
 
-        page_size = int(request.query_params.get("page_size", settings.MIN_PAGE_SIZE))
-        paginator = Paginator(queryset, page_size)
-        page_number = request.query_params.get("page", 1)
-        page = paginator.get_page(page_number)
+        return f"{base_code}-{next_serial:02d}"
 
-        return Response(
-            {
-                "count": paginator.count,
-                "next": page.next_page_number() if page.has_next() else None,
-                "previous": page.previous_page_number() if page.has_previous() else None,
-                "results": list(page),
-            }
-        )
+    # CHILD LEVEL (any depth)
+    parent_code = get_parent_code(instance)
+    next_serial = get_next_serial(instance)
+    return f"{parent_code}-{next_serial}"
