@@ -103,4 +103,7 @@ def generate_chainage_code(instance):
     next_number = str(existing_children + 1).zfill(2)
     return f"{parent_code}-{next_number}"
 
-above code is working fine but need samll changes , which WBSList has parant__isnull=True will be CG-01-CP-01
+above code is working fine but need samll changes , 
+which WBSList has parant__isnull=True will be CG-01-CP-01
+next parant__isnull=True will be CG-01-CP-02
+and remaing logic is same 
