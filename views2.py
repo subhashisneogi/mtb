@@ -1,3 +1,6 @@
+FOR /R %G IN (migrations) DO FOR %H IN ("%G\*.py") DO IF NOT "%~nxH"=="__init__.py" DEL /F /Q "%H"
+
+
 A (root)
  ├── B
  │     ├── C
