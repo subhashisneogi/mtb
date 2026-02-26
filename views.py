@@ -1,4 +1,33 @@
 
+def get_root_index(root_wbs):
+    return WBSList.objects.filter(
+        boq=root_wbs.boq,
+        parent__isnull=True,
+        id__lt=root_wbs.id
+    ).count()
+	
+def generate_chainage_code(instance):
+
+    base_code = "CG-01-CP"
+
+    # 🔹 Get root WBS
+    root_wbs = get_root_wbs(instance)
+
+    # 🔹 Get index of root WBS
+    root_index = get_root_index(root_wbs)
+
+    # 🔹 Previous remaining logic (your existing part)
+    # Example:
+    child_count = BOQChainageExecutiveSummeryData.objects.filter(
+        boq=instance.boq,
+        form__wbs=root_wbs
+    ).count()
+
+    final_code = f"{base_code}-{root_index}-{child_count}"
+
+    return final_code
+
+
 def get_root_wbs(wbs):
     while wbs.parent is not None:
         wbs = wbs.parent
