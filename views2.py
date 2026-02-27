@@ -1,374 +1,159 @@
-
-def to_python_value(value):
-    if isinstance(value, np.ndarray):
-        return value.item() if value.size > 0 else None
-    if isinstance(value, np.generic):
-        return value.item()
-    if isinstance(value, pd.Timestamp):
-        return value.date()
-    return value
-
-
-class PaymentMasterImportAPIView(APIView):
+class BOQWBSImportAPIView(APIView):
     """
-    API for bulk import of PaymentMaster 
+    Optimized BOQ WBS Import API
     """
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
-
     def post(self, request, *args, **kwargs):
-        try:
+        # try:
             with transaction.atomic():
-
-                count_data = {'add': 0, 'edit': 0}
-
-                organization_id = request.query_params.get('organization_id')
-                project_id = request.query_params.get('project_id')
-                site_id = request.query_params.get('site_id')
-                store_id = request.query_params.get('store_id')
-                file_name = request.data.get('file_name')
-                field_map = request.data.get('field_map', {})
-
-                if not all([organization_id, project_id, site_id, file_name]):
-                    raise APIException("Required parameters missing")
-
-                file_path = os.path.join('media/excel', file_name)
-
+                count_data = {
+                    "wbs_add": 0,
+                    "wbs_edit": 0,
+                    "errors": 0,
+                }
+                errors = []
+                organization_id = request.query_params.get("organization_id")
+                boq_id = request.query_params.get("boq_id")
+                wbs_list_id = request.query_params.get("wbs_list_id")
+                if not organization_id or not boq_id or not wbs_list_id:
+                    raise APIException("organization_id, boq_id, wbs_list_id are required.")
+                file_name = request.data.get("file_name")
+                field_map = request.data.get("field_map", {})
+                if not file_name:
+                    raise APIException("file_name is required.")
+                if not field_map:
+                    raise APIException("field_map is required.")
+                file_path = os.path.join("media/excel/", file_name)
                 if not os.path.exists(file_path):
-                    raise APIException("File not found")
-
-                sheet_xlsx = pd.read_excel(file_path)
-
-                if sheet_xlsx.empty:
-                    raise APIException("Empty file")
-
-                sheet_xlsx = sheet_xlsx.fillna("").applymap(
-                    lambda x: x.strip() if isinstance(x, str) else x
+                    raise APIException("Excel file not found.")
+                df = pd.read_excel(file_path)
+                if df.empty:
+                    raise APIException("Excel file is empty.")
+                required_columns = list(field_map.values())
+                for col in required_columns:
+                    if col not in df.columns:
+                        raise APIException(f"Missing column in Excel: {col}")
+                df = df.where(pd.notnull(df), None)
+                df = df.apply(lambda col: col.map(lambda x: x.strip() if isinstance(x, str) else x))
+                df[field_map["rate"]] = pd.to_numeric(
+                    df[field_map["rate"]], errors="coerce"
                 )
-
-                def get_value(row, key):
-                    column = field_map.get(key)
-                    if not column:
-                        return None
-                    value = row.get(column)
-                    return to_python_value(value)
-
-                def handle_date(value):
-                    if not value:
-                        return None
-                    return pd.to_datetime(value, errors='coerce').date()
-
-                def handle_float(value, default=0.0):
-                    if not value:
-                        return default
-                    try:
-                        return float(value)
-                    except:
-                        return default
-
-                def handle_str(value):
-                    if not value:
-                        return None
-                    return str(value).strip()
-
-                def format_choice_field(value, choices):
-                    if not value:
-                        return None
-                    value_str = str(value).strip().lower()
-                    choice_map = {c[0].lower(): c[0] for c in choices}
-                    return choice_map.get(value_str)
-
-                # Convert queryset to set (safe membership check)
-                pending_request_code_list = set(
-                    PaymentMaster.cmobjects.filter(
-                        status='pending',
-                        organization_id=organization_id,
-                        store_id=store_id,
-                        project_id=project_id,
-                        site_id=site_id,
-                    ).annotate(
-                        request_code_lower=Lower('request_code')
-                    ).values_list('request_code_lower', flat=True)
+                df[field_map["budgeted_quantity"]] = pd.to_numeric(
+                    df[field_map["budgeted_quantity"]], errors="coerce"
                 )
-
-                error_list = []
-
-                for index, row in sheet_xlsx.iterrows():
-
-                    request_code = get_value(row, 'request_code')
-                    request_code = str(request_code).strip() if request_code else ''
-
-                    if request_code != '' and request_code.lower() not in pending_request_code_list:
-                        error_list.append(
-                            f"Row {index+2}: {request_code} not in pending status"
-                        )
+                def get_parent_code(code):
+                    if not code:
+                        return None
+                    code = str(code).strip()
+                    if "." in code:
+                        return ".".join(code.split(".")[:-1])
+                    return None
+                existing_wbs_qs = WBSList.objects.filter(
+                    organization_id=organization_id,
+                    boq_id=boq_id
+                ).values("id", "boq_code")
+                existing_wbs_map = {
+                    str(obj["boq_code"]).strip(): obj["id"]
+                    for obj in existing_wbs_qs
+                    if obj["boq_code"]
+                }
+                created_map = {}
+                for index, row in df.iterrows():
+                    row_index = index + 2  # Excel row number
+                    boq_code = row.get(field_map["boq_code"])
+                    wbs_name = row.get(field_map["wbs"])
+                    rate = row.get(field_map["rate"])
+                    quantity = row.get(field_map["budgeted_quantity"])
+                    if not wbs_name:
+                        continue
+                    boq_code = str(boq_code).strip() if boq_code else None
+                    # Validate Rate
+                    if rate is None or pd.isna(rate):
+                        errors.append(f"Row {row_index}: Basic Rate must be numeric")
+                        count_data["errors"] += 1
                         continue
 
-                    vendor_id = get_value(row, 'vendor_id')
-                    vendor_id = int(vendor_id) if vendor_id else None
+                    if float(rate) <= 0:
+                        errors.append(f"Row {row_index}: Basic Rate should be greater than 0")
+                        count_data["errors"] += 1
+                        continue
+                    # Validate Quantity
+                    if quantity is None or pd.isna(quantity):
+                        errors.append(f"Row {row_index}: Quantity must be numeric")
+                        count_data["errors"] += 1
+                        continue
+                    if float(quantity) <= 0:
+                        errors.append(f"Row {row_index}: Quantity should be greater than 0")
+                        count_data["errors"] += 1
+                        continue
 
-                    cst_id = get_value(row, 'cst_id')
-                    cst_id = int(cst_id) if cst_id else None
+                    parent_id = wbs_list_id
+                    parent_code = get_parent_code(boq_code)
 
-                    purchase_order_id = get_value(row, 'purchase_order_id')
-                    purchase_order_id = int(purchase_order_id) if purchase_order_id else None
+                    if parent_code:
+                        if parent_code in created_map:
+                            parent_id = created_map[parent_code]
+                        elif parent_code in existing_wbs_map:
+                            parent_id = existing_wbs_map[parent_code]
 
-                    payment_through = format_choice_field(
-                        get_value(row, 'payment_through'),
-                        PaymentMaster.PAYMENT_THROUGH_CHOICE
-                    ) or 'Non-CST'
-
-                    data = {
-                        'vendor_id': vendor_id,
-                        'cst_id': cst_id,
-                        'cst_no': handle_str(get_value(row, 'cst_no')) if payment_through == 'Non-CST' else None,
-                        'remarks': get_value(row, 'remarks'),
-                        'amount': float(handle_float(get_value(row, 'amount'), 0.0)),
-                        'purpose': get_value(row, 'purpose'),
-                        'payment_against': format_choice_field(
-                            get_value(row, 'payment_against') or 'PO',
-                            PaymentMaster.PAYMENT_AGAINST_CHOICE
-                        ) or 'PO',
-                        'payment_no': get_value(row, 'payment_no'),
-                        'purchase_order_id': purchase_order_id,
-                        'date': handle_date(get_value(row, 'date')),
-                        'payment_through': payment_through,
-                        'is_advance_payment': format_choice_field(
-                            get_value(row, 'is_advance_payment'),
-                            PaymentMaster.ADVANCE_PAYMENT_CHOICE
-                        ),
+                    record_data = {
+                        "organization_id": organization_id,
+                        "boq_id": boq_id,
+                        "parent_id": parent_id,
+                        "boq_code": boq_code,
+                        "boq_no": row.get(field_map["boq_no"]),
+                        "wbs": wbs_name,
+                        "rate": float(rate),
+                        "budgeted_quantity": float(quantity),
                     }
 
-                    instance, created = PaymentMaster.cmobjects.update_or_create(
-                        organization_id=organization_id,
-                        store_id=store_id,
-                        project_id=project_id,
-                        site_id=site_id,
-                        request_code=request_code,
-                        latest=True,
-                        defaults=data
-                    )
-
-                    if created:
-                        instance.created_by_id = request.user.id
-                        count_data['add'] += 1
+                    if boq_code in existing_wbs_map:
+                        WBSList.objects.filter(
+                            pk=existing_wbs_map[boq_code]
+                        ).update(
+                            updated_by_id=request.user.id,
+                            **record_data
+                        )
+                        created_map[boq_code] = existing_wbs_map[boq_code]
+                        count_data["wbs_edit"] += 1
                     else:
-                        instance.updated_by_id = request.user.id
-                        count_data['edit'] += 1
-
-                    instance.save()
+                        instance = WBSList.objects.create(
+                            created_by_id=request.user.id,
+                            **record_data
+                        )
+                        created_map[boq_code] = instance.id
+                        count_data["wbs_add"] += 1
 
                 return Response({
-                    "results": count_data,
-                    "errors": error_list,
-                    "msg": "Successfully imported",
+                    "results": {
+                        "data": count_data,
+                        "errors": errors
+                    },
+                    "msg": "BOQ WBS import completed successfully.",
+                    "status": status.HTTP_201_CREATED,
                     "request_status": 1
-                }, status=status.HTTP_201_CREATED)
+                })
 
-        except Exception as e:
-            raise APIException(str(e))
-
-
-
-####
-import pandas as pd
-import numpy as np
-
-def get_value(row, column_name):
-    try:
-        value = row.get(column_name)
-        if isinstance(value, (pd.Series, np.ndarray)):
-            return value[0] if len(value) > 0 else None
-        return value
-    except Exception:
-        return None
+        # except Exception as e:
+        #     raise APIException({
+        #         "request_status": 0,
+        #         "msg": str(e)
+        #     })
 
 
-error_list = []
+# @receiver(post_save, sender=WBSList)
+# def signal_update_wbs_list(sender, instance, created, **kwargs):
+#     change_lmpi_data(instance.id,instance.budgeted_quantity)
+#     if instance.boq and created:
+#         if instance.parent is None:
+#             BOQChainage.objects.get_or_create(boq=instance.boq, wbs=instance, organization=instance.organization, defaults={
+#                 "name": f"CH-{instance.boq.id}-{instance.pk}",  "start": 0,"end": 1,})
+#         elif instance.parent:
+#             parent_chainage_id = BOQChainage.cmobjects.filter(boq=instance.boq, wbs=instance.root_id).values_list('id', flat=True).first()
+#             auto_value = generate_chainage_code(instance)
+#             print("parent_chainage_id ###", parent_chainage_id)
+#             BOQChainageExecutiveSummeryData.objects.get_or_create(boq=instance.boq, wbs=instance, value__isnull=True,  
+#                 defaults={"organization": instance.organization, "type": "C", "value": auto_value, 'form_id' : parent_chainage_id})
+	
 
-for index, row in df.iterrows():
-
-    skip = False
-
-    # ---------------- SAFE VALUE EXTRACTION ----------------
-    vendor_value = get_value(row, 'vendor')
-    po_value = get_value(row, 'purchase_order')
-    cst_value = get_value(row, 'cst_no')
-    payment_through = get_value(row, 'payment_through')
-
-    # Convert to safe string (avoid numpy truth ambiguity)
-    vendor_code = str(vendor_value).strip() if vendor_value is not None else ''
-    po_number = str(po_value).strip() if po_value is not None else ''
-    cst_number = str(cst_value).strip() if cst_value is not None else ''
-    payment_through = str(payment_through).strip() if payment_through else ''
-
-    # Handle NaN
-    if vendor_code.lower() == 'nan':
-        vendor_code = ''
-    if po_number.lower() == 'nan':
-        po_number = ''
-    if cst_number.lower() == 'nan':
-        cst_number = ''
-
-    # ---------------- DATABASE LOOKUPS ----------------
-    vendor_id = None
-    purchase_order_id = None
-    cst_id = None
-
-    if vendor_code != '':
-        vendor = Vendor.objects.filter(code__iexact=vendor_code).first()
-        if vendor:
-            vendor_id = vendor.id
-
-    if po_number != '':
-        po = PurchaseOrder.objects.filter(po_number__iexact=po_number).first()
-        if po:
-            purchase_order_id = po.id
-
-    if cst_number != '':
-        cst = CST.objects.filter(cst_no__iexact=cst_number).first()
-        if cst:
-            cst_id = cst.id
-
-    # ---------------- VALIDATIONS ----------------
-
-    # Vendor validation
-    if vendor_code == '' or not vendor_id:
-        error_list.append(
-            f"Row {index+2}: Invalid Vendor '{vendor_code}'. Vendor not found."
-        )
-        skip = True
-
-    # CST validation
-    if payment_through.upper() == 'CST':
-        if cst_number == '':
-            error_list.append(
-                f"Row {index+2}: CST number is required when payment through CST."
-            )
-            skip = True
-        elif not cst_id:
-            error_list.append(
-                f"Row {index+2}: Invalid CST tag '{cst_number}'. Not found or vendor mismatch."
-            )
-            skip = True
-
-    # PO validation
-    if po_number != '' and not purchase_order_id:
-        error_list.append(
-            f"Row {index+2}: Invalid Purchase Order '{po_number}'. Not found or vendor mismatch."
-        )
-        skip = True
-
-    # Skip if any validation failed
-    if skip:
-        continue
-
-    # ---------------- SAVE INSTANCE ----------------
-    try:
-        instance = YourModel(
-            vendor_id=vendor_id,
-            purchase_order_id=purchase_order_id,
-            cst_id=cst_id,
-            payment_through=payment_through,
-        )
-
-        instance.save()
-
-    except Exception as e:
-        error_list.append(f"Row {index+2}: Save failed - {str(e)}")
-        continue
-
-
-# --------------- RETURN ERROR IF ANY ---------------
-if error_list:
-    return Response(
-        {"status": "error", "errors": error_list},
-        status=400
-    )
-
-return Response(
-    {"status": "success"},
-    status=200
-)
-
-
-class PlantMachineryLogBookCumulative2APIView(APIView):
-    """
-    API to fetch cumulative or starting values based on machine.
-    """
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
-    def get(self, request):
-        fields = request.query_params.get('fields', None)
-        all_data = request.query_params.get('all', None)
-        order_by = request.query_params.get('order_by', '-id')
-        if fields:
-            try:
-                fields = json.loads(fields)
-            except json.JSONDecodeError:
-                raise APIException(
-                    {'request_status': 0, 'msg': "Invalid JSON format for fields."}
-                )
-        else:
-            fields = {}
-        aggregation_fields = {}
-        for field, operation in fields.items():
-            exp = None
-            if operation == 'aggregate':
-                exp = Coalesce(
-                    Sum(field),
-                    Value(0),
-                    output_field=FloatField()
-                )
-            elif operation == 'average':
-                exp = Coalesce(
-                    Avg(field),
-                    Value(0),
-                    output_field=FloatField()
-                )
-            elif operation == 'first_value':
-                exp = Window(
-                    expression=FirstValue(field),
-                    partition_by=[F('plant_machinery_machine__id')],
-                    order_by=F('log_book_date').asc()
-                )
-            elif operation == 'last_value':
-                exp = Window(
-                    expression=FirstValue(field),
-                    partition_by=[F('plant_machinery_machine__id')],
-                    order_by=F('log_book_date').desc()
-                )
-            if exp is not None:
-                aggregation_fields[f"{field}_calculated"] = exp
-        search = custom_filters(request, {}, ['fields'])
-        queryset = PlantMachineryLogBook.cmobjects.filter(*search)
-        if aggregation_fields:
-            queryset = queryset.annotate(**aggregation_fields)
-        queryset = queryset.values(
-            'plant_machinery_machine__id',
-            'plant_machinery_machine__machine_number',
-            'plant_machinery_machine__equipment_description',
-            'plant_machinery_machine__registration_no',
-            'plant_machinery_machine__plant_machinery_group__machine_type',
-            'project',
-            *aggregation_fields.keys()
-        )
-        queryset = queryset.distinct().order_by(
-            *str(order_by).split(",")
-        )
-        if all_data == 'true':
-            return Response({'results': list(queryset)})
-
-        page_size = int(request.query_params.get("page_size", settings.MIN_PAGE_SIZE))
-        paginator = Paginator(queryset, page_size)
-        page_number = request.query_params.get("page", 1)
-        page = paginator.get_page(page_number)
-
-        return Response(
-            {
-                "count": paginator.count,
-                "next": page.next_page_number() if page.has_next() else None,
-                "previous": page.previous_page_number() if page.has_previous() else None,
-                "results": list(page),
-            }
-        )
