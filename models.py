@@ -239,3 +239,80 @@ class BOQWBSImportAPIView(APIView):
         #         "request_status": 0,
         #         "msg": str(e)
         #     })
+
+
+from django.db.models import Max, IntegerField
+from django.db.models.functions import Cast, Substr
+from django.db import transaction
+
+
+def generate_chainage_code(instance):
+    BASE_CODE = "CG-01-CP"
+
+    with transaction.atomic():
+
+        # ---------------- ROOT ----------------
+        if instance.parent is None:
+
+            qs = (
+                BOQChainageExecutiveSummeryData.cmobjects
+                .filter(
+                    boq=instance.boq,
+                    wbs__parent__isnull=True,
+                    type="C",
+                    value__startswith=BASE_CODE + "-"
+                )
+                .annotate(
+                    last_num=Cast(
+                        Substr("value", len(BASE_CODE) + 2),
+                        IntegerField()
+                    )
+                )
+            )
+
+            max_number = qs.aggregate(max_val=Max("last_num"))["max_val"] or 0
+
+            next_number = str(max_number + 1).zfill(2)
+
+            final_code = f"{BASE_CODE}-{next_number}"
+
+        # ---------------- CHILD ----------------
+        else:
+
+            parent_code = (
+                BOQChainageExecutiveSummeryData.cmobjects
+                .filter(
+                    boq=instance.boq,
+                    wbs=instance.parent,
+                    type="C"
+                )
+                .values_list("value", flat=True)
+                .first()
+            )
+
+            if not parent_code:
+                parent_code = BASE_CODE
+
+            qs = (
+                BOQChainageExecutiveSummeryData.cmobjects
+                .filter(
+                    boq=instance.boq,
+                    wbs__parent=instance.parent,
+                    type="C",
+                    value__startswith=parent_code + "-"
+                )
+                .annotate(
+                    last_num=Cast(
+                        Substr("value", len(parent_code) + 2),
+                        IntegerField()
+                    )
+                )
+            )
+
+            max_number = qs.aggregate(max_val=Max("last_num"))["max_val"] or 0
+
+            next_number = str(max_number + 1).zfill(2)
+
+            final_code = f"{parent_code}-{next_number}"
+
+        return final_code
