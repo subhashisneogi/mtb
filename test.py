@@ -1,416 +1,109 @@
-
-from django.db.models import Sum, Avg, Value, FloatField, F, Subquery, OuterRef
-from django.db.models.functions import Coalesce
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.core.paginator import Paginator
-from django.conf import settings
-import json
-
-class PlantMachineryLogBookCumulative2APIView(APIView):
+#models.py
+class WBSList(BaseAbstractStructure):
     """
-    Ultra-fast cumulative API for large datasets (MySQL safe)
+    List for WBS for Tender/BOQ
     """
+    CATEGORY = (
+        ('highway', 'Highway'),
+        ('structure', 'Structure'),
+        ('volumetric', 'Volumetric'),
+        ('others', 'Others'),
+    )
+    organization = models.ForeignKey(Organization, related_name='wbs_list_organization', on_delete=models.CASCADE)
+    category = models.CharField(max_length=100, choices=CATEGORY, default='highway')
+    by_order = models.IntegerField(default=1)
+    after_this = models.ForeignKey('self', related_name="+", on_delete=models.CASCADE, null=True, blank=True)
+    boq_code = models.CharField(max_length=255,null=True, blank=True)
+    boq_no = models.CharField(max_length=255,null=True, blank=True)
+    #wbs = models.ForeignKey(TenderWBSKeyScopes, related_name='wbs_list_wbs_key_scopes', on_delete=models.DO_NOTHING)
+    wbs = models.CharField(max_length=255)
+    planning_tender = models.ForeignKey(PlanningTender, related_name='boq_planning_tender', on_delete=models.CASCADE, null=True, blank=True)
+    boq = models.ForeignKey(BOQ, related_name='wbs_list_boq', on_delete=models.CASCADE,
+                             null=True, blank=True)
+    tender = models.ForeignKey(TenderMasterNew, related_name='wbs_list_tender', on_delete=models.CASCADE,
+                              null=True, blank=True)
+    parent = models.ForeignKey('self', related_name='wbs_list_parent', on_delete=models.CASCADE,
+                              null=True, blank=True)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='wbs_list_uom', on_delete=models.CASCADE,
+                              null=True, blank=True)
+    
+class BOQChainage(BaseAbstractStructure):
+    organization = models.ForeignKey(Organization, related_name='+', on_delete=models.CASCADE)
+    planning_tender = models.ForeignKey(PlanningTender, related_name='boq_chainage_planning_tender', on_delete=models.CASCADE, null=True, blank=True)
+    boq = models.ForeignKey(BOQ, related_name='+',on_delete=models.CASCADE, null=True, blank=True)
+    wbs = models.ForeignKey(WBSList, related_name='+',on_delete=models.CASCADE, null=True, blank=True)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    start = models.FloatField(blank=True, null=True, default=0)
+    end = models.FloatField(blank=True, null=True, default=0)
+    chainage_value = models.FloatField(blank=True, null=True, default=0)
 
-    def get(self, request):
-        fields = request.query_params.get('fields')
-        all_data = request.query_params.get('all')
-        order_by = request.query_params.get('order_by', 'plant_machinery_machine__id')
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if not self.start:
+            self.start = 0.
+        if not self.end:
+            self.end = 0.
+        self.chainage_value = float(self.end)-float(self.start)
+        super().save(*args, **kwargs)
 
-        try:
-            fields = json.loads(fields)
-        except Exception:
-            return Response({"msg": "Invalid fields JSON", "request_status": 0})
+class BOQChainageExecutiveSummeryData(BaseAbstractStructure):
+    organization = models.ForeignKey(Organization, related_name='+', on_delete=models.CASCADE)
+    planning_tender = models.ForeignKey(PlanningTender, related_name='boq_chainage_executive_planning_tender', on_delete=models.CASCADE, null=True, blank=True)
+    boq = models.ForeignKey(BOQ, related_name='+',on_delete=models.CASCADE, null=True, blank=True)
+    wbs = models.ForeignKey(WBSList, related_name='+',on_delete=models.CASCADE, null=True, blank=True)
+    form = models.ForeignKey(BOQChainage, related_name='+',on_delete=models.CASCADE, blank=True, null=True)
+    value = models.CharField(max_length=200, blank=True, null=True)
+    type = models.CharField(max_length=200, blank=True, null=True)
 
-        search = custom_filters(request, {}, ['fields'])
+    def __str__(self):
+        return str(self.value) + " (" + str(self.type) + ") "
 
-        base_qs = PlantMachineryLogBook.cmobjects.filter(*search)
-
-        annotations = {}
-
-        for field, operation in fields.items():
-            # -----------------------------
-            # FIRST VALUE
-            # -----------------------------
-            if operation == 'first_value':
-                annotations[field] = Subquery(
-                    PlantMachineryLogBook.cmobjects.filter(
-                        plant_machinery_machine=OuterRef('plant_machinery_machine'),
-                        log_book_date__isnull=False
-                    ).order_by('log_book_date')
-                    .values(field)[:1]
-                )
-
-            # -----------------------------
-            # LAST VALUE
-            # -----------------------------
-            elif operation == 'last_value':
-                annotations[field] = Subquery(
-                    PlantMachineryLogBook.cmobjects.filter(
-                        plant_machinery_machine=OuterRef('plant_machinery_machine'),
-                        log_book_date__isnull=False
-                    ).order_by('-log_book_date')
-                    .values(field)[:1]
-                )
-
-            # -----------------------------
-            # AGGREGATES
-            # -----------------------------
-            elif operation == 'aggregate':
-                annotations[field] = Coalesce(
-                    Sum(field), Value(0), output_field=FloatField()
-                )
-
-            elif operation == 'average':
-                annotations[field] = Coalesce(
-                    Avg(field), Value(0), output_field=FloatField()
-                )
-
-        qs = base_qs.values(
-            'plant_machinery_machine__id',
-            'plant_machinery_machine__machine_number',
-            'plant_machinery_machine__equipment_description',
-            'plant_machinery_machine__registration_no',
-            'plant_machinery_machine__plant_machinery_group__machine_type',
-            'project'
-        ).annotate(**annotations).order_by(*order_by.split(","))
-
-        if all_data == 'true':
-            return Response({"results": qs})
-
-        page_size = int(request.query_params.get("page_size", settings.MIN_PAGE_SIZE))
-        paginator = Paginator(qs, page_size)
-        page = paginator.get_page(request.query_params.get("page", 1))
-
-        return Response({
-            "count": paginator.count,
-            "next": page.next_page_number() if page.has_next() else None,
-            "previous": page.previous_page_number() if page.has_previous() else None,
-            "results": list(page),
-        })
+    class Meta:
+        db_table = "boq_chainage_executivesummery"
 
 
+#signals.py
+@receiver(post_save, sender=WBSList)
+def signal_update_wbs_list(sender, instance, created, **kwargs):
+    print("in signal WBSList")
+    if instance:
+        change_lmpi_data(instance.id,instance.budgeted_quantity)
+    if instance.boq and created:
+        if instance.parent is None:
+            BOQChainage.objects.get_or_create(boq=instance.boq, wbs=instance, organization=instance.organization, defaults={
+                "name": f"CH-{instance.boq.id}-{instance.pk}",  "start": 0,"end": 1,})
+        elif instance.parent:
+            parent_chainage_id = BOQChainage.cmobjects.filter(boq=instance.boq, wbs=instance.parent).values_list('id', flat=True).first()
+            auto_value = generate_chainage_code(instance)
+            print("parent_chainage_id ###", parent_chainage_id)
+            BOQChainageExecutiveSummeryData.objects.get_or_create(boq=instance.boq, wbs=instance, value__isnull=True,  
+                defaults={"organization": instance.organization, "type": "C", "value": auto_value, 'form_id' : parent_chainage_id})
+	
 
 
-
-class PlantMachineryLogBookCumulative2APIView001(APIView):
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request):
-        fields = request.query_params.get('fields')
-        all_records = request.query_params.get('all')
-        order_by = request.query_params.get('order_by', '-id')
-
-        if not fields:
-            raise APIException({'request_status': 0, 'msg': 'fields is required'})
-
-        try:
-            fields = json.loads(fields)
-        except json.JSONDecodeError:
-            raise APIException({'request_status': 0, 'msg': 'Invalid JSON format for fields'})
-
-        search = custom_filters(request, {}, ['fields'])
-
-        qs = (
-            PlantMachineryLogBook.cmobjects
-            .filter(*search)
-            .select_related('plant_machinery_machine')
-        )
-
-        # ----------------------------
-        # Aggregations (FAST)
-        # ----------------------------
-        annotations = {
-            'first_date': Min('log_book_date'),
-            'last_date': Max('log_book_date'),
-        }
-
-        for field, operation in fields.items():
-            if operation == 'aggregate':
-                annotations[field] = Coalesce(Sum(field), Value(0), output_field=FloatField())
-            elif operation == 'average':
-                annotations[field] = Coalesce(Avg(field), Value(0), output_field=FloatField())
-
-        base = (
-            qs.values(
-                'plant_machinery_machine__id',
-                'plant_machinery_machine__machine_number',
-                'plant_machinery_machine__equipment_description',
-                'plant_machinery_machine__registration_no',
-                'plant_machinery_machine__plant_machinery_group__machine_type',
-                'project',
-            )
-            .annotate(**annotations)
-        )
-
-        # ----------------------------
-        # Fetch first & last values (INDEXED)
-        # ----------------------------
-        first_map = {}
-        last_map = {}
-
-        first_rows = (
-            PlantMachineryLogBook.cmobjects
-            .filter(*search)
-            .values('plant_machinery_machine_id')
-            .annotate(first_date=Min('log_book_date'))
-        )
-
-        last_rows = (
-            PlantMachineryLogBook.cmobjects
-            .filter(*search)
-            .values('plant_machinery_machine_id')
-            .annotate(last_date=Max('log_book_date'))
-        )
-
-        if 'start_hrs' in fields:
-            for r in first_rows:
-                first_map[r['plant_machinery_machine_id']] = (
-                    PlantMachineryLogBook.cmobjects
-                    .filter(
-                        plant_machinery_machine_id=r['plant_machinery_machine_id'],
-                        log_book_date=r['first_date']
-                    )
-                    .values_list('start_hrs', flat=True)
-                    .first()
-                )
-
-            for r in last_rows:
-                last_map[r['plant_machinery_machine_id']] = (
-                    PlantMachineryLogBook.cmobjects
-                    .filter(
-                        plant_machinery_machine_id=r['plant_machinery_machine_id'],
-                        log_book_date=r['last_date']
-                    )
-                    .values_list('start_hrs', flat=True)
-                    .first()
-                )
-
-        # ----------------------------
-        # Merge (small dataset)
-        # ----------------------------
-        result = []
-        for row in base:
-            mid = row['plant_machinery_machine__id']
-            if 'start_hrs' in fields:
-                row['start_hrs_first'] = first_map.get(mid)
-                row['start_hrs_last'] = last_map.get(mid)
-            result.append(row)
-
-        if all_records == 'true':
-            return Response({'results': result})
-
-        paginator = Paginator(result, int(request.query_params.get('page_size', settings.MIN_PAGE_SIZE)))
-        page = paginator.get_page(request.query_params.get('page', 1))
-
-        return Response({
-            'count': paginator.count,
-            'next': page.next_page_number() if page.has_next() else None,
-            'previous': page.previous_page_number() if page.has_previous() else None,
-            'results': list(page),
-        })
-
-class PlantMachineryLogBookCumulative2APIView001(APIView):
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request):
-        fields = request.query_params.get('fields')
-        all_records = request.query_params.get('all')
-        order_by = request.query_params.get('order_by', '-id')
-
-        if not fields:
-            raise APIException({'request_status': 0, 'msg': 'fields is required'})
-
-        try:
-            fields = json.loads(fields)
-        except json.JSONDecodeError:
-            raise APIException({'request_status': 0, 'msg': 'Invalid JSON for fields'})
-
-        search = custom_filters(request, {}, ['fields'])
-
-        base_qs = (
-            PlantMachineryLogBook.cmobjects
-            .filter(*search)
-            .select_related('plant_machinery_machine')
-        )
-
-        # ----------------------------------
-        # STEP 1: SUBQUERIES FOR WINDOW DATA
-        # ----------------------------------
-        subquery_annotations = {}
-
-        for field, operation in fields.items():
-            if operation == 'first_value':
-                subquery_annotations[f'{field}_first'] = Subquery(
-                    PlantMachineryLogBook.cmobjects
-                    .filter(
-                        plant_machinery_machine_id=OuterRef('plant_machinery_machine_id')
-                    )
-                    .order_by('log_book_date')
-                    .values(field)[:1]
-                )
-
-            elif operation == 'last_value':
-                subquery_annotations[f'{field}_last'] = Subquery(
-                    PlantMachineryLogBook.cmobjects
-                    .filter(
-                        plant_machinery_machine_id=OuterRef('plant_machinery_machine_id')
-                    )
-                    .order_by('-log_book_date')
-                    .values(field)[:1]
-                )
-
-        # ----------------------------------
-        # STEP 2: AGGREGATIONS
-        # ----------------------------------
-        aggregate_annotations = {}
-
-        for field, operation in fields.items():
-            if operation == 'aggregate':
-                aggregate_annotations[field] = Coalesce(
-                    Sum(field), Value(0), output_field=FloatField()
-                )
-            elif operation == 'average':
-                aggregate_annotations[field] = Coalesce(
-                    Avg(field), Value(0), output_field=FloatField()
-                )
-
-        # ----------------------------------
-        # STEP 3: FINAL QUERY
-        # ----------------------------------
-        result = (
-            base_qs
-            .values(
-                'plant_machinery_machine__id',
-                'plant_machinery_machine__machine_number',
-                'plant_machinery_machine__equipment_description',
-                'plant_machinery_machine__registration_no',
-                'plant_machinery_machine__plant_machinery_group__machine_type',
-                'project',
-            )
-            .annotate(**aggregate_annotations)
-            .annotate(**subquery_annotations)
-            .order_by(*order_by.split(','))
-        )
-
-        # ----------------------------------
-        # STEP 4: RESPONSE
-        # ----------------------------------
-        if all_records == 'true':
-            return Response({'results': list(result)})
-
-        page_size = int(request.query_params.get('page_size', settings.MIN_PAGE_SIZE))
-        paginator = Paginator(result, page_size)
-        page = paginator.get_page(request.query_params.get('page', 1))
-
-        return Response({
-            'count': paginator.count,
-            'next': page.next_page_number() if page.has_next() else None,
-            'previous': page.previous_page_number() if page.has_previous() else None,
-            'results': list(page),
-        })
-
-
-
-class PlantMachineryLogBookCumulative2APIView001old(APIView):
+def generate_chainage_code(instance):
     """
-    API to fetch cumulative or starting values based on machine.
+    Generate chainage BOQ code for BOQChainageExecutiveSummeryData value
     """
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    BASE_CODE = "CG-01-CP"
+    if not instance.parent:
+        return BASE_CODE
+    parent_exec = BOQChainageExecutiveSummeryData.cmobjects.filter(
+        wbs=instance.parent,
+        type="C"
+    ).first()
+    if parent_exec:
+        parent_code = parent_exec.value
+    else:
+        parent_code = BASE_CODE
+    existing_children = BOQChainageExecutiveSummeryData.cmobjects.filter(
+        wbs__parent=instance.parent,
+        type="C"
+    ).count()
+    next_number = str(existing_children + 1).zfill(2)
+    return f"{parent_code}-{next_number}"
 
-    def get(self, request):
-        fields = request.query_params.get('fields')
-        all_records = request.query_params.get('all')
-        order_by = request.query_params.get('order_by', '-id')
-
-        if not fields:
-            raise APIException({'request_status': 0, 'msg': 'fields parameter is required'})
-
-        try:
-            fields = json.loads(fields)
-        except json.JSONDecodeError:
-            raise APIException({'request_status': 0, 'msg': "Invalid JSON format for fields."})
-
-        search = custom_filters(request, {}, ['fields'])
-
-        # -------------------------------
-        # STEP 1: Base queryset
-        # -------------------------------
-        base_qs = (
-            PlantMachineryLogBook.cmobjects
-            .select_related('plant_machinery_machine')
-            .filter(*search)
-        )
-
-        # -------------------------------
-        # STEP 2: Window functions
-        # -------------------------------
-        window_annotations = {}
-        aggregate_annotations = {}
-
-        for field, operation in fields.items():
-            if operation == 'first_value':
-                window_annotations[f'{field}_first'] = Window(
-                    expression=FirstValue(field),
-                    partition_by=[F('plant_machinery_machine_id')],
-                    order_by=F('log_book_date').asc()
-                )
-
-            elif operation == 'last_value':
-                window_annotations[f'{field}_last'] = Window(
-                    expression=LastValue(field),
-                    partition_by=[F('plant_machinery_machine_id')],
-                    order_by=F('log_book_date').asc()
-                )
-
-            elif operation == 'aggregate':
-                aggregate_annotations[field] = Coalesce(
-                    Sum(field), Value(0), output_field=FloatField()
-                )
-
-            elif operation == 'average':
-                aggregate_annotations[field] = Coalesce(
-                    Avg(field), Value(0), output_field=FloatField()
-                )
-
-        qs_with_window = base_qs.annotate(**window_annotations)
-
-        # -------------------------------
-        # STEP 3: Final aggregation
-        # -------------------------------
-        result = (
-            qs_with_window
-            .values(
-                'plant_machinery_machine__id',
-                'plant_machinery_machine__machine_number',
-                'plant_machinery_machine__equipment_description',
-                'plant_machinery_machine__registration_no',
-                'plant_machinery_machine__plant_machinery_group__machine_type',
-                'project',
-                *window_annotations.keys()
-            )
-            .annotate(**aggregate_annotations)
-            .order_by(*str(order_by).split(','))
-        )
-
-        # -------------------------------
-        # STEP 4: Response
-        # -------------------------------
-        if all_records == 'true':
-            return Response({'results': list(result)})
-
-        page_size = int(request.query_params.get("page_size", settings.MIN_PAGE_SIZE))
-        paginator = Paginator(result, page_size)
-        page_number = request.query_params.get("page", 1)
-        page = paginator.get_page(page_number)
-
-        return Response({
-            "count": paginator.count,
-            "next": page.next_page_number() if page.has_next() else None,
-            "previous": page.previous_page_number() if page.has_previous() else None,
-            "results": list(page),
-        })
-
+above code is working fine but need samll changes , 
+which WBSList has parant__isnull=True will be CG-01-CP-01
+next parant__isnull=True will be CG-01-CP-02
+and remaing logic is same 
