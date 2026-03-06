@@ -62,6 +62,59 @@ class BOQChainageExecutiveSummeryData(BaseAbstractStructure):
         db_table = "boq_chainage_executivesummery"
 
 
+@receiver(pre_save, sender=WBSList)
+def wbs_validate_unique(sender, instance, **kwargs):
+    qs = WBSList.cmobjects.filter(
+        organization_id=instance.organization.id,
+        boq_id=instance.boq.id, wbs=instance.wbs, 
+    )
+    if instance.id:
+        qs = qs.exclude(id=instance.id)
+    if qs.exists():
+        raise APIException({
+            'request_status': 0,
+            'msg': f"WBS: must be unique per BOQ."
+        })
+
+@receiver(post_save, sender=WBSList)
+def signal_update_wbs_list(sender, instance, created, **kwargs):
+    print("in signal WBSList")
+    if instance:
+        change_lmpi_data(instance.id,instance.budgeted_quantity)
+    if instance.boq and created:
+        print("CREATED INSTANCE #########")
+        if instance.parent is None:
+            BOQChainage.objects.get_or_create(boq=instance.boq, wbs=instance, organization=instance.organization, defaults={
+                "name": f"CH-{instance.boq.id}-{instance.pk}",  "start": 0,"end": 1,})
+        elif instance.parent and instance.root:
+            parent_chainage = BOQChainage.cmobjects.filter(boq=instance.boq, wbs=instance.root).first()
+            auto_value = generate_chainage_code(instance)
+            BOQChainageExecutiveSummeryData.objects.get_or_create(boq=instance.boq, wbs=instance, value__isnull=True,  
+                defaults={"organization": instance.organization, "type": "C", "value": auto_value, 'form' : parent_chainage})  
+
+    if instance.parent and instance.root and instance.budgeted_quantity:
+        parent_chainage = BOQChainage.cmobjects.filter(boq=instance.boq, wbs=instance.root).first()
+        BOQChainageExecutiveSummeryData.objects.get_or_create(boq=instance.boq, wbs=instance, value__isnull=True,  
+        defaults={"organization": instance.organization, "type": "Q", "value": instance.budgeted_quantity, 'form' : parent_chainage})
+
+
+here write the proper signals for WBSList 
+here  "type": "C", "value": auto_value,  will create only during create 
+and  "type": "Q", "value": instance.budgeted_quantity, will he handle during create and update
+also write the proper validation signals 
+
+
+
+
+
+
+
+
+
+
+
+
+
 #signals.py
 @receiver(post_save, sender=WBSList)
 def signal_update_wbs_list(sender, instance, created, **kwargs):
