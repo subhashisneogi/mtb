@@ -1,3 +1,71 @@
+@receiver(post_save, sender=WBSList)
+def handle_wbs_chainage(sender, instance, created, **kwargs):
+
+    change_lmpi_data(instance.id, instance.budgeted_quantity)
+
+    if not instance.boq:
+        return
+
+    # Root WBS chainage creation
+    if created and instance.parent is None:
+        BOQChainage.objects.get_or_create(
+            organization=instance.organization,
+            boq=instance.boq,
+            wbs=instance,
+            defaults={
+                "name": f"CH-{instance.boq.id}-{instance.pk}",
+                "start": 0,
+                "end": 1
+            }
+        )
+
+    # Child WBS logic
+    if instance.parent and instance.root:
+
+        parent_chainage = BOQChainage.cmobjects.filter(
+            boq=instance.boq,
+            wbs=instance.root
+        ).first()
+
+        if not parent_chainage:
+            return
+
+        # Create chainage code only on create
+        if created:
+            auto_value = generate_chainage_code(instance)
+
+            BOQChainageExecutiveSummeryData.objects.get_or_create(
+                organization=instance.organization,
+                boq=instance.boq,
+                wbs=instance,
+                type="C",
+                defaults={
+                    "value": auto_value,
+                    "form": parent_chainage
+                }
+            )
+
+        # Handle Quantity (Q type) for BOTH create and update
+        if instance.budgeted_quantity is not None:
+
+            qty_obj, created_q = BOQChainageExecutiveSummeryData.objects.get_or_create(
+                organization=instance.organization,
+                boq=instance.boq,
+                wbs=instance,
+                type="Q",
+                defaults={
+                    "value": instance.budgeted_quantity,
+                    "form": parent_chainage
+                }
+            )
+
+            # If already exists then update value
+            if not created_q:
+                if qty_obj.value != str(instance.budgeted_quantity):
+                    qty_obj.value = instance.budgeted_quantity
+                    qty_obj.save(update_fields=["value"])
+    
+
 class BOQWBSImportAPIView(APIView):
     """
     BOQ WBS Import API
@@ -6,6 +74,7 @@ class BOQWBSImportAPIView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
+
         try:
             with transaction.atomic():
 
@@ -59,7 +128,9 @@ class BOQWBSImportAPIView(APIView):
 
                 for num_field in ["rate", "budgeted_quantity"]:
                     if num_field in field_map:
-                        df[field_map[num_field]] = pd.to_numeric(df[field_map[num_field]], errors="coerce")
+                        df[field_map[num_field]] = pd.to_numeric(
+                            df[field_map[num_field]], errors="coerce"
+                        )
 
                 def process_str(x):
                     if isinstance(x, str):
@@ -125,7 +196,7 @@ class BOQWBSImportAPIView(APIView):
 
                     if not boq_code or not boq_no or not wbs_name:
                         errors.append(
-                            f"Row {row_index}: boq_code, boq_no, and Particulars are required"
+                            f"Row {row_index}: boq_code, boq_no and WBS name are required"
                         )
                         count_data["errors"] += 1
                         continue
@@ -134,7 +205,7 @@ class BOQWBSImportAPIView(APIView):
 
                     if not re.fullmatch(r"\d+(?:\.\d+)*", boq_code):
                         errors.append(
-                            f"Row {row_index}: BOQ code must be format like - 1, 1.1, 1.2 etc."
+                            f"Row {row_index}: BOQ code must be format like 1, 1.1, 1.2"
                         )
                         count_data["errors"] += 1
                         continue
@@ -181,7 +252,7 @@ class BOQWBSImportAPIView(APIView):
                     existing_id = existing_wbs_map.get(boq_code)
 
                     if existing_id:
-                        # UPDATE
+
                         WBSList.cmobjects.filter(
                             pk=existing_id,
                             organization_id=organization_id
@@ -191,19 +262,10 @@ class BOQWBSImportAPIView(APIView):
                         )
 
                         created_map[boq_code] = existing_id
-
-                        if quantity:
-                            BOQChainageExecutiveSummeryData.cmobjects.filter(
-                                organization_id=organization_id,
-                                boq_id=boq_id,
-                                wbs_id=existing_id,
-                                type="Q"
-                            ).update(value=quantity)
-
                         count_data["items_updated"] += 1
 
                     else:
-                        # CREATE
+
                         instance = WBSList.objects.create(
                             created_by_id=request.user.id,
                             **data
@@ -211,7 +273,6 @@ class BOQWBSImportAPIView(APIView):
 
                         created_map[boq_code] = instance.id
                         existing_wbs_map[boq_code] = instance.id
-
                         count_data["items_created"] += 1
 
                 return Response(
@@ -225,6 +286,13 @@ class BOQWBSImportAPIView(APIView):
                 )
 
         except Exception as e:
+
             error_message = str(e.args[0]) if e.args else str(e)
             print(e)
-            raise APIException({'request_status': 0, 'msg': error_message})
+
+            raise APIException({
+                "request_status": 0,
+                "msg": error_message
+            })
+
+
