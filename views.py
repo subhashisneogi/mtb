@@ -1,266 +1,230 @@
 class BOQWBSImportAPIView(APIView):
     """
-    Optimized BOQ WBS Import API
+    BOQ WBS Import API
     """
-
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
 
-        with transaction.atomic():
-
-            count_data = {
-                "items_created": 0,
-                "items_updated": 0,
-                "errors": 0,
-            }
-
-            errors = []
-
-            organization_id = request.query_params.get("organization_id")
-            boq_id = request.query_params.get("boq_id")
-            wbs_list_id = request.query_params.get("wbs_list_id")
-
-            if not organization_id or not boq_id or not wbs_list_id:
-                raise APIException("organization_id, boq_id, wbs_list_id are required.")
-
-            file_name = request.data.get("file_name")
-            field_map = request.data.get("field_map")
-
-            if not file_name:
-                raise APIException("file_name is required.")
-
-            if not field_map:
-                raise APIException("field_map is required.")
-
-            file_path = os.path.join("media/excel/", file_name)
-
-            if not os.path.exists(file_path):
-                raise APIException("Excel file not found.")
-
-            df = pd.read_excel(file_path)
-
-            if df.empty:
-                raise APIException("Excel file is empty.")
-
-            df = df.where(pd.notnull(df), None)
-
-            required_columns = [
-                field_map["boq_code"],
-                field_map["boq_no"],
-                field_map["wbs"]
-            ]
-
-            for col in required_columns:
-                if col not in df.columns:
-                    raise APIException(f"Missing required column: {col}")
-
-            df = df.apply(lambda col: col.map(lambda x: x.strip() if isinstance(x, str) else x))
-
-            def get_parent_code(code):
-
-                if not code:
-                    return None
-
-                code = str(code).strip()
-
-                if "." in code:
-                    return ".".join(code.split(".")[:-1])
-
-                return None
-
-            # -------------------------------
-            # PRELOAD EXISTING WBS
-            # -------------------------------
-
-            existing_wbs = WBSList.cmobjects.filter(
-                organization_id=organization_id,
-                boq_id=boq_id,
-                root_id=wbs_list_id
-            ).values("id", "boq_code")
-
-            existing_wbs_map = {
-                str(i["boq_code"]).strip(): i["id"]
-                for i in existing_wbs if i["boq_code"]
-            }
-
-            # -------------------------------
-            # PRELOAD UOM
-            # -------------------------------
-
-            uom_list = UnitOfMesurement.cmobjects.filter(
-                organization_id=organization_id
-            ).values("id", "symbol")
-
-            uom_map = {
-                str(i["symbol"]).lower().strip(): i["id"]
-                for i in uom_list if i["symbol"]
-            }
-
-            created_map = {}
-
-            create_list = []
-            update_list = []
-
-            # -------------------------------
-            # PROCESS EXCEL
-            # -------------------------------
-
-            for index, row in df.iterrows():
-
-                row_index = index + 2
-
-                boq_code = row.get(field_map["boq_code"])
-                boq_no = row.get(field_map["boq_no"])
-                wbs_name = row.get(field_map["wbs"])
-
-                if not boq_code or not boq_no or not wbs_name:
-
-                    errors.append(
-                        f"Row {row_index}: boq_code, boq_no and wbs required"
-                    )
-
-                    count_data["errors"] += 1
-                    continue
-
-                boq_code = str(boq_code).strip()
-
-                if not re.fullmatch(r"\d+(\.\d+)*", boq_code):
-
-                    errors.append(
-                        f"Row {row_index}: invalid BOQ code format"
-                    )
-
-                    count_data["errors"] += 1
-                    continue
-
-                parent_id = wbs_list_id
-
-                parent_code = get_parent_code(boq_code)
-
-                if parent_code:
-
-                    if parent_code in created_map:
-                        parent_id = created_map[parent_code]
-
-                    elif parent_code in existing_wbs_map:
-                        parent_id = existing_wbs_map[parent_code]
-
-                quantity = row.get(field_map.get("budgeted_quantity"))
-                rate = row.get(field_map.get("rate"))
-
-                uom_value = row.get(field_map.get("uom"))
-
-                uom_id = None
-
-                if uom_value:
-                    symbol = str(uom_value).lower().strip()
-                    uom_id = uom_map.get(symbol)
-
-                record_data = {
-
-                    "organization_id": organization_id,
-                    "boq_id": boq_id,
-                    "root_id": wbs_list_id,
-                    "parent_id": parent_id,
-
-                    "boq_code": boq_code,
-                    "boq_no": boq_no,
-                    "wbs": wbs_name,
-
-                    "uom_id": uom_id,
-
-                    "rate": float(rate) if rate else 0,
-                    "budgeted_quantity": float(quantity) if quantity else 0,
-
-                    "total_labour": row.get(field_map.get("total_labour")),
-                    "total_material": row.get(field_map.get("total_material")),
-                    "total_machinery": row.get(field_map.get("total_machinery")),
-                    "total_overheads": row.get(field_map.get("total_overheads")),
+                count_data = {
+                    "items_created": 0,
+                    "items_updated": 0,
+                    "errors": 0,
                 }
 
-                # -------------------------------
-                # UPDATE
-                # -------------------------------
+                errors = []
 
-                if boq_code in existing_wbs_map:
+                organization_id = request.query_params.get("organization_id")
+                boq_id = request.query_params.get("boq_id")
+                wbs_list_id = request.query_params.get("wbs_list_id")
 
-                    wbs_id = existing_wbs_map[boq_code]
+                if not organization_id or not boq_id or not wbs_list_id:
+                    raise APIException("organization_id, boq_id, wbs_list_id are required.")
 
-                    update_list.append(
-                        WBSList(
-                            id=wbs_id,
-                            updated_by_id=request.user.id,
-                            **record_data
+                file_name = request.data.get("file_name")
+                field_map = request.data.get("field_map", {})
+
+                if not file_name:
+                    raise APIException("file_name is required.")
+
+                if not field_map:
+                    raise APIException("field_map is required.")
+
+                file_path = os.path.join("media/excel/", file_name)
+
+                if not os.path.exists(file_path):
+                    raise APIException("Excel file not found.")
+
+                df = pd.read_excel(file_path)
+
+                if df.empty:
+                    raise APIException("Excel file is empty.")
+
+                required_columns = [
+                    field_map["boq_code"],
+                    field_map["boq_no"],
+                    field_map["wbs"]
+                ]
+
+                for col in required_columns:
+                    if col not in df.columns:
+                        raise APIException(f"Missing required column in Excel: {col}")
+
+                df = df.where(pd.notnull(df), None)
+
+                df = df.apply(lambda col: col.map(lambda x: x.strip() if isinstance(x, str) else x))
+
+                for num_field in ["rate", "budgeted_quantity"]:
+                    if num_field in field_map:
+                        df[field_map[num_field]] = pd.to_numeric(df[field_map[num_field]], errors="coerce")
+
+                def process_str(x):
+                    if isinstance(x, str):
+                        return x.lower().strip().replace(" ", "")
+                    return x
+
+                def get_parent_code(code):
+                    if not code:
+                        return None
+                    code = str(code).strip()
+                    if "." in code:
+                        return ".".join(code.split(".")[:-1])
+                    return None
+
+                # Fetch existing WBS records once
+                existing_wbs_qs = WBSList.objects.filter(
+                    organization_id=organization_id,
+                    boq_id=boq_id,
+                    root_id=wbs_list_id
+                ).values("id", "boq_code")
+
+                existing_wbs_map = {
+                    str(obj["boq_code"]).strip(): obj["id"]
+                    for obj in existing_wbs_qs if obj["boq_code"]
+                }
+
+                # Track duplicates inside Excel
+                excel_code_map = {}
+
+                # Fetch UOM list
+                uom_list = pd.DataFrame(
+                    UnitOfMesurement.cmobjects.filter(
+                        organization_id=organization_id
+                    ).values("id", "formal_name", "symbol")
+                )
+
+                uom_list = uom_list.fillna(np.nan).replace([np.nan], [None])
+                uom_list["symbol"] = uom_list["symbol"].map(lambda x: process_str(x))
+
+                def check_uom(row):
+                    if "uom" in field_map:
+                        uom_value = row.get(field_map["uom"])
+                        if uom_value:
+                            symbol = process_str(uom_value)
+                            match = uom_list.loc[uom_list["symbol"] == symbol]
+                            if not match.empty:
+                                return int(match.iloc[0]["id"])
+                    return None
+
+                df["uom_id"] = df.apply(check_uom, axis=1)
+
+                created_map = {}
+
+                df = df.replace([np.nan], [None])
+
+                for index, row in df.iterrows():
+
+                    row_index = index + 2
+
+                    boq_code = row.get(field_map["boq_code"])
+                    boq_no = row.get(field_map["boq_no"])
+                    wbs_name = row.get(field_map["wbs"])
+
+                    if not boq_code or not boq_no or not wbs_name:
+                        errors.append(
+                            f"Row {row_index}: boq_code, boq_no, and Particulars are required"
                         )
-                    )
+                        count_data["errors"] += 1
+                        continue
 
-                    created_map[boq_code] = wbs_id
+                    boq_code = str(boq_code).strip()
 
-                    count_data["items_updated"] += 1
+                    if not re.fullmatch(r"\d+(?:\.\d+)*", boq_code):
+                        errors.append(
+                            f"Row {row_index}: BOQ code must be format like - 1, 1.1, 1.2 etc."
+                        )
+                        count_data["errors"] += 1
+                        continue
 
-                # -------------------------------
-                # CREATE
-                # -------------------------------
+                    # Excel duplicate validation
+                    if boq_code in excel_code_map:
+                        first_row = excel_code_map[boq_code]
+                        errors.append(
+                            f"Row {row_index}: BOQ code '{boq_code}' already used in Row {first_row}"
+                        )
+                        count_data["errors"] += 1
+                        continue
+                    else:
+                        excel_code_map[boq_code] = row_index
 
-                else:
+                    quantity = row.get(field_map.get("budgeted_quantity"))
+                    rate = row.get(field_map.get("rate"))
 
-                    obj = WBSList(
-                        created_by_id=request.user.id,
-                        **record_data
-                    )
+                    parent_id = wbs_list_id
+                    parent_code = get_parent_code(boq_code)
 
-                    create_list.append(obj)
+                    if parent_code:
+                        if parent_code in created_map:
+                            parent_id = created_map[parent_code]
+                        elif parent_code in existing_wbs_map:
+                            parent_id = existing_wbs_map[parent_code]
 
-                    created_map[boq_code] = obj
+                    data = {
+                        "organization_id": organization_id,
+                        "boq_id": boq_id,
+                        "parent_id": parent_id,
+                        "uom_id": None if pd.isna(row["uom_id"]) else row["uom_id"],
+                        "boq_code": boq_code,
+                        "boq_no": boq_no,
+                        "wbs": wbs_name,
+                        "rate": float(rate) if rate and not pd.isna(rate) else 0,
+                        "budgeted_quantity": float(quantity) if quantity and not pd.isna(quantity) else 0,
+                        "total_labour": row.get(field_map.get("total_labour")),
+                        "total_material": row.get(field_map.get("total_material")),
+                        "total_machinery": row.get(field_map.get("total_machinery")),
+                        "total_overheads": row.get(field_map.get("total_overheads")),
+                    }
 
-                    count_data["items_created"] += 1
+                    existing_id = existing_wbs_map.get(boq_code)
 
-            # -------------------------------
-            # BULK CREATE
-            # -------------------------------
+                    if existing_id:
+                        # UPDATE
+                        WBSList.cmobjects.filter(
+                            pk=existing_id,
+                            organization_id=organization_id
+                        ).update(
+                            updated_by_id=request.user.id,
+                            **data
+                        )
 
-            if create_list:
+                        created_map[boq_code] = existing_id
 
-                created_objs = WBSList.objects.bulk_create(
-                    create_list,
-                    batch_size=500
+                        if quantity:
+                            BOQChainageExecutiveSummeryData.cmobjects.filter(
+                                organization_id=organization_id,
+                                boq_id=boq_id,
+                                wbs_id=existing_id,
+                                type="Q"
+                            ).update(value=quantity)
+
+                        count_data["items_updated"] += 1
+
+                    else:
+                        # CREATE
+                        instance = WBSList.objects.create(
+                            created_by_id=request.user.id,
+                            **data
+                        )
+
+                        created_map[boq_code] = instance.id
+                        existing_wbs_map[boq_code] = instance.id
+
+                        count_data["items_created"] += 1
+
+                return Response(
+                    {
+                        "data": count_data,
+                        "errors": errors,
+                        "msg": "BOQ WBS import completed successfully.",
+                        "status": status.HTTP_201_CREATED,
+                        "request_status": 1,
+                    }
                 )
 
-                for obj in created_objs:
-                    created_map[obj.boq_code] = obj.id
-
-            # -------------------------------
-            # BULK UPDATE
-            # -------------------------------
-
-            if update_list:
-
-                WBSList.objects.bulk_update(
-                    update_list,
-                    [
-                        "parent",
-                        "boq_code",
-                        "boq_no",
-                        "wbs",
-                        "uom",
-                        "rate",
-                        "budgeted_quantity",
-                        "total_labour",
-                        "total_material",
-                        "total_machinery",
-                        "total_overheads",
-                    ],
-                    batch_size=500
-                )
-
-            return Response(
-                {
-                    "data": count_data,
-                    "errors": errors,
-                    "msg": "BOQ WBS import completed successfully",
-                    "request_status": 1,
-                },
-                status=status.HTTP_201_CREATED
-            )
+        except Exception as e:
+            error_message = str(e.args[0]) if e.args else str(e)
+            print(e)
+            raise APIException({'request_status': 0, 'msg': error_message})
