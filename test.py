@@ -63,3 +63,23 @@ class TenderMasterNewSurveyMasterAPIView(APIView):
 
 #here I want to implement if new users is added then email functins will trigger
 for both post and put properly standard way
+
+
+def send_assign_survey_users_email(users, data):
+    """Tender Site Survey users assigned Email Triggered """
+    if not users or not data:
+        return
+    context={}
+    context['current_datetime'] = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    context['user'] = f"{user.first_name} {user.last_name}"
+    subject = f"Tender Survey Checklist Update – Verification Required"
+    to_users_list = list(UserWiseModulePermissions.cmobjects.filter(
+        module_item__unique_id__in=['tender-survey-approver'],
+        level_permission=True,
+    ).values_list('user_id',flat=True))
+    cc_users_list = list(UserWiseModulePermissions.cmobjects.filter(
+        module_item__unique_id__in=['tender-survey-submit-cc'],
+        level_permission=True,
+    ).values_list('user_id',flat=True))
+    trigger_notifications(action='TENDER-SURVEY-ASSIGNED-USERS', subject=subject, user_list=to_users_list, cc_user_list=cc_users_list, context=context)
+
