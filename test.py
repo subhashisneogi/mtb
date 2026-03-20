@@ -1,102 +1,67 @@
- "pending_since_days": 14515200000000,
-
-#html
-{% load custom_filters %}
-{% load custom_template_filters %}
-<div class="email-container">
-    <p>Date: {{ date }}</p>
-    <p>Hi,</p>
-    <p>
-        This is a reminder that the Bank Guarantees&nbsp;(BGs) for the following Tenders are due for withdrawal from the authorities.
-    </p>
-        <table class="borderTable">
-        <thead>
-            <tr>
-                <th>Sl No</th>
-                <th>Tender Id</th>
-                <th>Organisation</th>
-                <th>Work Description</th>
-                <th>BG Value</th>
-                <th>Financial Open Date</th>
-                <th>Rank</th>
-                <th>Pending Since(Today-Financial Open Date)</th>
-                <th>BG Submission Address</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in data %}
-            <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ item.tender_id|default:"" }}</td>
-                <td>{{ item.tender_organization__employee_name|default:"" }}</td>
-                <td>{{ item.proposed_tender|default:"" }}</td>
-                <td>{{ item.bg_value|default:"" }}</td>
-                <td>{{ item.financial_bid_open_date|str_to_date:"%d-%m-%Y" }}</td>
-                <td>{{ item.rank_value|default:"" }}</td>
-                <td>{{ item.pending_since_days }}</td>
-                <td>{{ item.emd_deposition_location|default:"" }}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-    </table>
-    <p>Please ensure timely action.</p>
-    <div class="footer">
-        <p style="color: #333333;">Thank you for your support.</p>
-        <div class="signature">
-            <p style="color: #333333;">Regards,</p>
-            <p style="color: #333333;">
-                <strong>Team Shyam Infra</strong>
-            </p>
-        </div>
-    </div>
-</div>
-
-#views
-
-class TenderMonitoringPendingEMDEmailTriggerAPIView(APIView):
-    permission_classes = (AllowAny,)
-    def get(self, request):
-        """
-        Monitoring of pending EMDs, if no action taken, every 31 days after Financial Bid Open Date
-        """
-        current_date = datetime.now().date()
-        pending_since_date = current_date - timedelta(days=31)
-        rank_subquery = TenderMasterNewWinLossAnalysis.cmobjects.filter(
-            tender=OuterRef('pk')).values('rank')[:1]
-        tender_data = TenderMasterNew.cmobjects.annotate(
-            pending_since_days=ExpressionWrapper(
-                (F('financial_bid_open_date') - Now()) / timedelta(days=1),
-                output_field=IntegerField()
-            ),
-            rank_value=Subquery(rank_subquery, output_field=IntegerField())
-            ).filter(status__in=['win', 'loss', 'canceled'],financial_bid_open_date__lte=pending_since_date).values(
-            'id','tender_id','financial_bid_open_date','emd_amount','emd_type','emd_deposition_location','emd_validity_date',
-            'emd_checked_by_account','pending_since_days', 'tender_organization__employee_name', 'proposed_tender', 'bg_value', 'rank_value')
-
-        to_users_list = list(UserWiseModulePermissions.cmobjects.filter(
-                module_item__unique_id__in=['tender-pending-emds-to'],
-                level_permission=True,
-            ).values_list('user_id', flat=True))
-        cc_users_list = list(UserWiseModulePermissions.cmobjects.filter(
-                module_item__unique_id__in=['tender-pending-emds-cc'],
-                level_permission=True,
-            ).values_list('user_id', flat=True))
-        context = {}
-        if tender_data:
-            subject = "List of pending EMDs with details for follow-up"
-            context = {
-                "date": current_date.strftime('%d-%m-%Y'),
-                "data": list(tender_data),
-            }
-            trigger_notifications(
-                action='TENDER-AUTO-PENDING-EMDS',
-                subject=subject,
-                user_list=to_users_list,
-                cc_user_list=cc_users_list,
-                context=context
-            )
-        return Response(context)
+#models
+class SupplyManagement(BaseAbstractStructure):
+    """ Supply to factory/aggregator from (aggregator or grower)model """
+    vehicle_option = (
+        ('Yes', 'Yes'),
+        ('No', 'No'),
+    )
+    supply_option = (
+        ('Factory', 'Factory'),
+        ('Aggregator', 'Aggregator'),
+    )
+    supply_to=models.CharField(max_length=100, choices=supply_option, blank=True, null=True)
+    consumer=models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="consumer_supply_management", blank=True, null=True)
+    vehicle_option=models.CharField(max_length=100, choices=vehicle_option, blank=True, null=True)
+    date_of_supply=models.DateField(auto_now_add= False, blank=True,null=True)
+    alloted_vehicle=models.ForeignKey(VehicleManagement, related_name='vehicle_number_alloted',on_delete=models.DO_NOTHING, blank=True, null=True)  
+    gross_leaf = models.CharField(max_length=200,blank=True, null=True)
+    supply_challan_id = models.CharField(max_length=300,blank=True, null=True, unique=True)
+    ##for grower to factory supply fields
+    quantity=models.FloatField(max_length=200,blank=True, null=True) 
+    supply_bag_id=models.CharField(max_length=200,blank=True,null=True)
+    driver_name=models.CharField(max_length=200,blank=True, null=True)
+    phone_regex = RegexValidator(regex=r'^\+?1?\d{6,12}$', message="Not a valid Mobile Number")
+    mobile_number = models.CharField(validators=[phone_regex],max_length=17,blank=True, null=True)
+    is_weighment_proceed = models.BooleanField(default=False)
+    def __str__(self):
+        return str(self.supply_challan_id)
+#signals
+@receiver(post_save, sender=SupplyManagement)
+def generate_supply_challan_code(sender, instance, created, **kwargs):
+    print("HBFEGFEYFEFVYEFY #############")
+    if not created:
+        return
+    # Get region code from aggregator or grower profile
+    agg_supplier_details = AggregatorProfile.cmobjects.filter(user_id=instance.created_by_id).first()
+    grower_supplier_details = GrowerProfile.cmobjects.filter(user_id=instance.created_by_id).first()
+    if agg_supplier_details and agg_supplier_details.region:
+        region_code = agg_supplier_details.region.region_id
+    elif grower_supplier_details and grower_supplier_details.region:
+        region_code = grower_supplier_details.region.region_id
+    else:
+        region_code = ""
+    # Use username for stability
+    user_code = instance.created_by.username.upper()
+    prefix = f"CH{region_code}{user_code}"
+    print("prefix ##", prefix)
+    with transaction.atomic():
+        last_challan = SupplyManagement.objects.filter(supply_challan_id__contains="CH"+str(region_code) + str(request.user).upper(),\
+        created_by_id=request.user.id).last()
+        # Calculate the next supply_challan_id
+        if last_challan and last_challan.supply_challan_id.startswith("CH"+str(region_code) + str(request.user).upper()):
+            # Extract the numeric part and increment it
+            numeric_part_index = len("CH" + str(region_code) + str(request.user).upper())
+            
+            numeric_part = int(last_challan.supply_challan_id[numeric_part_index:]) + 1    
+            next_challan_id = f"CH{region_code}{str(request.user).upper()}{numeric_part:0>2d}"
+        else:
+            # Handle the case when there are no existing supply_challan_id values
+            next_challan_id = f"CH{region_code}{str(request.user).upper()}01"
+        # Set the new supply_challan_id
+        created.supply_challan_id = next_challan_id
 
 
-please write proper code to calculate the 
-pending_since_days = today_date - financial_bid_open_date
+please write the proper way to generate the supply_challan_id when created 
+now challan_id is not created
+
+
