@@ -1,66 +1,81 @@
-class GrowerProfileUpdateView(LoginRequiredMixin, CommonMixin, UpdateView,):
-	"""
-	Grower Profile Update View 
-	"""
-	model = GrowerProfile
-	form_class = GrowerProfileForm
-	second_form_class = CreateUserFormedit
-	template_name = 'profile/grower_profile_update.html'
+from django.db import transaction
+from django.shortcuts import redirect, reverse
+from django.contrib import messages
+from django.views.generic import UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-	def get(self, request, *args, **kwargs):
-	# checking if the user is Admin
-		try:
-			if not self.request.user.is_superuser:
-				messages.error(self.request, 'You have no permission to access the requested resource!')
-				return redirect(reverse('index'))
-		except AttributeError as error:
-			messages.error(self.request, 'You have no permission to access the requested resource!')
-			return redirect(reverse('index'))
-		return super().get(request, *args, **kwargs)
+class GrowerProfileUpdateView(LoginRequiredMixin, CommonMixin, UpdateView):
+    """
+    Grower Profile Update View (Optimized)
+    """
+    model = GrowerProfile
+    form_class = GrowerProfileForm
+    second_form_class = CreateUserFormedit
+    template_name = 'profile/grower_profile_update.html'
 
-	def get_success_url(self, **kwargs):
-		messages.success(self.request, 'Grower Profile Updated Successfully')
-		return reverse('user_profile:all_users',kwargs={"usertype_slug": 'grower' }) 
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Handle permission in one place instead of overriding get()
+        """
+        if not getattr(request.user, "is_superuser", False):
+            messages.error(request, 'You have no permission to access the requested resource!')
+            return redirect(reverse('index'))
+        return super().dispatch(request, *args, **kwargs)
 
-	def get_object(self):
-		profile_details = GrowerProfile.cmobjects.filter(user_id=self.kwargs['user_create_pk']).first()
-		return profile_details
+    def get_object(self):
+        """
+        Fetch object with related user in single query
+        """
+        return GrowerProfile.cmobjects.select_related('user').filter(
+            user_id=self.kwargs['user_create_pk']
+        ).first()
 
-	def get_context_data(self, **kwargs):
-		kwargs['active_client'] = True
-		if 'form' not in kwargs:
-			kwargs['form'] = self.form_class(instance=self.get_object())
-		if 'form2' not in kwargs:
-			kwargs['form2'] = self.second_form_class(instance=self.get_object().user)
+    def get_success_url(self):
+        messages.success(self.request, 'Grower Profile Updated Successfully')
+        return reverse('user_profile:all_users', kwargs={"usertype_slug": 'grower'})
 
-		context = super(GrowerProfileUpdateView, self).get_context_data(**kwargs)
-		context['aggregator_list'] = AggregatorProfile.cmobjects.all().order_by('-id')
-		context['profile_details'] = self.get_object()
-		return context
-	
-	def form_valid(self, form, ):
-		
-		self.user_id = self.kwargs['user_create_pk']
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-		context = self.get_context_data()
+        profile = self.object or self.get_object()
 
-		profile_details = GrowerProfile.cmobjects.filter(user_id=self.kwargs['user_create_pk']).first()
+        context.update({
+            'active_client': True,
+            'form': kwargs.get('form') or self.form_class(instance=profile),
+            'form2': kwargs.get('form2') or self.second_form_class(instance=profile.user),
+            'aggregator_list': AggregatorProfile.cmobjects.all().order_by('-id'),
+            'profile_details': profile
+        })
 
-		print("Profile Details", profile_details)
+        return context
 
-		garden_details = Gardens.objects.filter(grower_id=profile_details.pk).first()
+    def form_valid(self, form):
+        profile = self.get_object()
 
-		Gardens.objects.filter(grower_id=profile_details.pk).update(name = form.instance.name)
+        if not profile:
+            messages.error(self.request, "Profile not found")
+            return redirect(reverse('index'))
 
-		print("GARDEN DETAILS###", garden_details)
+        with transaction.atomic():
+            # Save main profile
+            self.object = form.save()
 
-		Plot.objects.filter(garden_id=garden_details.pk).update_or_create(garden_id=garden_details.pk, defaults={
-			'name': form.instance.name,})
+            # Update Garden (single query)
+            garden = Gardens.objects.filter(grower_id=profile.pk).first()
+            if garden:
+                garden.name = form.instance.name
+                garden.save(update_fields=['name'])
 
-		GrowerQrCode.objects.update_or_create(grower_id=form.instance.pk, \
-					defaults={'name': form.instance.name,})
+                # Update/Create Plot
+                Plot.objects.update_or_create(
+                    garden_id=garden.pk,
+                    defaults={'name': form.instance.name}
+                )
 
-		with transaction.atomic():
-			self.object = form.save()
+            # Update/Create QR Code
+            GrowerQrCode.objects.update_or_create(
+                grower_id=profile.pk,
+                defaults={'name': form.instance.name}
+            )
 
-		return super(GrowerProfileUpdateView, self).form_valid(form)
+        return super().form_valid(form)
