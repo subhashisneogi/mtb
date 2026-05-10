@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} STG Farm Diary   {% endblock %}
+{% block css %}
+<link href="{% static 'select2/select2.min.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+
+
+
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">{% if not form.instance.pk %} Add New {{ type_details }}  {% else %}   Edit {{ type_details }}  {% endif %}</h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a type="button" href="{% url 'chemical_data:chemical_view_list' grower_pk=grower_pk chemical_type=chemical_type_id %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>
+                        Back
+                    </a>
+                </div>
+            </div>
+            <!-- Small boxes (Stat box) -->
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12 col-12">
+                    <div class="row">
+                        <div class="white-box">
+                            <form method="POST" role="form" id="create-form">
+                                {% csrf_token %}
+                                <h5>{{ type_details }}</h5>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">Date of usage</label>
+                                                    {{ form.date }}
+                                                    {{ form.date.errors }}
+                                                </div>
+                                            </div>
+                                            {% if is_unified_chemical %}
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">Chemical Type</label>
+                                                    {{ form.chemical_type_filter }}
+                                                    {{ form.chemical_type_filter.errors }}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">{{ type_details }}</label>
+                                                    {{ form.chemical }}
+
+                                                    {{ form.chemical.errors }}
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Labour</label>
+                                                    {{ form.labour }}
+                                                    {{ form.labour.errors }}
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <div class="form-group">
+                                                    <label class="required_field">Quantity {% if type_name == "Fertilizer"  %} Kg {% else %} Ltr. {% endif %}</label>
+                                                    {{ form.quantity }}
+                                                    {{ form.quantity.errors }}
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <div class="form-group">
+                                                    <label class="required_field">Unit</label>
+                                                    {% if form.instance.pk %}
+                                                    <select name="unit" class="form-control" required>
+                                                        <option value="Kg" selected hidden>{{ chemical_details.unit }}</option>
+                                                        {% if type_name == "Fertilizer"  %}
+                                                        <option value="Kg">Kg</option>
+                                                        {% else %}
+                                                        <option value="Ltr.">Ltr.</option>
+                                                        <option value="ml">ml</option>
+                                                        {% endif %}
+                                                    </select>
+                                                    {% else %}
+                                                    <select name="unit" class="form-control" required>
+                                                        <option value="">Select unit</option>
+                                                        {% if type_name == "Fertilizer"  %}
+                                                        <option value="Kg">Kg</option>
+                                                        {% else %}
+                                                        <option value="Ltr.">Ltr.</option>
+                                                        <option value="ml">ml</option>
+                                                        {% endif %}
+                                                    </select>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% if garden_details.is_plot %}
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Plot Name</label>
+                                                    {{ form.plot }}
+                                                    {{ form.plot.errors }}
+                                                </div>
+                                            </div>
+                                            {% if chemical_details.division != None %}
+                                            <div class="col-sm-6" style="visibility: hidden;">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Division Name</label>
+                                                    {{ form.division }}
+                                                            {{ form.division.errors }}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            
+
+                                                
+                                            {% else %}
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Division Name</label>
+                                                    {{ form.division }}
+                                                    {{ form.division.errors }}
+                                                </div>
+                                            </div>
+                                            {% if chemical_details.plot != None %}
+                                            <div class="col-sm-6" style="visibility: hidden;">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Plot Name</label>
+                                                    {{ form.plot }}
+                                                            {{ form.plot.errors }}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            {% endif %}
+
+
+
+                                            {% if form.instance.pk %}
+                                            <input type="hidden" name="grower" value="{{ grower_details.pk }}">
+                                            <input type="hidden" name="created_by" value="{{ chemical_type_id }}">
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    {% if not form.instance.pk %}
+                                    <div class="col-lg-3 white-box-submit">
+                                        <button type="submit" class="btn btn-block btn-success pt-2 pb-2">Create</button>
+                                    </div>
+                                    <div class="col-lg-3 white-box-reset">
+                                        <button type="button" id="resetButton" class="btn btn-block btn-default pt-2 pb-2">Reset</button>
+                                    </div>
+                                    {% else %}
+                                    <div class="col-lg-3 white-box-submit">
+                                        <button type="submit" class="btn btn-block btn-success pt-2 pb-2">Update</button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+
+<script src="{% static 'formset/formset.js' %}"></script>
+<script src="{% static 'select2/select2.full.min.js' %}"></script>
+
+
+
+
+<script>
+    // Reset Form
+    $(document).ready(function(){
+        $("#resetButton").on("click", function(e){
+                console.log("reset btn");   
+                $("#create-form").get(0).reset()
+        });
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var chemicalOptions = {{ chemical_options_json|default:"[]"|safe }};
+        var selectedChemicalId = "{{ form.chemical.value|default:'' }}";
+
+        function refreshChemicalOptions() {
+            if (!chemicalOptions.length) {
+                return;
+            }
+            var selectedType = $(".select2_chemical_type").val();
+            var $chemical = $(".select2_chemical");
+            var currentValue = $chemical.val() || selectedChemicalId;
+            $chemical.empty().append(new Option("--Select --", ""));
+            chemicalOptions.forEach(function (item) {
+                if (!selectedType || String(item.chemical_type_id) === String(selectedType)) {
+                    $chemical.append(new Option(item.chemical_name, item.id, false, String(item.id) === String(currentValue)));
+                }
+            });
+            $chemical.trigger("change.select2");
+        }
+
+        $(".select2_chemical").select2({
+        placeholder: "--Select --",
+        width: '100%',
+        });
+
+        $(".select2_chemical_type").select2({
+        placeholder: "--Select --",
+        width: '100%',
+        });
+
+        $(".select2_chemical_type").on("change", function () {
+            selectedChemicalId = "";
+            refreshChemicalOptions();
+        });
+        refreshChemicalOptions();
+
+        $(".select2_labour").select2({
+        placeholder: "--Select --",
+        width: '100%',
+        });
+
+        $(".select2_plot").select2({
+        placeholder: "--Select --",
+        width: '100%',
+        });
+
+        $(".select2_division").select2({
+        placeholder: "--Select --",
+        width: '100%',
+        });
+    });
+</script>
+{% endblock %}

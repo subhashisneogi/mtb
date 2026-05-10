@@ -1,0 +1,139 @@
+
+
+<div class="content-wrapper" style="min-height: 124px;">
+
+  <section class="content">
+
+    <div class="container-fluid">
+      <!-- Leaf Collection Graph -->
+      <div class="row">
+          <div class="col-lg-2 col-sm-3 col-12">
+              <select class="form-select form-control" id="year_select" onchange="year_graph_data(value);">
+                  <option value="" selected hidden>{{  current_year }}</option>
+                  {% for year_list in year %}
+                  <option value="{{ year_list }}" {% if selected_year == year_list %} selected {% endif %} >{{ year_list }}</option>
+                  {% endfor %}
+                </select>
+          </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div id ="leaf_collection_ajax">
+            
+
+          </div>
+        </div>
+      </div>
+
+      <div class="row" id="default_leaf_graph">
+        <!-- LEAF COLLECTION BAR CHAT -->
+        <div class="col-md-12">
+          <div class="card card-success mt-3" >
+            <div class="card-header" id="leaf_card_id">
+              <h3 class="card-title">Leaf Collection Total - {{ tot_net_weight|stringformat:".2f" }}  KG  for {{ current_year }}</h3>
+            </div>
+            <div class="card-body">
+              <div class="chart">
+                <div class="chartjs-size-monitor">
+                  <div class="chartjs-size-monitor-expand">
+                    <div class=""></div>
+                  </div>
+                  <div class="chartjs-size-monitor-shrink">
+                    <div class=""></div>
+                  </div>
+                </div>
+                <canvas id="barChart"
+                  style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%; display: block; width: 487px;"
+                  class="chartjs-render-monitor" width="487" height="250"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INVOICE COLLECTION BAR CHAT -->
+        <div class="col-md-12">
+          <div class="card card-success mt-3">
+            <div class="card-header" id="invoice_card_id">
+              <h3 class="card-title">Total <strong>{{ tot_invoice }}</strong>  Invoice Generated - <TOT_INV> for {{ current_year }}</h3>
+            </div>
+            <div class="card-body">
+              <div class="chart">
+                <div class="chartjs-size-monitor">
+                  <div class="chartjs-size-monitor-expand">
+                    <div class=""></div>
+                  </div>
+                  <div class="chartjs-size-monitor-shrink">
+                    <div class=""></div>
+                  </div>
+                </div>
+
+                <canvas id="barChartInvoice"
+                  style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%; display: block; width: 487px;"
+                  class="chartjs-render-monitor" width="487" height="250"></canvas>
+                
+                </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+        <div class="row">
+
+        <div class="col-md-12"  >
+          <div class="card card-danger">
+            <div class="card-header">
+              <h3 class="card-title">Pie Chart - Total <strong>{{ tot_stg_growers }}</strong> no. of associated STGs in label  </h3>
+            </div>
+            <div class="card-body">
+              <div class="chartjs-size-monitor">
+                <div class="chartjs-size-monitor-expand">
+                  <div class=""></div>
+                </div>
+                <div class="chartjs-size-monitor-shrink">
+                  <div class=""></div>
+                </div>
+              </div>
+              <canvas id="pieChart"
+                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%; display: block; width: 487px;"
+                class="chartjs-render-monitor" width="487" height="250"></canvas>
+            </div>
+
+          </div>
+
+
+          <div class="card card-danger">
+            <div class="card-header">
+              <h3 class="card-title">Pie Chart - Total <b>{{ tot_growers_agg }}</b> no. of associated agents / aggregators and growers</h3>
+            </div>
+            <div class="card-body">
+              <div class="chartjs-size-monitor">
+                <div class="chartjs-size-monitor-expand">
+                  <div class=""></div>
+                </div>
+                <div class="chartjs-size-monitor-shrink">
+                  <div class=""></div>
+                </div>
+              </div>
+              <canvas id="pieChart2"
+                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%; display: block; width: 487px;"
+                class="chartjs-render-monitor" width="487" height="250"></canvas>
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+
+
+

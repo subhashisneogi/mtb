@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>other work Schedule</title>
+        <style>
+        table,
+        td,
+        div,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
+            font-family: Arial, sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
+            padding: 0;
+            margin: 0;
+        }
+
+        img {
+            width: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        table {
+            width: 800px;
+            border-collapse: collapse;
+            border-spacing: 0;
+            background: #f7f7f7;
+            margin: 0px auto;
+        }
+
+        td {
+            border: 1px solid #43443d;
+            padding: 8px;
+        }
+
+        .backgrnd-color {
+            background-color: #43443d;
+        }
+
+        table tr td h1 {
+            color: #fff;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        table tr td p {
+            font-size: 13px;
+            line-height: 21px;
+            word-break: break-all;
+
+        }
+        .frst-col p {
+            padding: 5px 5px 5px 0px;
+        }
+        table tr td h3 {
+            text-align: center;
+            padding: 5px;
+            color: #43443d;
+            font-size: 16px;
+        }
+
+        .backgrnd-color h2 {
+            color: #fff;
+            font-size: 18px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .backgrnd-color td {
+            border-right: 1px solid #fff;
+        }
+
+        .backgrnd-color td:last-child {
+            border-right: 1px solid #000;
+        }
+
+        .top-section img {
+            height: 600px;
+        }
+
+        .bottom-sec img {
+            height: 600px;
+        }
+
+        .top-section {
+            width: 800px;
+            margin: -4px auto;
+        }
+
+        .bottom-sec {
+            width: 800px;
+            margin: 0 auto;
+        }
+
+        .tble-heading td h6 {
+            font-size: 13px;
+            color: #43443d;
+            padding: 5px;
+            text-align: center;
+            font-weight: 700;
+        }
+        .fix-wdth{
+            width: 14%;
+        }
+
+
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 15px 0;
+        background-color: #fff;
+    }
+    .page-number {
+        font-size: 14px;
+        color: #333;
+        position: absolute;
+        bottom: 0px;
+        text-align: centers;
+        left: 0;
+        right: 0;
+    }
+    .main-box{
+        position: relative;
+        min-height: 29.7cm;
+        padding: 0;
+        margin: 0;
+    }
+        </style>
+    </head>
+    <body>
+        <div class="main-box">
+            <table>
+                <tr class="backgrnd-color">
+                    <td colspan="6">
+                        <h1>Monthly Schedule of work</h1>
+                    </td>
+                </tr>
+                <tr class="tble-heading">
+                    <td style="width: 12%;">
+                        <h6>Sl. No.</h6>
+                    </td>
+                    <td style="width: 52%;">
+                        <h6>Month / Year</h6>
+                    </td>
+                    <td style="width: 14%;">
+                        <h6>Total No. of working days</h6>
+                    </td>
+                    <td style="width: 14%;">
+                        <h6>Total hours</h6>
+                    </td>
+                    <td style="width: 14%;">
+                        <h6>Hourly Rate</h6>
+                    </td>
+                    <td>
+                        <h6>
+                            Average monthly
+                            <br>
+                            wages (Rs.)
+                        </h6>
+                    </td>
+                </tr>
+                {% if monthly_schedule_list %}
+            {% for data in monthly_schedule_list %}
+                <tr>
+                    <td>
+                        <p style="text-align: center;">{{ forloop.counter }}</p>
+                    </td>
+                    <td>
+                        <p>{{ data.month | default:"NA" }} / {{ data.year.year| default:"NA" }}</p>
+                    </td>
+                    <td>
+                        <p>{{ data.no_of_working_days | default:"NA"}}</p>
+                    </td>
+                    <td>
+                        <p>{{ data.total_hours|default:"NA"}}</p>
+                    </td>
+                    <td>
+                        <p> {{ data.hourly_rate | default:"NA" }}</p>
+                    </td>
+                    <td>
+                        <p> {{ data.monthly_wages | default:"NA" }}</p>
+                    </td>
+                </tr>
+                {% endfor %}
+        {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center;">
+                        <p class="text-center text-danger">No Record Found</p>
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+            <br>
+            <br>
+            <br>
+            <div class="footer">
+                <div class="page-number">
+                    Page {{ current_page }} of {{ total_pages }}
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

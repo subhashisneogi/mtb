@@ -1,0 +1,492 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %}Leaf collection Register - Normal / Easy weight {% endblock %}
+{% block css %}  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .p-user-image{
+            height: 40px;
+            border-radius: 30px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form role="form"  method = "GET">
+
+                            <div class="row">
+
+                                <div class="col-lg-3">
+                                    <select name="mode" id="mode" class="form-control" required>
+                                        <option hidden value="">Select Mode</option>
+                                        <option  value="Disable" {% if mode == "Disable" %} selected {% endif %}>Normal</option>
+                                        <option  value="Enable" {% if mode == "Enable" %} selected {% endif %}>Easy Weight</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <select class="form-control" id="id_region" name="region" required>
+                                        
+                                        {% if region %}
+                                            <option  value="{{ region }}"  selected> {{ region_details }}  </option>
+                                            {% for item in distinct_regions %}
+
+
+                                            <option value="{{ item }}">{{ item }}</option>
+
+                                            {% endfor %}
+
+
+                                        {% else %}
+                                            <option  value=""  selected>Select Region</option>
+                                        {% endif %}
+                                        </select>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <select name="entity_id" id="associated_entity" class="form-control select2_entity_id" required>
+                                        {% if entity_id %}
+                                            <option  value="{{ entity_id }}"  selected> {{ blf_name }}-[{{ blf_username }}]  </option>
+                                            {% for item in blf_list %}
+                                                <option  value="{{ item.pk }}">{{ item.entity_unit }}-[{{ item.user }}]</option>
+                                            {% endfor %}
+                                        
+                                        {% else %}
+                                            <option  value=""  selected>Select Entity</option>
+                                        {% endif %}
+                                    </select> 
+                                </div>
+
+                            </div>
+
+                            <div class="row mt-3">
+
+                                <!-- <div id=""> -->
+                                    <div class="col-lg-3 normal" id="normal">
+                                        <input type="date" name="start_date" id="start_date" class="form-control"  value="{{ request.GET.start_date }}"  >
+                                    </div>
+                                    <div class="col-lg-3 normal" id="normal">
+                                        <input type="date" name="end_date" id="end_date" class="form-control"  value="{{ request.GET.end_date }}"  >
+                                    </div>
+
+                                    <div class="col-lg-6 easy-weight">
+                                        <div class="form-group">
+                                            <label >Month Year</label>
+                                            <input type="month" name="month_year" class="form-control" value="{{ request.GET.month_year }}"  placeholder="Month Year" id="id_month_year">
+                                            
+                                        </div>
+                                    </div>
+
+
+
+
+                                <div class="col-lg-3 col-md-6 mt-4---">
+                                    <button type="submit" class="btn btn-success rounded-pill btn-block pl-4 pr-4"> <i
+                                            class="fas fa-search mr-2"></i> Search</button>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mt-4---">
+                                    <a href="{% url 'weighment_supply:lef_collection_reports_register_admin' %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                            class="fa fa-refresh mr-2 text-white" ></i> Reset</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                <div class="col-sm-6">
+                    {% if mode %}    
+                        <h6 class="font-weight-bold mt-3 text-muted">Leaf Collection Reports  - <span class="text-capitalize">{%if mode == "Enable" %} Easy Weight {% else %} Normal {% endif %}</span></h6>
+                    {% else %}
+                    <h6 class="font-weight-bold mt-3 text-muted">Leaf Collection Reports <span class="text-capitalize">{{ mode }}</span></h6>
+                    {% endif %}
+                    
+                </div>
+
+                <div class="col-sm-6 text-right modalright">
+                    <!-- export_easy_weight_data -->
+
+                    {% if mode and result %}  
+                        {% if mode == "Enable" %}  
+                        <a type="button" href="{% url 'easy_weight_master:export_easy_weight_data' %}?entity_id={{ request.GET.entity_id }}&month_year={{ request.GET.month_year }}" style="width: 10rem" class="btn bg-success2 text-white pl-3 pr-3">
+                            <i class="fa fa-download  mr-2"  aria-hidden="true"></i>Generate XLS
+                        </a>
+                        {% else %}
+                        <a type="button" href="{% url 'weighment_supply:lef_collection_reports_xls' %}?start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}&mode={{ request.GET.mode }}&entity_id={{ request.GET.entity_id }}" style="width: 10rem" class="btn bg-success2 text-white pl-3 pr-3">
+                            <i class="fa fa-download  mr-2"  aria-hidden="true"></i>Generate XLS
+                        </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row ml-2 mr-2">
+
+                <div class="col-lg-12">
+
+                    <div class="card report-page">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+
+                                        {% if request.GET.mode == "Enable" %}
+                                        <tr>
+                                            <th>Sr. No</th>
+                                            <th>Date</th>
+                                            <th>Supplier Code</th>
+                                            <th>Grower</th>
+                                            <th>Phone No.</th>
+                                            <th>Net Weight(Kg.)</th>
+                                            <!-- <th>Gross Weight(Kg.)</th> -->
+                                            <th>Rate(INR)</th>
+                                        </tr>
+                                        {% else %}
+
+
+                                        <tr>
+                                            <th>Sr. No</th>
+                                            <th>TXN ID</th>
+                                            <th>Grower ID</th>
+                                            <th>Grower Name</th>
+                                            <th>Supply Date</th>
+                                            <th>Supply Qty</th>
+                                            <th>FLC %</th>
+                                            <th>Deduction %</th>
+                                            <th>By Aggregator (if any)</th>
+                                          
+                                        </tr>
+
+                                        {% endif %}
+                                    </thead>
+                                    <tbody>
+
+                                        {% if result %}
+                                        {% if request.GET.mode == "Enable" %}
+                                        {% for item in result %}
+                                        <tr>
+                                            <td>{{ result.start_index|add:forloop.counter0 }}</td>
+                                           
+                                            <td class="text-capitalize">
+                                                {{ item.supply_date|date:'d-m-Y'|default:'NA' }}
+                                            </td>
+                                            <td class="text-capitalize">
+                                                {% if item.supplier  %}
+                                                    {{ item.supplier}}
+                                                {% else %}
+                                                    NA
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <td class="text-capitalize">
+
+                                                {% if item.aggregator.name %}
+                                                    {{ item.aggregator.name }}
+                                                {% elif item.grower.name %}
+                                                    {{ item.grower.name }}
+                                                {% else %}
+                                                    NA
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <td class="text-capitalize">
+                                                Phone No.
+                                            </td>
+                                            <td class="text-capitalize">
+                                               {{ item.nt_wght }} Kg
+                                            </td>
+                                            <td>
+                                               Gross Wght. (kg)
+                                            </td>
+                                            <td>
+                                                Rate (INR)
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                            {% for item in result %}
+                                            <tr>
+                                                <td>{{ result.start_index|add:forloop.counter0 }}</td>
+                                               
+                                                <td class="text-capitalize">
+                                                    {{ item.weighment_supply_id }}
+                                                </td>
+                                                <td class="text-capitalize">
+                                                    {% if item.supplier  %}
+                                                        {{ item.supplier}}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                
+                                                <td class="text-capitalize">
+
+                                                    {% if item.aggregator.name %}
+                                                        {{ item.aggregator.name }}
+                                                    {% elif item.grower.name %}
+                                                        {{ item.grower.name }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                
+                                                <td class="text-capitalize">
+                                                    {% if item.supply_date  %}
+                                                        {{ item.supply_date|date:'d-m-Y' }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %} 
+                                                </td>
+                                                <td class="text-capitalize">
+                                                   {{ item.nt_wght }} Kg
+                                                </td>
+                                                <td>
+                                                   {{ item.leaf_receipt_id.final_leaf_count }}&nbsp;%
+                                                </td>
+                                                <td>
+                                                    {{ item.leaf_receipt_id.deduction }}&nbsp;%
+                                                </td>
+                                                {% if mode == "aggregator" %}
+                                                <td>
+                                                    {% if item.supply_id.alloted_vehicle %}
+                                                        {{ item.supply_id.alloted_vehicle }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                {% endif %}
+                                               
+                                                <td>{{ item.aggregator.name|default:'NA' }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                        {% else %}
+
+                                        <tr>
+                                            <td colspan="9" class="text-center text-danger">Sorry! No Record Found.</td>
+                                        </tr>
+
+                                        {% endif %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+
+                  
+<!-- Existing code for pagination -->
+{% if result.has_other_pages %}
+    <div class="d-flex justify-content-center paggination-sec">
+        <div class="">
+            <nav class="">
+                <ul class="pagination">
+                    <!-- Previous page link -->
+                    {% if result.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ result.previous_page_number }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.mode %}&mode={{ request.GET.mode }}{% endif %}{% if request.GET.entity_id %}&entity_id={{ request.GET.entity_id }}{% endif %}" tabindex="-1">Previous</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Page links -->
+                    {% for i in result.paginator.page_range %}
+                        {% if result.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                        {% elif i > result.number|add:'-2' and i < result.number|add:'2' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.mode %}&mode={{ request.GET.mode }}{% endif %}{% if request.GET.entity_id %}&entity_id={{ request.GET.entity_id }}{% endif %}">{{ i }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Next page link -->
+                    {% if result.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ result.next_page_number }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.mode %}&mode={{ request.GET.mode }}{% endif %}{% if request.GET.entity_id %}&entity_id={{ request.GET.entity_id }}{% endif %}">Next</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+{% endif %}
+
+
+                    
+                </div>
+
+            </div>
+
+            <!-- /.row -->
+
+            
+
+
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+
+{% endblock %}
+
+
+{% block js %}
+
+
+<script>
+
+    const select = document.getElementById('mode');
+    const selectedValue = select.value;
+
+    if (selectedValue == "Enable") {
+        $(".normal").hide();
+        $(".easy-weight").show();
+    } else if (selectedValue == "Disable") {
+        $(".normal").show();
+        $(".easy-weight").hide();
+    }
+    else{
+        $(".normal").show();
+        $(".easy-weight").hide();
+    }
+
+</script>
+
+<script>
+    $(document).ready(function () {
+        // console.log({{ grower }})
+        // $("#grower_id").val({{ grower }});
+        $("#id_region").val({{ region }});
+        // $("#associated_entity").val({{ entity_id }});
+    }); 
+</script>
+
+<script>
+
+    // var mode = $('#mode').val();
+    // var id_region = $('#id_region').val();
+
+    $('#id_region').on('change', function () {
+        var data = $(this).find('option').filter(':selected').val();
+        
+        var mode = $('#mode').val();
+        // var id_region = $(this).find('option').filter(':selected').val();
+        $("#associated_entity").empty().trigger('change');
+        // console.log('selected value:', data);
+        $.ajax({
+            url: "{% url 'user_profile:blf_list_region_wise' %}",
+
+                data: {
+                    'id' : data,
+                    'mode' : mode,
+                },    
+                // dataType: 'json',
+                success: function (data) {  
+
+                    $("#associated_entity").html(data);
+                    // $("#associated_entity").val({{ entity_id }});
+                },
+                error: function (rs, e) {
+                    console.log(rs);
+                    console.log(e)
+                }
+            });
+    });
+
+//  FOR MODE TO REGION
+
+$('#mode').on('change', function () {
+    var data = $(this).find('option').filter(':selected').val(); 
+    
+    $("#id_region").empty().trigger('change');
+    $("#associated_entity").empty().trigger('change');
+
+    if (data == "Enable") {
+        $(".normal").hide();
+        $(".easy-weight").show();
+    } else if (data == "Disable") {
+        $(".normal").show();
+        $(".easy-weight").hide();
+    }
+
+    // console.log(data);
+    // console.log("MODE #########")
+    $.ajax({
+            url: "{% url 'user_profile:region_list_easy_mode_wise' %}",
+                data: {
+                    'mode' : data,
+                },    
+                // dataType: 'json',
+                success: function (data) {  
+                    $("#id_region").html(data);
+                    // $("#associated_entity").val({{ entity_id }});
+                },
+                error: function (rs, e) {
+                    console.log(rs);
+                    console.log(e)
+                }
+            });        
+    });
+
+</script>
+
+<script>
+    $("#end_date").change(function() {
+      var start_date = document.getElementById("start_date").value;
+      var end_date = document.getElementById("end_date").value;
+  
+      if ((Date.parse(end_date) <= Date.parse(start_date))) {
+        alert("End date should be greater than Start date");
+        document.getElementById("end_date").value = "";
+      }
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+
+
+    $(document).ready(function () {
+        $(".select2_entity_id").select2({
+            placeholder: "Select Entity",
+            width: '100%',
+            allowClear: false,
+        });
+    });
+
+
+
+</script>
+
+{% endblock %}

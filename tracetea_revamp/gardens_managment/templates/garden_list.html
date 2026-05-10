@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} User Management {% endblock %}
+{% block css %}  
+    <style>
+        .p-user-image{
+            height: 40px;
+            border-radius: 30px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+
+
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form role="form"  method = "GET" action="{% url 'gardens_managment:garden_search' %}">
+
+                            <div class="row">
+                                <!-- <div class="col-lg-4">
+                                    <select class="form-control" name="tea_type">
+                                        
+                                        <option  value="all" >Select Tea Type Any</option>
+                                       
+                                        {% for item_type in tea_type_list  %}
+                                        <option value="{{ item_type.name }}" {% if tea_type == item_type.name %} selected {% endif %}>{{ item_type.name }}</option>
+                                        {% endfor %}
+
+                                    </select>
+                                </div> -->
+                              
+                                <div class="col-lg-6">
+                                    <input type="text" name="name" class="form-control" value="{{request.GET.name}}"  placeholder="Name">
+                                </div>
+                               
+                                <div class="col-lg-3 mt-4---">
+                                    <button type="submit" class="btn btn-success rounded-pill btn-block pl-4 pr-4"> <i
+                                            class="fas fa-search mr-2"></i> Search</button>
+                                </div>
+                                <div class="col-lg-3 mt-4---">
+                                    <a href="{% url 'gardens_managment:garden_list' grower_pk=grower_pk %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                            class="fas fa-eye mr-2 text-white" ></i> Show All</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted"> Graden List for - <strong class="text-capitalize">{{ grower_details.name }}</strong></h6>
+                    <h6 class="font-weight-bold  text-muted">Username - <strong class="text-capitalize">{{ grower_details.grower }} {{ grower_pk }}</strong> </h6>
+                    
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a type="button" href="{% url 'gardens_managment:garden_create' grower_pk=grower_pk %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-plus mr-2" aria-hidden="true"></i>Add New 
+                    </a>
+                </div>  
+            </div>
+
+            <div class="row ml-2 mr-2">
+
+                <div class="col-lg-12">
+
+                    <div class="card report-page">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Sr. No</th>
+                                            <th>Grower Name</th>
+                                            <th>Garden Name</th>
+                                            <th>Division Name</th>
+                                            <th>Plot Name</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        {% if garden_list %}
+                                            {% for item in garden_list %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td class="text-capitalize">{{ item.grower }}</td>
+                                                <td class="text-capitalize">{{ item.name }}</td>
+                                                <td class="text-capitalize">
+                                                    {% if item.is_division == True %}
+                                                    
+                                                        
+                                                        {% if item.garden_division.all %}
+                                                        <a  href="{% url 'gardens_managment:division_list' garden_pk=item.pk %}"  class="btn bg-success2 btn-xs text-white pl-3 pr-3"> 
+                                                            <i class="fas fa-list mr-2 text-white" aria-hidden="true"></i> Division List</a>
+                                                        
+
+                                                        {% else %}
+                                                        <a href="{% url 'gardens_managment:division_create' garden_pk=item.pk %}" class="btn bg-success2 btn-xs text-white pl-3 pr-3"> 
+                                                            <i class="fas fa-plus mr-2 text-white" aria-hidden="true"></i> Add Division</a>
+
+                                                        {% endif %}
+
+
+                                                        
+                                                        
+                                            
+                                                    {% else %}  
+
+                                                            
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-capitalize">
+
+                                                    {% if item.is_plot %}
+                                                    {% if item.garden_plot.all %}
+                                                    
+                                                        {% for plot_item in item.garden_plot.all  %}
+
+                                                            {{ plot_item.name }}{% if not forloop.last %},{% endif %}
+                                                        {% endfor %}
+
+                                                        <!-- <a  href="{% url 'gardens_managment:division_list' garden_pk=item.pk %}"  class="btn bg-success2 btn-xs text-white pl-3 pr-3"> 
+                                                        <i class="fas fa-list mr-2 text-white" aria-hidden="true"></i> Plot List</a>
+                                                        -->
+
+                                                    {% else %}
+                                                    
+
+                                                    {% endif %}
+
+                                                    {% else %}
+
+                                                    {% endif %}
+                                                        
+                                                    
+                                                </td>
+                                                <td class="project-actions ">                          
+                                                    <a class=" mr-3" href="{% url 'gardens_managment:garden_update' garden_pk=item.pk grower_pk=grower_pk %}"><i class="fa fa-edit"></i></a>
+                                                    <a class="" href="{% url 'gardens_managment:garden_delete' garden_pk=item.pk %}" onclick="return confirm('Are you sure you want to remove this Garden?');"><i class="fa fa-trash"></i> </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+
+                                        <tr>
+                                            <td colspan="9" class="text-center text-danger">Sorry! No Record Found.</td>
+                                        </tr>
+
+                                        {% endif %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+
+                    
+                    <!-- 
+                    <div class="d-flex justify-content-center">    
+                        <ul class="pagination pagination-sm mt-3 float-right">      
+                          <li class="page-item"><a class="page-link active" href="#">1</a></li>
+                          <li class="page-item"><a class="page-link" href="#">2</a></li>
+                          <li class="page-item"><a class="page-link" href="#">3</a></li>       
+                        </ul>
+                     </div> -->
+
+
+                     <div class="d-flex justify-content-cente paggination-sec">
+                        {% if is_paginated %}
+        
+                        <div class="">
+                            <nav  class="">
+                                <ul class="pagination">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+        
+                                    {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ i }} <span class="sr-only">(current)</span></a>
+                                    </li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                                    {% endif %}
+                                    {% endfor %}
+        
+        
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if garden_list.has_other_pages %}
+                    <div class="d-flex justify-content-cente paggination-sec">
+                        <div class="">
+                            <nav class="">
+                                <ul class="pagination">
+                                    {% if garden_list.has_previous %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="?page={{ garden_list.previous_page_number }}" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+
+
+                                    {% for i in garden_list.paginator.page_range %} 
+                                        {% if garden_list.number == i %}
+                                            <li class="page-item active">
+                                                <a class="page-link" href="#">{{ i }} </a>
+                                            </li>
+                                            
+                                        {% elif i > garden_list.number|add:'-3' and i < garden_list.number|add:'3' %}
+                                            <li class="page-item ">
+                                                <a class="page-link" href="?page={{ i }}">{{ i }} </a>
+                                            </li>
+                                        
+                                        {% endif %} 
+                                    {% endfor %} 
+
+                                    <!-- <li class="page-item active">
+                                        <a class="page-link" href="#">1 <span class="sr-only">(current)</span></a>
+                                    </li> -->
+
+                                    {% if garden_list.has_next %}
+
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ garden_list.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li>
+                                        <a class="next" href="javascript:void(0);"><i class="ion-ios-arrow-right"></i></a>
+                                    </li>
+                                    {% endif %}
+                    
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+
+
+                </div>
+
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+{% endblock %}
+
+
+{% block js %}
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+
+{% endblock %}

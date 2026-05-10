@@ -1,0 +1,361 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- bootstrap -->
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <!-- fav icon -->
+    <link rel="icon" type="image/png" href="{% static 'tracetea-logo.png' %}">
+    <!-- font awesome css -->
+    <!-- <link rel="stylesheet" href="{% static 'assets/css/font-awesome.min.css' %}"> -->
+    <!-- swiper css -->
+    <link rel="stylesheet" href="{% static 'assets/css/swiper-bundle.min.css' %}">
+    <!-- animation css -->
+    <link rel="stylesheet" href="{% static 'assets/css/aos.css' %}">
+    <!-- stellarnav css -->
+    <link rel="stylesheet" href="{% static 'assets/css/stellarnav.css' %}">
+    <!-- font family -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- custom css -->
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/responsive.css' %}">
+    <!-- fav icon -->
+    <link rel="icon" type="image/png" href="{% static 'assets/images/fav-icon.png' %}">
+    <title>TRACE TEA</title>
+
+</head>
+
+<body>
+    <!-- nav bar -->
+    <section class="nav-bar">
+        <div class="navbar-box">
+
+            <div class="nav-bar-logo">
+                <a href="/"> <img src="{% static 'assets/images/trusttea-logo.png' %}" class="img-fluid" alt=""> </a>
+            </div>
+            <div class="nav-bar-btn">
+                <a href="{% url 'accounts:admin_login' %}" target="_blank" class="btn btn-login"><span><i class="fa-solid fa-arrow-right-to-bracket"></i></span>
+                    LOGIN</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- digital section -->
+    <section class="digital-sec">
+        <div class="digitals-left">
+            <div class="digileft-head">
+                <div class="digileft-headlogo">
+                    <a href="#">
+                        <!-- <img src="{% static 'assets/images/tracetea-logo.png' %}" alt=""> -->
+                        <img src="{% static 'tracetea-logo.png' %}" alt="">
+                    </a>
+                </div>
+
+                <div class="digileft-hlecon">
+                    <h5>DIGITAL TRACEABILITY</h5>
+                    <h6>SYSTEM FOR TEA</h6>
+                </div>
+            </div>
+
+            <div class="digileft-con">
+                <p>
+                    trustea has envisaged to put in place a Digital Traceability System, subsequent to the Verification
+                    and Certification of the Tea gardens and BLFs for ensuring that the Certified factory procures green
+                    leaf only from the Certified Supply Chain and track the chain of custody till the made tea exit from
+                    the factory gate. This proposed Trustea Traceability System is also expected to ease the demands of
+                    record keeping towards compliance for all stakeholders. Further to that, it will help provide the
+                    necessary assurances to the consumers of Trustea Certified Tea. The objective is to put in place an
+                    easy to use, secure, integrated information technology system, covering the following stakeholders
+                    of the supply chain:
+                </p>
+                <ul class="digi-list">
+                    <li>
+                        Certified Factories
+                    </li>
+                    <li>
+                        Large Gardens
+                    </li>
+                    <li>
+                        Small Growers owning Small Tea Gardens
+                    </li>
+                    <li>
+                        Self Help Groups (SHG) of Small Tea Gardens
+                    </li>
+                    <li>
+                        Aggregators who procure Green tea leaf from small growers
+                    </li>
+                    <li>
+                        Sub-Aggregators who procure Green tea leaf from small growers
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="digitals-right">
+            <img src="{% static 'assets/images/hero-bg.png' %}" class="img-fluid" alt="">
+        </div>
+    </section>
+
+    <!-- {{ blf_count }} -->
+    <!-- hero section -->
+    <section class="register-box">
+        <!-- Swiper -->
+        <div class="swiper mySwiperregis">
+            <div class="swiper-wrapper">
+
+                <div class="swiper-slide">                  
+                    <div class="register-content">
+
+                        <h5 class="text-center pt-3">BLF</h5>
+                            
+                        <canvas id="blfChart"
+                            style="max-height: 270px; display: block; box-sizing: border-box; height: 260px; width: 442px;"></canvas>
+
+                    </div>
+                </div>
+
+                <div class="swiper-slide">
+                    
+                    <div class="register-content">
+                        <h5 class="text-center pt-3">Farmers</h5>
+                        <canvas id="stgChart"
+                            style="max-height: 270px; display: block; box-sizing: border-box;     height: 260px; width: 442px;"></canvas>
+
+                    </div>
+                </div>
+
+                <div class="swiper-slide">
+                    
+                    <div class="register-content">
+                        <h5 class="text-center pt-3">Aggregators</h5>
+                        <canvas id="aggreChart"
+                            style="max-height: 270px; display: block; box-sizing: border-box;     height: 260px; width: 442px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="swiper-slide">
+                    
+                    <div class="register-content">
+                        <h5 class="text-center pt-3">Farm Diary Usage</h5>
+                        <canvas id="weeklyChart"
+                            style="max-height: 270px; display: block; box-sizing: border-box;     height: 260px; width: 442px;"></canvas>
+                    </div>
+                </div>
+
+                
+            </div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+        </div>
+    </section>
+
+
+
+    <!-- JS Files -->
+    <!-- bootstrap JS -->
+    <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+
+    <!-- font awesome kit -->
+    <script src="https://kit.fontawesome.com/c7890550ed.js" crossorigin="anonymous"></script>
+
+    <!-- chart js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <!-- swiper JS -->
+    <script src="{% static 'assets/js/swiper-bundle.min.js' %}"></script>
+
+    <!-- Custom JS -->
+    <!-- <script src="{% static 'assets/js/custom.js' %}"></script> -->
+
+
+<script>
+    
+// chart
+const ctx = document.getElementById('blfChart').getContext('2d');
+	const myChart = new Chart(ctx, {
+		type: 'pie',
+		data: {
+            
+			labels: ['West Bengal - {{ west_bengal_blf_count }}', '	South India - {{ south_india_blf_count }}', 'Assam - {{ assam_blf_count }}', 'North East - {{ north_east_blf_count }}'],
+			
+            datasets: [{
+				label: '# BLF',
+				data: [{{ west_bengal_blf_count }}, {{ south_india_blf_count }}, {{ assam_blf_count }}, {{ north_east_blf_count }}],
+				backgroundColor: [
+					'rgba(51 102 204)',
+					'rgba(220 57 18)',
+					'rgba(255 153 0)',
+				      'rgba(16 150 24)'
+				],
+				borderColor: [
+					'rgba(90, 218, 69, 1)'
+				],
+			
+				borderWidth: 1
+			}],
+		
+		},
+            options: {   
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: 'right'
+                    }
+                  }
+                }
+	});
+	const stg = document.getElementById('stgChart').getContext('2d');
+	const stgChart = new Chart(stg, {
+		type: 'pie',
+		data: {
+			labels: ['West Bengal - {{ west_bengal_stg_count }}', '	South India - {{ south_india_stg_count }}', 'Assam - {{ assam_stg_count }}', 'North East - {{ north_east_stg_count }}'],
+			datasets: [{
+				label: '# of Votes',
+				data: [{{ west_bengal_stg_count }}, {{ south_india_stg_count }}, {{ assam_stg_count }}, {{ north_east_stg_count }}],
+				backgroundColor: [
+					'rgba(51 102 204)',
+					'rgba(220 57 18)',
+					'rgba(255 153 0)',
+				      'rgba(16 150 24)'
+				],
+				borderColor: [
+					'rgba(90, 218, 69, 1)'
+				],
+			
+				borderWidth: 1
+			}],
+		
+		},
+            options: {   
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: 'right'
+                    }
+                  }
+                }
+
+	});
+	const aggre = document.getElementById('aggreChart').getContext('2d');
+	const aggreChart = new Chart(aggre, {
+		type: 'pie',
+		data: {
+			labels: ['West Bengal - {{ west_bengal_agg_count }}', '	South India - {{ south_india_agg_count }}', 'Assam - {{ assam_agg_count }}', 'North East - {{ north_east_agg_count }}'],
+			datasets: [{
+				label: '# of Votes',
+				data: [{{ west_bengal_agg_count }}, {{ south_india_agg_count }}, {{ assam_agg_count }}, {{ north_east_agg_count }}],
+				backgroundColor: [
+					'rgba(51 102 204)',
+					'rgba(220 57 18)',
+					'rgba(255 153 0)',
+				    'rgba(16 150 24)'
+				],
+				borderColor: [
+					'rgba(90, 218, 69, 1)'
+				],
+			
+				borderWidth: 1
+			}],
+		
+		},
+            options: {   
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: 'right'
+                    }
+                  }
+                }
+
+	});
+
+
+	const weekly = document.getElementById('weeklyChart').getContext('2d');
+	const weeklyChart = new Chart(weekly, {
+		type: 'pie',
+		data: {
+			labels: ['West Bengal - {{ wb_total_farm_diary }}', '	South India - {{ si_total_farm_diary }}', 'Assam - {{ assam_total_farm_diary }}', 'North East - {{ north_east_total_farm_diary }}'],
+			datasets: [{
+				label: '# of Votes',
+				data: [{{ wb_total_farm_diary }}, {{ si_total_farm_diary }}, {{ assam_total_farm_diary }}, {{ north_east_total_farm_diary }}],
+				backgroundColor: [
+					'rgba(51 102 204)',
+					'rgba(220 57 18)',
+					'rgba(255 153 0)',
+				      'rgba(16 150 24)'
+				],
+				borderColor: [
+					'rgba(90, 218, 69, 1)'
+				],
+			
+				borderWidth: 1
+			}],
+		
+		},
+            options: {   
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: 'right'
+                    }
+                  }
+                }
+
+	});
+
+     
+
+
+
+    </script>
+
+    <!-- Register Section -->
+    <script>
+        var swiperregis = new Swiper(".mySwiperregis", {
+            pagination: {
+                el: ".swiper-pagination",
+                clickable: true,
+            },
+
+            slidesPerView: 3,
+            spaceBetween: 0,
+            // autoplay: {
+            //     delay: 3000,
+            // },
+            breakpoints: {
+                1199: {
+                    slidesPerView: 3,
+                    spaceBetween: 10
+                },
+                1024: {
+                    slidesPerView: 2,
+                    spaceBetween: 10
+                },
+                768: {
+                    slidesPerView: 1,
+                    spaceBetween: 10
+                },
+                640: {
+                    slidesPerView: 1,
+                    spaceBetween: 10
+                },
+                320: {
+                    slidesPerView: 1,
+                    spaceBetween: 10
+                }
+            },
+            navigation: {
+        nextEl: ".swiper-button-next",
+        prevEl: ".swiper-button-prev",
+      },
+        });
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Farm Diary- Map Create{% endblock %}
+{% block css %}
+<style>
+ 
+</style>
+
+
+{% endblock %}
+
+{% block content %}
+
+
+
+
+
+
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+                <div class="col-sm-6">
+                    <!-- <h6 class="font-weight-bold mt-3 text-muted">Add New <span class="text-capitalize"></span></h6> -->
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a type="button" href="{% url 'chemical_data:chemical_type_list' grower_pk=grower_pk %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back 
+                    </a>
+                </div>
+            </div>
+
+
+
+            <div class="row ml-2 mr-2">
+                <div class="col-lg-12">
+                    <div class="card report-page">
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table ">
+                                    <thead>
+                                        <tr>
+                                            <th>Upload Map </th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                         
+                                        
+                                        <tr>
+                                            <td class="text-capitalize text-center">
+                                                <a href="{% url 'chemical_data:farm_diary_mannual_map_create' grower_pk=grower_pk %}"  class="btn btn-primary btn-block">Mannual Map Image Upload</a>
+                                            </td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <td class=" text-center">
+                                               OR
+                                            </td>
+                                        </tr>                                       
+                                        
+                                        <tr>
+                                            <td class="text-capitalize text-center">
+                                                
+                                                <a href="{% url 'chemical_data:farm_diary_add_map' grower_pk=grower_pk map_area='total-land-under-agriculuture' %}"  class="btn btn-block btn-success">Digital Map Upload</a>
+                                                
+                                            </td>
+                                        </tr>
+                                        
+                                        
+                                        
+        
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                </div>
+            </div>
+
+
+
+
+
+
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+
+{% endblock %}
+
+{% block js %}
+
+{% endblock %}

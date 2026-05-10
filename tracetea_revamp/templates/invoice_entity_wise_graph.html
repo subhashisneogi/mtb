@@ -1,0 +1,102 @@
+{% load l10n %}
+{% load poll_extras %}
+<div class="card card-success mt-3" >
+  <div class="card-header" id="invoice_card_id">
+
+        <h3 class="card-title">Invoices generated month wise for {{ year }}, Entity - {{ blf_details.entity_unit }} ({{blf_details}})</h3>
+  </div>
+  <div class="card-body">
+      <div class="chart">
+        <canvas id="InvoiceEntityBarChart" style="width:100%;max-width:100%; height: 350px;"></canvas>
+      </div>
+  </div>
+</div>
+
+  <script>
+    // Check if the chart has already been initialized
+    if (typeof window.entityChart === 'undefined'){
+
+
+
+      console.log("1st Time ###****")
+        // Initial chart data
+        const xValuesInvoice = [{% for key, value in results %}'{{ key.0|month_name }}', {% endfor %}];
+        const yValuesInvoice = [{% for key, value in results %}{{ value.0| unlocalize }}, {% endfor %}];
+       
+        // Create the initial chart
+        window.entityChart = new Chart("InvoiceEntityBarChart", {
+            type: "bar",
+            data: {
+                labels: xValuesInvoice,
+                datasets: [{
+                    backgroundColor: 'rgba(60,141,188,0.9)',
+                    borderColor: 'rgba(60,141,188,0.8)',
+                    pointRadius: false,
+                    pointColor: '#3b8bba',
+                    pointStrokeColor: 'rgba(60,141,188,1)',
+                    pointHighlightFill: '#fff',
+                    pointHighlightStroke: 'rgba(60,141,188,1)',
+                    data: yValuesInvoice // Ensure values are treated as numbers
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            // min: 0,  // Explicitly set the minimum value to 0
+                            // precision: 0
+                        }
+                    }]
+                },
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: "Total Invoices in Year {{ year }} : {{ tot_invoice }}"
+                }
+            }
+        });
+    } else {
+
+        console.log("2nd Time ###****")
+
+        const xValuesInvoice2 = [{% for key, value in results %}'{{ key.0|month_name }}', {% endfor %}];
+        const yValuesInvoice2 = [{% for key, value in results %}{{ value.0| unlocalize }}, {% endfor %}];
+       
+
+        // Create the initial chart
+        window.entityChart = new Chart("InvoiceEntityBarChart", {
+            type: "bar",
+            data: {
+                labels: xValuesInvoice2,
+                datasets: [{
+                  backgroundColor: 'rgba(60,141,188,0.9)',
+                  borderColor: 'rgba(60,141,188,0.8)',
+                  pointRadius: false,
+                  pointColor: '#3b8bba',
+                  pointStrokeColor: 'rgba(60,141,188,1)',
+                  pointHighlightFill: '#fff',
+                  pointHighlightStroke: 'rgba(60,141,188,1)',
+                    data: yValuesInvoice2
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            // min: 0,  // Explicitly set the minimum value to 0
+                            // precision: 0
+                        }
+                    }]
+                },
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: "Total Invoices in Year {{ year }} : {{ tot_invoice }}"
+                }
+            }
+        });
+    }
+
+</script>

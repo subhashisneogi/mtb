@@ -1,0 +1,90 @@
+<div class="card report-page">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><a href="?q={{ search_query }}&sort=id&dir={% if sort == 'id' %}{{ next_dir }}{% else %}asc{% endif %}">Sr. No</a></th>
+                        <th><a href="?q={{ search_query }}&sort=tracetea_id&dir={% if sort == 'tracetea_id' %}{{ next_dir }}{% else %}asc{% endif %}">Tracetea ID</a></th>
+                        <th><a href="?q={{ search_query }}&sort=grower_name&dir={% if sort == 'grower_name' %}{{ next_dir }}{% else %}asc{% endif %}">Grower Name</a></th>
+                        <th>Associated Aggregator</th>
+                        <th><a href="?q={{ search_query }}&sort=mobile&dir={% if sort == 'mobile' %}{{ next_dir }}{% else %}asc{% endif %}">Mobile No.</a></th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if associated_grower_list %}
+                        {% for item in associated_grower_list %}
+                        <tr>
+                            <td>{{ associated_grower_list.start_index|add:forloop.counter0 }}</td>
+                            <td class="text-capitalize">{{ item.user|default:"NA" }}</td>
+                            <td class="text-capitalize">{{ item.name|default:"NA" }}</td>
+                            <td class="text-capitalize" style="white-space: normal;">
+                                {% for item_agg in item.associated_aggregator.all %}
+                                    {{ item_agg.name }}{% if not forloop.last %}, {% endif %}
+                                {% empty %}
+                                    NA
+                                {% endfor %}
+                            </td>
+                            <td>{{ item.mobile_number|default:"NA" }}</td>
+                            <td class="project-actions text-left">
+                                <div class="dropdown">
+                                    <button class="action-menu-button" type="button" data-toggle="dropdown"
+                                            aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-ellipsis-v"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <a class="dropdown-item action-link"
+                                           href="{% url 'chemical_data:chemical_type_list' grower_pk=item.user.id %}">
+                                            <i class="fa fa-eye"></i><span>View</span>
+                                        </a>
+                                        <a class="dropdown-item action-link"
+                                           href="{% url 'user_profile:grower_visting_card' grower_pk=item.pk %}"
+                                           target="_blank">
+                                            <i class="fa fa-print"></i><span>Visiting Card</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-danger">Sorry! No Record Found.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if associated_grower_list.has_other_pages %}
+<nav>
+    <ul class="pagination">
+        {% if associated_grower_list.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?q={{ search_query }}&sort={{ sort }}&dir={{ dir }}&page={{ associated_grower_list.previous_page_number }}">Previous</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+        {% endif %}
+
+        {% for i in associated_grower_list.paginator.page_range %}
+            {% if associated_grower_list.number == i %}
+            <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+            {% elif i > associated_grower_list.number|add:'-3' and i < associated_grower_list.number|add:'3' %}
+            <li class="page-item"><a class="page-link" href="?q={{ search_query }}&sort={{ sort }}&dir={{ dir }}&page={{ i }}">{{ i }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if associated_grower_list.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?q={{ search_query }}&sort={{ sort }}&dir={{ dir }}&page={{ associated_grower_list.next_page_number }}">Next</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}

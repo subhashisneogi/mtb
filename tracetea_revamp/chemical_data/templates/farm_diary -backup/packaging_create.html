@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Packaging / Distribution  {% endblock %}
+{% block css %}
+<style>
+#consignee-sec{
+    display: none;
+}
+#warehouse-sec{
+    display: none;
+}
+</style>
+
+{% endblock %}
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">{% if not form.instance.pk %} Add New Packaging / Distribution  {% else %} Edit Packaging / Distribution  {% endif %}</h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a type="button" href="{% url 'packaging:packaging_list' %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back 
+                    </a>
+                </div>
+            </div>
+            <!-- Small boxes (Stat box) -->
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12 col-12">
+                    <div class="row">
+                        <div class="white-box">
+
+                            <form method='POST' role="form" id="create-form" >
+                                {% csrf_token %}
+                                <h5>Packaging / Distribution   {% if not form.instance.pk %}  {% else %}  {% endif %}  </h5>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="row">
+                                            
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">Invoice No</label>
+                                                    {{ form.invoice_no }}
+                                                    {{ form.invoice_no.errors }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6" >
+                                                <div class="form-group">
+                                                    <label class="required_field---">Type of Dispatch</label>
+                                                    {{ form.type_of_dispatch }}
+                                                    {{ form.type_of_dispatch.errors }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6" id="consignee-sec">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Consignee</label>
+                                                    {{ form.consignee }}
+                                                    {{ form.consignee.errors }}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-sm-6" id="warehouse-sec">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Warehouse CTM No</label>
+                                                    {{ form.warehouse }}
+                                                    {{ form.warehouse.errors }}
+                                                </div>
+                                            </div>
+
+
+                                           
+
+                                         
+
+                                        </div>
+                                    </div>
+
+
+                                  
+
+                
+                                </div>
+
+
+                                <div class="row">
+
+                                    <div class="col-lg-3 white-box-submit">
+                                        <button type="submit"
+                                            class="btn btn-block btn-success pt-2 pb-2">Create</button>
+                                    </div>
+
+                                    {% if not form.instance.pk %}
+                                        <div class="col-lg-3 white-box-reset">
+                                            <button type="button" id="resetButton" 
+                                            class="btn btn-block btn-default pt-2 pb-2">Reset</button>
+                                        </div>
+                                    {% endif %} 
+
+                                   
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+
+
+
+
+
+{% endblock %}
+
+{% block js %}
+
+<script>
+// Reset Form
+$(document).ready(function(){
+    $("#resetButton").on("click", function(e){
+            console.log("reset btn");
+            // location.reload();
+            $("#create-form").get(0).reset()
+            $('#grade_id').val(null).trigger('change');
+            // $('#select2-land_type').val(null).trigger('change');
+            
+    });
+});
+
+</script>
+
+<script>
+    $(document).ready(function(){
+      $("#type_of_dispatch").on('change', function () {
+        var data = $(this).val();
+        if(data=="Auction"){
+            $("#warehouse-sec").show();
+            $("#consignee-sec").hide();
+        }
+        else{
+            $("#warehouse-sec").hide();
+            $("#consignee-sec").show();
+        }
+      });
+    });
+
+</script>
+
+
+
+
+
+
+{% endblock %}

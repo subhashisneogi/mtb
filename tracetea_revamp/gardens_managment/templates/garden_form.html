@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} User Management {% endblock %}
+{% block css %}
+<link href="{% static 'switchery/switchery.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1 ">
+                <div class="col-sm-6 ">
+                    <h6 class="font-weight-bold  text-muted">{% if not form.instance.pk %} Add New {% else %} Edit Tea Garden     {% endif %}</h6>
+                </div>
+                <div class="col-sm-6  text-right modalright">
+
+                    {% if form.instance.pk %}
+                    <a type="button" href="{% url 'gardens_managment:garden_details' grower_pk=grower_id %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back 
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Small boxes (Stat box) -->
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12 col-12">
+                    <div class="row">
+                        <div class="white-box">
+
+                            <form method='POST' role="form" id="create-form" >
+                                {% csrf_token %}
+                                <h5>{% if not form.instance.pk %} Create {% else %} Edit {% endif %} Garden</h5>
+                                <div class="row">
+                                    <div class="col-sm-8">
+
+
+                                        <div class="row">
+                                            <input type="hidden" class="fomt-control" name="grower" value="{{ grower_id }}">
+                                                    
+                                                    <!-- <div class="col-sm-6">
+                                                        <div class="form-group">
+                                                            <label class="required_field">Grower</label>
+
+                                    
+                                                            {{ form.grower }}
+                                                            {{ form.grower.errors }}
+                                                        </div>
+                                                    </div> -->
+
+                                                
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Land Type</label>
+                                                    {{ form.land_type }}
+                                                    {{ form.land_type.errors }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field"> Garden Name</label>
+                                                    {{ form.name }}
+                                                    {{ form.name.errors }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---"> Production Area (hec)</label>
+                                                    {{ form.production_area }}
+                                                    {{ form.production_area.errors }}
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <h5>Division</h5>
+
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label class="required_field---">Division</label>
+                                            {{ form.is_division }}
+                                            {{ form.is_division.errors }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!--  Plot Details Formset  -->
+
+
+                              
+
+                                <div id="show-p">
+                                    <h5>Plot Details</h5>
+                                    <div class="row">
+                                        <div class="col-lg-12 col-sm-12">
+                                            <div class="table-responsive">
+                                                <table class="table table-striped--- ">
+                                                    {{ plot_details_form_set.management_form }}
+                                                    <thead>
+                                                        <tr>
+                                                            <th colspan="4">
+                                                                Plot Details</th>
+                                                                <th></th>
+                                                        </tr>
+                                                    </thead>
+
+                                                    <tbody>
+                                                        {% for form in plot_details_form_set %}
+                                                        <tr class='{% cycle "row1" "row2" %}  formset_row'>
+    
+                                                            <td>
+    
+                                                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                                                                {{ form.id }}
+                                                                {{ form.capacity_qty }}
+    
+                                                            </td>
+                                                            <td>{{ form.name }}</td>
+                                                            <td>{{ form.plot_area }}</td>
+                                                            
+                                                            <td></td>
+                                                            
+    
+                                                        </tr>
+    
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div class="row">  
+                                    {% if form.instance.pk %}    
+                                    <div class="col-lg-3 white-box-submit">
+                                        <button type="submit" id="submit" class="btn btn-block btn-success pt-2 pb-2">Update</button>
+                                    </div>
+                                    
+                                    {% else %}
+                                    <div class="col-lg-3 white-box-submit">
+                                        <button type="submit" id="submit" class="btn btn-block btn-success pt-2 pb-2">Create</button>
+                                    </div>
+                                    <div class="col-lg-3 white-box-reset">
+                                        <button type="button" id="resetButton" 
+                                        class="btn btn-block btn-default pt-2 pb-2">Reset</button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+
+
+{% endblock %}
+
+{% block js %}
+
+<script src="{% static 'switchery/switchery.js' %}"></script>
+<script src="{% static 'formset/jquery.formset.js' %}"></script>
+
+<script>
+    // Reset Form
+    $(document).ready(function(){
+        $("#resetButton").on("click", function(e){
+            console.log("reset btn");
+            // location.reload();
+            $("#create-form").get(0).reset()
+            $('#select2-grower').val(null).trigger('change');
+            $('#select2-land_type').val(null).trigger('change');
+            
+        });
+    });
+
+</script>
+
+<script>
+    $(document).ready(function () {
+
+        $('.formset_row').formset({
+            addText: 'add more extra',
+            deleteText: 'remove',
+            prefix: '{{ plot_details_form_set.prefix }}',
+            formCssClass: 'dynamic-formset1',
+        });
+
+        $('.formset_row2').formset({
+            addText: 'add more extra',
+            deleteText: 'remove',
+            prefix: '{{ division_form_set.prefix }}',
+            formCssClass: 'dynamic-formset1',
+        });
+
+    });
+</script>
+
+<script type="text/javascript">
+    var elem = document.querySelector('.js-switch_1');
+    var init = new Switchery(elem);
+</script>
+
+<script>
+    $(document).ready(function(){
+      $("#id_is_division").change(function(e){
+        console.log(e.target.checked);
+        if (e.target.checked) {
+            $("#show-p").hide();
+        } else {
+            $("#show-p").show();
+        }
+      });
+    });
+
+    $("#submit").click(function(e){
+        if($("#id_is_division").is(':checked'))
+        {
+            $("#plot_name_id").prop('required',false);     
+
+        }else{
+            $("#plot_name_id").prop('required',true);
+        }
+        
+    });
+
+    $(document).ready(function () {
+        if($("#id_is_division").is(':checked'))
+        {
+            $("#show-p").hide();   
+
+        }else{
+            $("#show-p").show();
+        }
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,332 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>0f64cd98-39bc-4987-9137-7ff8b51adaab</title>
+    <meta name="author" content="Debasish Dutta" />
+    <style type="text/css">
+        * {
+            margin: 0;
+            padding: 0;
+            text-indent: 0;
+        }
+
+        .s1 {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: italic;
+            font-weight: normal;
+            text-decoration: none;
+            font-size: 11pt;
+        }
+
+        .s2 {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 14pt;
+        }
+
+        h2 {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 11pt;
+        }
+
+        h1 {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            text-decoration: underline;
+            font-size: 14pt;
+        }
+
+        .s3 {
+            color: #FFF;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 11pt;
+        }
+
+        .s4 {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: normal;
+            text-decoration: none;
+            font-size: 11pt;
+        }
+
+        .s5 {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 11pt;
+        }
+
+        p {
+            color: black;
+            font-family: Calibri, sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            text-decoration: none;
+            font-size: 10pt;
+            margin: 0pt;
+            padding-top: 8px;
+
+        }
+
+        table,
+        tbody {
+            vertical-align: top;
+            overflow: visible;
+        }
+        .td-left-cell-style {
+            border-left-style:solid;
+            border-left-width:1pt;
+            border-right-style:solid;
+            border-right-width:1pt
+        }
+
+        .td-cell-style {
+            border-top-style:solid;
+            border-top-width:1pt;
+            border-left-style:solid;
+            border-left-width:1pt;
+            border-bottom-style:solid;
+            border-bottom-width:1pt;
+            border-right-style:solid;
+            border-right-width:1pt
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            padding: 0 50px;
+        }
+
+        .signature {
+            text-align: center;
+            width: 20%;
+        }
+
+        .signature-line {
+            border-top: 2px solid black;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <p class="s1" style="text-indent: 0pt;line-height: 13pt;text-align: right;">Report generated as on {% now "d/m/Y" %}
+    </p>
+    <p class="s2" style="padding-top: 1pt;text-indent: 0pt;text-align: center;">{{blf_profile.entity_name }}
+        ({{blf_profile.user}})</p>
+    <p style="padding-top: 1pt;text-indent: 0pt;text-align: center;">Address: {{blf_profile.address|default:'NA'}}</p>
+    <p style="padding-top: 1pt; text-indent: 0pt; line-height: 107%; text-align: center; margin: 0 auto;">
+        District: {{ blf_profile.district|default:'NA'|title }}, State: {{ blf_profile.state|default:'NA'|title }}
+    </p>
+    <p style="padding-top: 1pt;text-indent: 0pt;text-align: center;">
+        Report from: {{ start_date|date:'d-m-Y' }}
+        To {{ end_date|date:'d-m-Y' }}
+    </p>
+    <p style="padding-top: 1pt;text-indent: 0pt;text-align: left;"><br /></p>
+    <h1 style="text-indent: 0pt;text-align: center;">INVOICE REGISTER</h1>
+    <p style="padding-top: 7pt;text-indent: 0pt;text-align: left;"><br /></p>
+    <table style="border-collapse:collapse;margin: 0 auto;" cellspacing="0">
+        {% if result %}
+        {% for item in result %}
+        <tr style="height:16pt">
+            {% if forloop.counter == 1 %}
+            <td class="td-left-cell-style" style="width:57pt;"
+                bgcolor="#000000">
+                <p class="s3" style="padding-left: 14pt;text-indent: 0pt;line-height: 13pt;text-align: left;">SL No.</p>
+            </td>
+            {% else %}
+            <td class="td-cell-style" style="width:57pt;"
+                bgcolor="#000000">
+                <p class="s3" style="padding-left: 14pt;text-indent: 0pt;line-height: 13pt;text-align: left;"></p>
+            </td>
+            {% endif %}
+            <td class="td-cell-style" style="width:78pt;"
+                bgcolor="#000000">
+                <p class="s3" style="text-indent: 0pt;line-height: 13pt;text-align: center;">Invoice No.</p>
+            </td>
+            <td class="td-cell-style" style="width:170pt;"
+                bgcolor="#000000">
+                <p class="s3" style="text-indent: 0pt;line-height: 13pt;text-align: center;">Invoice Date</p>
+            </td>
+            <td class="td-cell-style" style="width:184pt;"
+                bgcolor="#000000">
+                <p class="s3" style="text-indent: 0pt;line-height: 13pt;text-align: center;">Type of Dispatch</p>
+            </td>
+            <td class="td-cell-style" style="width:198pt;"
+                bgcolor="#000000">
+                <p class="s3" style="text-indent: 0pt;line-height: 13pt;text-align: center;">Consignee / Warehouse CTM
+                    No.</p>
+            </td>
+        </tr>
+        <tr style="height:15pt">
+            <td class="td-cell-style" style="width:57pt;"
+                rowspan="{% if item.batchlist_invoice_no.all %}
+                {{item.batchlist_invoice_no.count|add:2 }} {% else %} 3 {% endif %}">
+                <p style="padding-top: 9pt;text-indent: 0pt;text-align: left;"><br /></p>
+                <p class="s4" style="text-indent: 0pt;text-align: center;">
+                    {{ forloop.counter }}
+                </p>
+            </td>
+            <td class="td-cell-style" style="width:78pt;"
+                rowspan="{% if item.batchlist_invoice_no.all %}
+                {{item.batchlist_invoice_no.count|add:2 }} {% else %} 3 {% endif %}">
+                <p style="padding-top: 9pt;text-indent: 0pt;text-align: left;"><br /></p>
+                <p class="s4" style="text-indent: 0pt;text-align: center;">
+                    {{ item.invoice_no|default:'NA' }}
+                </p>
+            </td>
+            <td class="td-cell-style"
+                style="width:170pt;">
+                <p class="s4" style="text-indent: 0pt;line-height: 13pt;text-align: center;">
+                    {{ item.invoice_date|date:'d-m-Y'|default:'NA' }}
+                </p>
+            </td>
+            <td class="td-cell-style"
+                style="width:184pt;">
+                <p class="s4" style="text-indent: 0pt;line-height: 13pt;text-align: center;">
+                    {% if item.lot_batch_range.all %}
+                    {% for obj in item.lot_batch_range.all %}
+                    {{ obj.type_of_dispatch }}
+                    {% endfor %}
+                    {% else %}
+                    NA
+                    {% endif %}
+                </p>
+            </td>
+            <td class="td-cell-style"
+                style="width:198pt;">
+                <p class="s4" style="text-indent: 0pt;line-height: 13pt;text-align: center;">
+                    {% if item.lot_batch_range.all %}
+                    {% for obj in item.lot_batch_range.all %}
+                    {% if obj.type_of_dispatch == "Auction" %}
+                    {% if obj.warehouse %}
+                    {{ obj.warehouse }}
+                    {% else %}
+                    NA
+                    {% endif %}
+                    {% elif not obj.type_of_dispatch == "Auction" %}
+                    {% if obj.consignee %}
+                    {{ obj.consignee }}
+                    {% else %}
+                    NA
+                    {% endif %}
+
+                    {% endif %}
+                    {% endfor %}
+                    {% else %}
+                    NA
+                    {% endif %}
+                </p>
+            </td>
+        </tr>
+        <tr style="height:15pt">
+            <td  class="td-cell-style" style="width:170pt;"
+                bgcolor="#E7E6E6">
+                <p class="s5" style="text-indent: 0pt;line-height: 13pt;text-align: center;">Batch / Lot No.</p>
+            </td>
+            <td class="td-cell-style" style="width:184pt;"
+                bgcolor="#E7E6E6">
+                <p class="s5" style="text-indent: 0pt;line-height: 13pt;text-align: center;">Bag No. from and To</p>
+            </td>
+            <td class="td-cell-style" style="width:198pt;"
+                bgcolor="#E7E6E6">
+                <p class="s5" style="text-indent: 0pt;line-height: 13pt;text-align: center;">Bag Weight (Kg.)</p>
+            </td>
+        </tr>
+        {% if item.batchlist_invoice_no.all %}
+
+        {% for obj in item.batchlist_invoice_no.all %}
+
+        <tr style="height:15pt">
+            <td class="td-cell-style"
+                style="width:170pt;">
+                <p class="s4" style="padding-top: 1pt;text-indent: 0pt;line-height: 12pt;text-align: center;">
+                    {{ obj.lot_batch|default:'NA' }}
+                </p>
+            </td>
+            <td class="td-cell-style"
+                style="width:184pt;">
+                <p class="s4" style="padding-top: 1pt;text-indent: 0pt;line-height: 12pt;text-align: center;">
+                    {{ obj.bag_no_range|default:'NA' }}
+                </p>
+            </td>
+            <td class="td-cell-style"
+                style="width:198pt;">
+                <p class="s4" style="text-indent: 0pt;line-height: 13pt;text-align: center;">
+                    {{ obj.lot_batch.bag_weight_kg|default:'NA' }} Kg
+                </p>
+            </td>
+        </tr>
+
+        {% endfor %}
+
+        {% else %}
+        <tr style="background: #fff; border: #373737 1px solid; ">
+            <td colspan="3"
+                style="text-align: center;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 13px; color: #c50b0b; vertical-align: top;">
+                No Data Found</td>
+        </tr>
+        {% endif %}
+
+        {% endfor %}
+        {% else %}
+        <tr style="background: #fff; border: #373737 1px solid; ">
+            <td colspan="3"
+                style="text-align: center;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 13px; color: #c50b0b; vertical-align: top;">
+                No Data Found</td>
+        </tr>
+        {% endif %}
+    </table>
+    <p style="text-indent: 0pt;text-align: left;"><br /><br /><br></p>
+
+    <table style="margin: 0 auto; border: 0px solid #000;" cellspacing="0">
+        <tbody >
+            <tr style="height:15pt">
+                <td style="border: 0px solid #000; width: 400px;">
+                    <div class="signature-line">
+                        <p style="font-size: 12px;">(Signature of Trustea Officer)</p>
+                    </div>
+                </td>
+                <td style="border: 0px solid #000; width: 120px;">
+                    
+                </td>
+                <td style="border: 0px solid #000; width: 400px; text-align: right;">
+                    <div class="signature-line">
+                        <p style="font-size: 12px;">(Signature of Manager)</p>
+                    </div>
+
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+
+
+
+
+
+</body>
+
+</html>

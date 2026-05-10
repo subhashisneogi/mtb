@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Plucking Data  {% endblock %}
+{% block css %}  
+    <style>
+        .p-user-image{
+            height: 40px;
+            border-radius: 30px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form role="form"  method = "GET" action="{% url 'chemical_data:plucking_data_search' %}">
+
+                            <div class="row">
+
+                                <input type="hidden" name="grower_pk" value="{{ grower_pk }}">
+                              
+                                <div class="col-lg-4">
+                                    <label class="text-capitalize"><b>Start Date</b></label>
+                                    <input type="date" name="start_date" id="start_date"  class="form-control"  placeholder="Leaf Start Date" required>
+                                </div>
+                                <div class="col-lg-4">
+                                    <label class="text-capitalize"><b>End Date</b></label>
+                                    <input type="date" name="end_date" id="end_date"  class="form-control"  placeholder="Leaf End Date" required>
+                                </div>
+                               
+                                <div class="col-lg-2 col-md-6 mt-4">
+                                    <button type="submit" class="btn btn-success rounded-pill btn-block pl-4 pr-4"> <i
+                                            class="fas fa-search mr-2"></i> Search</button>
+                                </div>
+                                <div class="col-lg-2 col-md-6 mt-4">
+                                    <a href="{% url 'chemical_data:plucking_data_view_list' grower_pk=grower_pk %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                            class="fas fa-eye mr-2 text-white" ></i> Show All</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted text-capitalize">Grower - {{ grower_details.name }} ({{grower_details}})</h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <!-- <a type="button" href="{% url 'chemical_data:generate_plucking_data_pdf' %}?start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}&grower_pk={{ grower_pk }}" style="width: 10rem" class="btn bg-danger text-white pl-3 pr-3">
+                        <i class="fa fa-download  mr-2"  aria-hidden="true"></i>Download PDF
+                    </a> -->
+                    <a type="button" href="{% url 'chemical_data:plucking_data_view_create' grower_pk=grower_pk %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-plus  mr-2" aria-hidden="true"></i>Add New
+                    </a>
+                    <a type="button" href="{% url 'chemical_data:chemical_type_list' grower_pk=grower_pk %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left  mr-2" aria-hidden="true"></i>Back
+                    </a>
+                </div>
+            </div>
+
+            <div class="row ml-2 mr-2">
+
+                <div class="col-lg-12">
+
+                    <div class="card report-page">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Sr. No</th>
+                                            <th>Plucking Date</th>
+                                            <th>Plucking Time</th>
+                                            <th>Division Name</th>
+                                            <th>Plot Name</th>
+                                            <th>Area Plucked (ha)</th>
+                                            <th>Qty Plucked (Kg)</th>
+                                            <th>Labour</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        {% if plucking_data_list %}
+                                            {% for item in plucking_data_list %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                               
+                                                <td class="text-capitalize">
+                                                    {% if item.date %}
+                                                        {{ item.date|date:"d-m-Y" }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-capitalize">
+                                                    {% if item.plucking_time %}
+                                                        {{ item.plucking_time }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                    
+                                                </td>
+                                                <td class="text-capitalize">
+
+                                                    {% if item.division %}
+                                                        {{ item.division }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+
+                                                </td>
+                                                <td class="text-capitalize">
+                                                    {% if item.plot %}
+                                                        {{ item.plot }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-capitalize">
+                                                    {% if item.area_plucked %}
+                                                        {{ item.area_plucked }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-capitalize">
+                                                    {% if item.quantity_plucked %}
+                                                        {{ item.quantity_plucked }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-capitalize">
+                                                    {% if item.labour %}
+                                                        {{ item.labour }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-capitalize">
+                                                    <a class=" mr-3" href="{% url 'chemical_data:plucking_data_view_edit' grower_pk=grower_pk plucking_data_pk=item.pk %}"><i class="fa fa-edit"></i></a>
+                                                    <!-- <a class="" href="{% url 'chemical_data:plucking_data_delete' plucking_data_pk=item.pk %}" onclick="return confirm('Are you sure you want to remove this item?');"><i class="fa fa-trash"></i> </a> -->
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+
+                                        <tr>
+                                            <td colspan="9" class="text-center text-danger">Sorry! No Record Found.</td>
+                                        </tr>
+
+                                        {% endif %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    
+                        <!-- /.card-body -->
+                    </div>
+
+                    <!-- 
+                    <div class="d-flex justify-content-center">    
+                        <ul class="pagination pagination-sm mt-3 float-right">      
+                          <li class="page-item"><a class="page-link active" href="#">1</a></li>
+                          <li class="page-item"><a class="page-link" href="#">2</a></li>
+                          <li class="page-item"><a class="page-link" href="#">3</a></li>       
+                        </ul>
+                     </div> -->
+
+
+                     <div class="d-flex justify-content-cente paggination-sec">
+                        {% if is_paginated %}
+        
+                        <div class="">
+                            <nav  class="">
+                                <ul class="pagination">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+        
+                                    {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ i }} <span class="sr-only">(current)</span></a>
+                                    </li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                                    {% endif %}
+                                    {% endfor %}
+        
+        
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if plucking_data_list.has_other_pages %}
+                    <div class="d-flex justify-content-cente paggination-sec">
+                        <div class="">
+                            <nav class="">
+                                <ul class="pagination">
+                                    {% if plucking_data_list.has_previous %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="?page={{ plucking_data_list.previous_page_number }}" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+
+
+                                    {% for i in plucking_data_list.paginator.page_range %} 
+                                        {% if plucking_data_list.number == i %}
+                                            <li class="page-item active">
+                                                <a class="page-link" href="#">{{ i }} </a>
+                                            </li>
+                                            
+                                        {% elif i > plucking_data_list.number|add:'-3' and i < plucking_data_list.number|add:'3' %}
+                                            <li class="page-item ">
+                                                <a class="page-link" href="?page={{ i }}">{{ i }} </a>
+                                            </li>
+                                        
+                                        {% endif %} 
+                                    {% endfor %} 
+
+                                    <!-- <li class="page-item active">
+                                        <a class="page-link" href="#">1 <span class="sr-only">(current)</span></a>
+                                    </li> -->
+
+
+
+
+                                    {% if plucking_data_list.has_next %}
+
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ plucking_data_list.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li>
+                                        <a class="next" href="javascript:void(0);"><i class="ion-ios-arrow-right"></i></a>
+                                    </li>
+                                    {% endif %}
+                    
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+
+
+                </div>
+
+            </div>
+
+
+
+
+            <!-- /.row -->
+
+
+
+
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+
+{% endblock %}
+
+{% block js %}
+
+<script>
+    $("#end_date").change(function() {
+      var start_date = document.getElementById("start_date").value;
+      var end_date = document.getElementById("end_date").value;
+  
+      if ((Date.parse(end_date) <= Date.parse(start_date))) {
+        alert("End date should be greater than Start date");
+        document.getElementById("end_date").value = "";
+      }
+    });
+</script>
+
+
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+
+{% endblock %}

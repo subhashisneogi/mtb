@@ -1,0 +1,167 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Log in | Trustea</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- icheck bootstrap -->
+    <link rel="stylesheet" href="{% static 'plugins/icheck-bootstrap/icheck-bootstrap.min.css' %}">
+    <!-- Adminlte style -->
+    <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}">
+    <!-- style -->
+    <link rel="stylesheet" href="{% static 'dist/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'dist/css/responsive.css' %}">
+
+
+	<link href="{% static 'sweetalert/css/sweetalert.css' %}" rel="stylesheet">
+
+	<!-- toaster css -->
+	<link rel="stylesheet" href="{% static 'toaster/toastr.min.css' %}" type="text/css" />
+
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+
+    <style>
+        .login-page {
+            background-image: url("{% static 'bg.jpg' %}");
+            background-color: #cccccc;
+            /* height: 500px; */
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            position: relative;
+        }
+    </style>
+
+</head>
+
+<body class="hold-transition login-page">
+    <div class="login-box">
+
+        <!-- /.login-logo -->
+        <div class="card">
+            <div class="card-body login-card-body">
+
+                <div class="login-logo">
+                    <a href="/"><img src="{% static 'tracetea-logo.png' %}" alt="smallteagrowers"
+                            title="smallteagrowers"></a>
+                </div>
+
+                <h6 class="login-box-msg">Login</h6>
+
+
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="usr">User Id</label>
+                        <input type="text" name="email" id="email" class="form-control" placeholder="" autocomplete="off"
+                        required >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pwd">Password</label>
+                        <input type="password" class="form-control" type="password" name="password" id="password" 
+                            autocomplete="off" required    placeholder="***********">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mt-2 d-flex justify-content-center">
+                            <button type="submit" class="btn btn-success w-75 rounded-pill">Login</button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+            <!-- /.login-card-body -->
+        </div>
+
+    </div>
+    <!-- /.login-box -->
+
+
+    <div class="container-fluid login-footer">
+        <footer class="main-footer ml-0">
+            <div class="float-right d-none d-sm-block">
+                <p> © COPYRIGHT - 2023 | Small Tea Growers</p>
+            </div>
+            <div class="growerlogo"><img src="{% static 'dist/img/Grower.png' %}" alt="" title=""></div>
+        </footer>
+    </div>
+
+    <!-- jQuery -->
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <!-- Bootstrap 4 -->
+    <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- App -->
+    <script src="{% static 'dist/js/adminlte.min.js' %}"></script>
+
+
+    <!-- Sweet alert -->
+    <script src="{% static 'sweetalert/js/sweetalert.min.js' %}"></script>
+
+    <!-- Toaster JS -->
+    <script src="{% static 'toaster/toastr.min.js' %}"></script>
+
+
+
+
+    {% if messages %}
+    {% for message in messages %}
+    {% if message.tags == 'error' %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            setTimeout(function () {
+                toastr.options = {
+                    closeButton: true,
+                    progressBar: true,
+                    showMethod: 'slideDown',
+                    timeOut: 12000
+                };
+                toastr.error('', '{{ message }}');
+
+            }, 1300);
+        });
+    </script>
+    {% else %}
+    <!-- <script type="text/javascript">
+        $(document).ready(function () {
+            setTimeout(function () {
+                toastr.options = {
+                    closeButton: true,
+                    progressBar: true,
+                    showMethod: 'slideDown',
+                    timeOut: 12000
+                };
+                toastr.success('', '{{ message }}');
+
+            }, 1300);
+        });
+    </script> -->
+    {% endif %}
+    {% endfor %}    
+    {% endif %}
+
+
+
+
+
+
+
+
+
+
+</body>
+
+</html>

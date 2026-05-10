@@ -1,0 +1,513 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %}Monthly Schedule of Work{% endblock %}
+{% block css %}
+<style>
+    .schedule-panel {
+        border: 1px solid #d9e5ee;
+        border-radius: 8px;
+        margin-bottom: 18px;
+        overflow: hidden;
+    }
+    .schedule-panel-header {
+        align-items: center;
+        background: #f7fafc;
+        border-bottom: 1px solid #d9e5ee;
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 14px;
+    }
+    .schedule-panel-title {
+        color: #53616d;
+        font-weight: 700;
+    }
+    .schedule-panel-body {
+        padding: 14px;
+    }
+    .schedule-row {
+        align-items: start;
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 84px minmax(180px, 1fr) minmax(180px, 1fr) 44px;
+        margin-bottom: 12px;
+    }
+    .schedule-row-header {
+        color: #55b735;
+        display: grid;
+        font-weight: 700;
+        gap: 14px;
+        grid-template-columns: 84px minmax(180px, 1fr) minmax(180px, 1fr) 44px;
+        margin-bottom: 8px;
+    }
+    .schedule-field {
+        min-width: 0;
+    }
+    .schedule-field .form-control {
+        width: 100%;
+    }
+    .schedule-remove {
+        height: 46px;
+        margin-top: 0;
+        width: 44px;
+    }
+    .schedule-add {
+        min-width: 120px;
+    }
+    .schedule-add:disabled {
+        cursor: not-allowed;
+        opacity: .6;
+    }
+    .schedule-week-label {
+        color: #53616d;
+        font-weight: 700;
+        padding-bottom: 12px;
+    }
+    .schedule-message {
+        color: #6c7883;
+        min-height: 20px;
+    }
+    .schedule-field-error {
+        color: #dc3545;
+        display: block;
+        font-size: 13px;
+        line-height: 1.25;
+        margin-top: 5px;
+        min-height: 0;
+    }
+    .schedule-invalid {
+        border-color: #dc3545 !important;
+    }
+    @media (max-width: 767px) {
+        .schedule-row,
+        .schedule-row-header {
+            grid-template-columns: 1fr;
+        }
+        .schedule-row-header {
+            display: none;
+        }
+        .schedule-week-label {
+            padding-bottom: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">{% if not form.instance.pk %}Add New{% else %}Edit{% endif %} Monthly Schedule</h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a href="{% url 'chemical_data:farmdiary_monthly_shedule_list' grower_pk=grower_pk %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2"></i>Back
+                    </a>
+                </div>
+            </div>
+
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form method="POST" id="monthly-schedule-form">
+                            {% csrf_token %}
+                            <h5>Grower - {{ grower_details.name }}</h5>
+
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="required_field">Select Year</label>
+                                        {{ form.year }}
+                                        {{ form.year.errors }}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="required_field">Select Month</label>
+                                        {{ form.month }}
+                                        {{ form.month.errors }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="schedule-panel">
+                                <div class="schedule-panel-header">
+                                    <div>
+                                        <span class="schedule-panel-title required_field">Days and Hours</span>
+                                        <div id="week-row-help" class="schedule-message"></div>
+                                    </div>
+                                    <button type="button" id="add-week-row" class="btn bg-success2 text-white schedule-add" disabled>
+                                        <i class="fa fa-plus mr-2"></i>Add Row
+                                    </button>
+                                </div>
+                                <div class="schedule-panel-body">
+                                    <div class="schedule-row-header">
+                                        <div>Week</div>
+                                        <div>Days</div>
+                                        <div>Hours</div>
+                                        <div></div>
+                                    </div>
+                                    <div id="week-rows">
+                                        {% for row in day_hour_rows %}
+                                        <div class="schedule-row">
+                                            <div class="schedule-week-label">Week {{ forloop.counter }}</div>
+                                            <div class="schedule-field">
+                                                <input type="text" inputmode="numeric" pattern="[0-9]+" name="week_days[]" class="form-control week-days integer-only" value="{{ row.days|floatformat:0 }}" placeholder="Number of Days" required>
+                                                <span class="schedule-field-error week-days-error"></span>
+                                            </div>
+                                            <div class="schedule-field">
+                                                <input type="text" inputmode="numeric" pattern="[0-9]+" name="week_hours[]" class="form-control week-hours integer-only" value="{{ row.hour|floatformat:0 }}" placeholder="Number of Hours" required>
+                                                <span class="schedule-field-error week-hours-error"></span>
+                                            </div>
+                                            <button type="button" class="btn btn-light schedule-remove"><i class="fa fa-trash"></i></button>
+                                        </div>
+                                        {% empty %}
+                                        <div class="schedule-row">
+                                            <div class="schedule-week-label">Week 1</div>
+                                            <div class="schedule-field">
+                                                <input type="text" inputmode="numeric" pattern="[0-9]+" name="week_days[]" class="form-control week-days integer-only" placeholder="Number of Days" required>
+                                                <span class="schedule-field-error week-days-error"></span>
+                                            </div>
+                                            <div class="schedule-field">
+                                                <input type="text" inputmode="numeric" pattern="[0-9]+" name="week_hours[]" class="form-control week-hours integer-only" placeholder="Number of Hours" required>
+                                                <span class="schedule-field-error week-hours-error"></span>
+                                            </div>
+                                            <button type="button" class="btn btn-light schedule-remove"><i class="fa fa-trash"></i></button>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="required_field">Total Working Days</label>
+                                        {{ form.no_of_working_days }}
+                                        {{ form.no_of_working_days.errors }}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="required_field">Total Hours</label>
+                                        {{ form.total_hours }}
+                                        {{ form.total_hours.errors }}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="required_field">Hourly Rate</label>
+                                        {{ form.hourly_rate }}
+                                        {{ form.hourly_rate.errors }}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="required_field">Monthly Wages</label>
+                                        {{ form.monthly_wages }}
+                                        {{ form.monthly_wages.errors }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-3 white-box-submit">
+                                    <button type="submit" id="monthly-submit-btn" class="btn btn-block btn-success pt-2 pb-2">{% if form.instance.pk %}Update{% else %}Create{% endif %}</button>
+                                </div>
+                                {% if not form.instance.pk %}
+                                <div class="col-lg-3 white-box-reset">
+                                    <button type="button" id="resetButton" class="btn btn-block btn-default pt-2 pb-2">Reset</button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    (function () {
+        var monthDays = {
+            January: 31, February: 28, March: 31, April: 30, May: 31, June: 30,
+            July: 31, August: 31, September: 30, October: 31, November: 30, December: 31
+        };
+        var monthIndex = {
+            January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+            July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
+        };
+        var $rows = $("#week-rows");
+        var $year = $("#id_year");
+        var $month = $("#id_month");
+        var $daysTotal = $("#id_no_of_working_days");
+        var $hoursTotal = $("#id_total_hours");
+        var $rate = $("#id_hourly_rate");
+        var $wages = $("#id_monthly_wages");
+        var $help = $("#week-row-help");
+        var $addButton = $("#add-week-row");
+        var $submitButton = $("#monthly-submit-btn");
+        var hasScheduleError = false;
+
+        function clearCustomValidity() {
+            $year.get(0).setCustomValidity("");
+            $month.get(0).setCustomValidity("");
+            $rows.find(".week-days, .week-hours").each(function () {
+                this.setCustomValidity("");
+            });
+        }
+        function setFieldError($input, message) {
+            $input.toggleClass("schedule-invalid", Boolean(message));
+            $input.siblings(".schedule-field-error").text(message || "");
+        }
+        function syncSubmitState() {
+            $submitButton.prop("disabled", hasScheduleError);
+        }
+
+        function selectedYearValue() {
+            var text = $year.find("option:selected").text();
+            return parseInt(text, 10);
+        }
+        function selectedMonthValue() {
+            return $month.val();
+        }
+        function daysInMonth() {
+            var year = selectedYearValue();
+            var month = selectedMonthValue();
+            if (!year || !month) { return 31; }
+            if (month === "February" && ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0)) {
+                return 29;
+            }
+            return monthDays[month] || 31;
+        }
+        function weekCount() {
+            return weekDayLimits().length || 5;
+        }
+        function weekDayLimits() {
+            var year = selectedYearValue();
+            var month = selectedMonthValue();
+            if (!year || !month) { return []; }
+            var monthNumber = monthIndex[month] - 1;
+            var totalDays = daysInMonth();
+            var limits = [];
+            var day = 1;
+            var firstDay = new Date(year, monthNumber, 1).getDay();
+            var firstDayMondayIndex = firstDay === 0 ? 6 : firstDay - 1;
+            var firstWeekDays = Math.min(7 - firstDayMondayIndex, totalDays);
+            limits.push(firstWeekDays);
+            day += firstWeekDays;
+            while (day <= totalDays) {
+                var remaining = totalDays - day + 1;
+                limits.push(Math.min(7, remaining));
+                day += 7;
+            }
+            return limits;
+        }
+        function refreshLabels() {
+            var limits = weekDayLimits();
+            $rows.find(".schedule-row").each(function (index) {
+                var limit = limits[index] || "";
+                $(this).find(".schedule-week-label").text("Week " + (index + 1));
+                $(this).find(".week-days").attr("data-max", limit || "").attr("placeholder", limit ? "Max " + limit + " days" : "Number of Days");
+            });
+            var ready = Boolean(selectedYearValue() && selectedMonthValue());
+            if (!ready) {
+                $help.text("Select year and month before adding week rows.");
+                $addButton.prop("disabled", true);
+                return;
+            }
+            // $help.text("Maximum " + weekCount() + " week rows. Week day limits: " + limits.map(function (limit, index) { return "Week " + (index + 1) + " = " + limit; }).join(", ") + ".");
+            $addButton.prop("disabled", $rows.find(".schedule-row").length >= weekCount());
+        }
+        function calculateTotals() {
+            var days = 0;
+            var hours = 0;
+            $rows.find(".schedule-row").each(function () {
+                var rowDays = parseFloat($(this).find(".week-days").val()) || 0;
+                var rowHours = parseFloat($(this).find(".week-hours").val()) || 0;
+                days += rowDays;
+                hours += rowDays * rowHours;
+            });
+            $daysTotal.val(days ? Math.round(days) : "");
+            $hoursTotal.val(hours ? hours.toFixed(2) : "");
+            var wages = hours * (parseFloat($rate.val()) || 0);
+            $wages.val(wages ? wages.toFixed(2) : "");
+            refreshLabels();
+            validateScheduleFields(false);
+        }
+        function validateWeekDays(reportValidity) {
+            var limits = weekDayLimits();
+            var valid = true;
+            $rows.find(".schedule-row").each(function (index) {
+                var $input = $(this).find(".week-days");
+                var input = $input.get(0);
+                input.setCustomValidity("");
+                setFieldError($input, "");
+                var limit = limits[index] || 0;
+                var value = parseFloat(input.value) || 0;
+                if (input.value && !/^\d+$/.test(input.value)) {
+                    valid = false;
+                    setFieldError($input, "Only whole numbers are allowed.");
+                }
+                if (limit && value > limit) {
+                    valid = false;
+                    setFieldError($input, "Maximum " + limit + " days allowed for Week " + (index + 1) + ".");
+                    if (reportValidity) {
+                        input.focus();
+                    }
+                }
+            });
+            return valid;
+        }
+        function validateHours(reportValidity) {
+            var valid = true;
+            $rows.find(".schedule-row").each(function (index) {
+                var daysInput = $(this).find(".week-days").get(0);
+                var $hoursInput = $(this).find(".week-hours");
+                var hoursInput = $hoursInput.get(0);
+                var daysValue = parseFloat(daysInput.value) || 0;
+                var hoursValue = parseFloat(hoursInput.value) || 0;
+                var maxHours = daysValue * 24;
+                hoursInput.setCustomValidity("");
+                setFieldError($hoursInput, "");
+                if (hoursInput.value && !/^\d+$/.test(hoursInput.value)) {
+                    valid = false;
+                    setFieldError($hoursInput, "Only whole numbers are allowed.");
+                }
+                if (daysValue > 0) {
+                    hoursInput.setAttribute("data-max", String(maxHours));
+                    hoursInput.setAttribute("placeholder", "Max " + maxHours + " hours");
+                } else {
+                    hoursInput.removeAttribute("data-max");
+                    hoursInput.setAttribute("placeholder", "Number of Hours");
+                }
+                if (daysValue > 0 && hoursValue > maxHours) {
+                    valid = false;
+                    setFieldError($hoursInput, "Maximum " + maxHours + " hours allowed for " + daysValue + " days.");
+                    if (reportValidity) {
+                        hoursInput.focus();
+                    }
+                }
+            });
+            return valid;
+        }
+        function validateScheduleFields(focusInvalid) {
+            var daysValid = validateWeekDays(focusInvalid);
+            var hoursValid = validateHours(focusInvalid && daysValid);
+            var totalDaysValid = (parseFloat($daysTotal.val()) || 0) <= daysInMonth();
+            if (!totalDaysValid) {
+                var $lastDays = $rows.find(".week-days").last();
+                setFieldError($lastDays, "Total working days cannot exceed " + daysInMonth() + " days.");
+                if (focusInvalid && daysValid && hoursValid) {
+                    $lastDays.focus();
+                }
+            }
+            hasScheduleError = !(daysValid && hoursValid && totalDaysValid);
+            syncSubmitState();
+            return !hasScheduleError;
+        }
+        function validateForm(reportValidity) {
+            clearCustomValidity();
+            var form = $("#monthly-schedule-form").get(0);
+            if (!selectedYearValue()) {
+                $year.get(0).setCustomValidity("Please select year.");
+            }
+            if (!selectedMonthValue()) {
+                $month.get(0).setCustomValidity("Please select month.");
+            }
+            if ($rows.find(".schedule-row").length > weekCount()) {
+                $addButton.get(0).setCustomValidity("Too many week rows for the selected year and month.");
+            } else {
+                $addButton.get(0).setCustomValidity("");
+            }
+            validateScheduleFields(false);
+            if (reportValidity && !form.checkValidity()) {
+                form.reportValidity();
+            }
+            return form.checkValidity() && !hasScheduleError;
+        }
+        function addRow() {
+            if (!(selectedYearValue() && selectedMonthValue())) {
+                return;
+            }
+            if ($rows.find(".schedule-row").length >= weekCount()) {
+                return;
+            }
+            var $newRow = $rows.find(".schedule-row:first").clone();
+            $newRow.find("input").val("");
+            $rows.append($newRow);
+            calculateTotals();
+        }
+        function keepIntegerValue(input) {
+            var cleanValue = input.value.replace(/\D/g, "");
+            if (input.value !== cleanValue) {
+                input.value = cleanValue;
+            }
+        }
+        function isAllowedIntegerKey(event) {
+            if (event.ctrlKey || event.metaKey || event.altKey) {
+                return true;
+            }
+            var allowedKeys = [
+                "Backspace", "Delete", "Tab", "Enter", "Escape",
+                "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+                "Home", "End"
+            ];
+            if (allowedKeys.indexOf(event.key) !== -1) {
+                return true;
+            }
+            return /^[0-9]$/.test(event.key);
+        }
+
+        $addButton.on("click", addRow);
+        $rows.on("click", ".schedule-remove", function () {
+            if ($rows.find(".schedule-row").length > 1) {
+                $(this).closest(".schedule-row").remove();
+                calculateTotals();
+            }
+        });
+        $rows.on("beforeinput", ".integer-only", function (event) {
+            if (event.originalEvent && event.originalEvent.data && /\D/.test(event.originalEvent.data)) {
+                event.preventDefault();
+            }
+        });
+        $rows.on("keydown", ".integer-only", function (event) {
+            if (!isAllowedIntegerKey(event)) {
+                event.preventDefault();
+            }
+        });
+        $rows.on("paste", ".integer-only", function (event) {
+            event.preventDefault();
+            var text = (event.originalEvent.clipboardData || window.clipboardData).getData("text");
+            var cleanValue = text.replace(/\D/g, "");
+            document.execCommand("insertText", false, cleanValue);
+        });
+        $rows.on("input keyup change paste", "input", function () {
+            keepIntegerValue(this);
+            calculateTotals();
+            validateScheduleFields(false);
+        });
+        $rate.on("input", calculateTotals);
+        $year.add($month).on("change", calculateTotals);
+        $("#resetButton").on("click", function () {
+            $("#monthly-schedule-form").get(0).reset();
+            calculateTotals();
+        });
+        $("#monthly-schedule-form").on("submit", function (event) {
+            if (!validateForm(true)) {
+                event.preventDefault();
+                return;
+            }
+            if (!$submitButton.prop("disabled")) {
+                $submitButton.prop("disabled", true).text("Saving...");
+            }
+        });
+        calculateTotals();
+    })();
+</script>
+{% endblock %}

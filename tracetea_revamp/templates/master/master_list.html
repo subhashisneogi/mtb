@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Master List {% endblock %}
+{% block css %}  
+<style>
+    .button-solid {
+      border: none;
+      
+    }
+    button-solid:focus {
+      border: none;
+      outline: none;
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+
+
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form role="form" action = "{% url 'master_list' %}" method = "GET" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-lg-3">
+                                        <select class="form-control" name="type">
+                                            <!-- <option value="">----</option> -->
+                                            <option  value="all" >Select option</option>
+
+                                            <option value="region" name="region">Region</option>
+                                            <option value="state" name="state">State</option>
+                                            <option value="district" name="district">District</option>
+
+
+                                            
+                                        </select>
+                                      
+                                </div>      
+                             
+                                <div class="col-lg-3 mt-4---">
+    
+                                    <button type="submit" class="btn btn-success btn-block rounded-pill pl-4 pr-4"> <i
+                                            class="fas fa-filter mr-2"></i> Filter</button>
+    
+    
+    
+    
+                                </div>
+                            </div>    
+                            <div class="row mt-4">
+
+                                <div class="col-lg-3 col-md-6 mt-4---">
+                                    <a href="{% url 'export_region'  %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                            class="fas fa-download mr-2 text-white" ></i> Download Region</a>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mt-4---">
+                                    <a href="{% url 'export_state'  %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                        class="fas fa-download mr-2 text-white" ></i> Download State</a>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mt-4---">
+                                    <a href="{% url 'export_district'  %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                        class="fas fa-download mr-2 text-white" ></i> Download District</a>
+                                </div>
+                            </div>   
+    
+                            
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted"><span class="text-capitalize"></span>List</h6>
+                </div>
+            <!-- <div class="col-sm-6 text-right modalright">
+
+                <a type="button" href="{% url 'bulk_import_grower' %}" class="btn bg-success2 text-white pl-3 pr-3">
+                    <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back 
+                </a>
+                <a type="button" href="{% url 'bulk_import_aggregator' %}" class="btn bg-success2 text-white pl-3 pr-3">
+                    <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back 
+                </a>
+                
+            </div> -->
+            
+
+            </div>
+
+            <div class="row ml-2 mr-2">
+
+                <div class="col-lg-12">
+
+                    <div class="card report-page">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <!-- <th>Sr. No</th> -->
+                                            <th>Id</th>
+                                            <th>Name</th>
+                                        
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if master_list %}
+
+                                            {% for item in master_list %}
+                                            <tr>
+                                                <!-- <td>{{ forloop.counter }}</td> -->
+                                                {% if item.district_id %}
+                                                    <td class="id">{{ item.district_id }}</td>
+                                                {% elif item.state_id %}    
+                                                    <td class="id">{{ item.state_id }}</td>
+                                                {% else %}    
+                                                    <td class="id" hidden>{{ item.id }}</td>
+                                                    <td class="text-capitalize">{{ item.region_id }}</td>
+                                                {% endif %}    
+                                                <td class="text-capitalize">{% if item.name %}{{ item.name }}{% else %} {{item.region_name}} {% endif %}</td>
+                                                <!-- <td></td> -->
+                                                {% if item.region_name %}
+                                                    <!-- <form action="{% url 'state_view' %}" method="GET" class="d-flex">              
+
+                                                        <td >
+                                                            <button type="submit" value="{{item.id}}" name="id" class="button-solid mr-3"
+                                                        ><i class="fa fa-eye" aria-hidden="true"></i></button>
+                                                        </td>
+                                                    </form> -->
+                                            
+                                                    <td><button type ="button"  class="btn btn-info btn-sn" data-toggle="modal" data-target="#myModal">View associated state</a>
+                                                    </td>
+                                                {% else %}                                                                                                          
+                                                
+                                                {% endif %}    
+                                                <!-- {% if item.region_name %}
+                                                    {% for data in master_list %}
+                                                    <td class="text-capitalize">{{ item.state__name}},</td>
+                                                    {% endfor %}
+                                                {% else %}
+                                                
+                                                {% endif %} -->
+
+                                            </tr>
+                                            {% endfor %}
+
+                                        {% else %}
+
+                                        <tr>
+                                            <td colspan="9" class="text-center text-danger">Please! select option to see the list.</td>
+                                        </tr>
+
+
+                                        {% endif %}
+
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <div class="d-flex justify-content-cente paggination-sec">
+                        {% if is_paginated %}
+        
+                        <div class="">
+                            <nav  class="">
+                                <ul class="pagination">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+        
+                                    {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ i }} <span class="sr-only">(current)</span></a>
+                                    </li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                                    {% endif %}
+                                    {% endfor %}
+        
+        
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    </div>
+                      </div>
+                </div>
+
+            </div>
+
+
+
+
+
+
+            <!-- /.row -->
+
+
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+    <div class="container">
+      
+        <div class="modal fade" id="myModal" role="dialog">
+          <div class="modal-dialog">
+          
+            <!-- Modal content-->
+            <div class="modal-content">
+              <div class="modal-header">
+                <!-- <button type="button" class="close" data-dismiss="modal">&times;</button> -->
+                <h4 class="modal-title">State Associated:</h4>
+              </div>
+              <!-- <div class="modal-body">
+                {% for data in state_list %}
+                <p>{{data.state__name}}</p>
+                {% endfor %}
+              </div> -->
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        
+      </div>
+</div>
+<!-- /.content-wrapper -->
+
+
+
+{% endblock %}
+
+
+{% block js %}
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+<script>
+    
+    $(document).ready(function() {
+        $('.btn-sn').click(function (e) {
+            e.preventDefault();
+            var id=$(this).closest('tr').find('.id').text();
+            var url ="/state/view/"
+            console.log(id);
+            $.ajax({
+                // type:"POST",
+                url:url,
+                data:{
+                    'id':id
+                },
+                success:function(data){
+                    $('.modal-dialog').html(data)
+                    console.log(data)
+                    // $('#modal-dialog').modal('show');
+                }
+            })
+
+    });
+});
+  
+     
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+
+{% endblock %}

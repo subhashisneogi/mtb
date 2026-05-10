@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Weighment & Supply  {% endblock %}
+{% block css %}
+<link rel="stylesheet" href=
+"https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+<style>
+   
+
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        background: transparent;
+        bottom: 0;
+        color: transparent;
+        cursor: pointer;
+        height: auto;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: auto;
+    } 
+    
+
+
+</style>
+
+{% endblock %}
+{% block content %}
+
+<div class="content-wrapper">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">{% if not form.instance.pk %} Add New Weighment & Supply  {% else %} Edit Weighment & Supply  {% endif %}</h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a type="button" href="{% url 'weighment_supply:weighment_list' %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back 
+                    </a>
+                </div>
+            </div>
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12 col-12">
+                    <div class="row">
+                        <div class="white-box">
+
+                            <form method='POST' role="form" id="create-form" >
+                                {% csrf_token %}
+                                <h5>Weighment & Supply   {% if not form.instance.pk %}  {% else %}  {% endif %}  </h5>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="row">
+                                            
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Supplier Type</label>
+                                                    <input type="text" name="supplier_type" value="{{ weighment_details.supplier_type }}" class="form-control readonly-field text-capitalize" readonly>
+                                                    {{ form.supplier_type.errors }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Supplier</label>
+                                                    <input type="hidden" name="supplier" value="{{ supplier_details.created_by_id }}" class="" readonly>
+                                                    <input type="text"  value="{{ profile_details.name }}" class="form-control readonly-field" readonly>
+                                                </div>
+                                            </div>
+                                           
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Date of Supply</label>
+                                                    
+                                                    {{ form.supply_date }}
+                                                    
+                                                    {{ form.supply_date.errors }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Challan No.  {{ supplier_details.id }}</label>
+                                                    <select name="supply_challan" class="form-control readonly-field" id="supply_challan_id" disabled>
+                                                        
+                                                        <option value="1" selected>{{ supplier_details.supply_challan_id }}</option>
+                                                    </select>
+                                                    
+                                                   
+                                                    {{ form.supply_challan.errors }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Mode of Supply</label>
+                                                    {{ form.mode_of_supply }}
+                                                    {{ form.mode_of_supply.errors }}
+                                                    
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Total Gross Weight (Kg)</label>
+                                                    {{ form.total_gross_weight_kg }}
+                                                    {{ form.total_gross_weight_kg.errors }}
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Vehicle No.</label>
+                                                    <select name="vehicle_no" class="form-control readonly-field"  disabled>
+                                                        <option value="{{ supplier_details.alloted_vehicle.id }}" selected>{{ supplier_details.alloted_vehicle }}</option>
+                                                    </select>
+                                                    
+                                                    {{ form.vehicle_no.errors }}
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Mobile Number</label>
+                                                    {{ form.mobile_number }}
+                                                    {{ form.mobile_number.errors }}
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+
+                                    <div class="col-lg-3 white-box-submit">
+                                        <button type="submit"
+                                            class="btn btn-block btn-success pt-2 pb-2">Update</button>
+                                    </div>
+
+                                    {% if not form.instance.pk %}
+                                        <div class="col-lg-3 white-box-reset">
+                                            <button type="button" id="resetButton" 
+                                            class="btn btn-block btn-default pt-2 pb-2">Reset</button>
+                                        </div>
+                                    {% endif %} 
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script src=
+"https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js">
+    </script>
+
+
+<script>  
+
+    $(function() {  
+    //    $( "#date_supply" ).datepicker({  
+    //       dateFormat:"dd-mm-yy", 
+    //       placeholder :"(yy-mm-dd)",  
+    //    });  
+    });  
+   
+ </script>  
+
+
+{% endblock %}

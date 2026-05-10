@@ -1,0 +1,158 @@
+
+            <table cellspacing="0" cellpadding="0">
+
+
+                <tr style="margin: 0px 0px; padding: 0px 0px;">
+                    <td colspan="2"
+                        style="text-align: center;color: #548235;font-size: 28px;font-weight: 600;padding: 15px 0px 25px 0px;">
+                        Forward Traceability - Grower to Invoice Tracking</td>
+                </tr>
+
+                <tr>
+                    <td colspan="2" style="padding:2px 0px 20px 0px;">
+                        <table
+                            style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+
+
+
+                            <tr style=" border: #373737 1px solid;">
+                                <td colspan="2"
+                                    style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px;color: #000;">
+                                    Grower Name</td>
+                                <td colspan="3"
+                                    style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 500; font-size: 15px; color: #000000; vertical-align: top;">
+                                    {{ grower_details.name }} ({{ grower_details }})</td>
+
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+
+                {% for item in result_items %}
+
+                <tr>
+                    <td colspan="2" style="padding:16px 0px 20px 0px;">
+                        <table
+                            style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+
+                            <tbody>
+
+
+                                <tr style="background: #ffffff; border: #373737 1px solid;">
+                                    <td
+                                        style="background: #ffe4da; text-align: left;padding: 7px;  border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        Invoice No.:</td>
+                                    <td
+                                        style="background: #ffe4da; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 400; font-size: 15px; color: #000000; vertical-align: top;">
+                                        {{ item.invoice_no }}</td>
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        Invoice Date:</td>
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 400; font-size: 15px; color: #000000; vertical-align: top;">
+                                        {{ item.invoice_date|date:'d-m-Y' }}</td>
+                                </tr>
+
+                                <tr style="background: #ffffff; border: #373737 1px solid; ">
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        Type of Dispatch:</td>
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 400; font-size: 15px; color: #000000; vertical-align: top;">
+
+                                        {% for obj in item.use_of_chemical_list %}
+                                                            {{ obj.type_of_dispatch }}
+                                        {% endfor %} </td>
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        Consignee / Warehouse CTM No.: </td>
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 400; font-size: 15px; color: #000000; vertical-align: top;">
+                                        {% for obj in item.use_of_chemical_list %}
+                                            {%  if obj.type_of_dispatch == "consignee" %}
+                                                {{ obj.consignee }}
+                                            
+                                            {% elif obj.type_of_dispatch == "warehouse" %}
+                                                {{ obj.warehouse }}
+                                            {% else %}
+                                                NA
+                                            {% endif %}
+
+                                        {% endfor %} 
+                                    
+                                    </td>
+                                </tr>
+
+                               
+                                
+                                <tr style="background: #ebebeb; border: #373737 1px solid; ">
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        Batch / Lot No. </td>
+                                    <td colspan="2"
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        Bag No. from and To </td>
+
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        Bag Weight</td>
+                                </tr>
+
+                                {% if item.batch_lists %}
+
+                                {% for batch_item in item.batch_lists %}
+
+                                <tr style="background: #fff; border: #373737 1px solid;">
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        {{ batch_item.lot_batch }}
+                                    </td>
+                                    <td colspan="2"
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                        {{ batch_item.bag_no_range }}
+                                    </td>
+
+                                    <td
+                                        style="text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000; vertical-align: top;">
+                                    
+                                        {{ batch_item.lot_batch.bag_weight_kg }} Kg
+                                    </td>
+                                </tr>
+
+                                {% endfor %}
+
+                                {% else %}
+
+                                <tr style="background: #fff; border: #373737 1px solid;">
+                                    <td colspan="4"
+                                        style="text-align: center;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #be1f1f; vertical-align: top;">
+                                       No Data Found
+                                    </td>
+                                    
+                                </tr>
+
+                                {% endif %}
+
+
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+
+
+                {% endfor %}
+
+
+
+
+
+
+
+
+
+
+
+
+            </table>
+   

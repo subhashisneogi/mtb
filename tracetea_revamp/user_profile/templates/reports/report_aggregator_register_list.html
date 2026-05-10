@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Aggregator/Agent Register {% endblock %}
+{% block css %} 
+<link href="{% static 'select2/select2.min.css' %}" rel="stylesheet" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .p-user-image{
+            height: 40px;
+            border-radius: 30px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form role="form"  method = "GET">
+
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <select class="form-control" id="id_region" name="region" required>
+                                        <option option value="">Select Region </option>
+                                        {% for item in region_list %}
+                                        <option value="{{ item.pk }}" {% if selected_region_id == item.pk %} selected  {% endif %}>{{ item.region_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <select name="entity_id" id="associated_entity" class="form-control select2_entity_id" required>
+                                        {% if entity_id %}
+                                            <option  value="{{ entity_id }}"  selected> {{ blf_name }}-[{{ blf_username }}]  </option>
+                                            {% for item in blf_list %}
+                                                <option  value="{{ item.pk }}">{{ item.entity_unit }}-[{{ item.user }}]</option>
+                                            {% endfor %}
+                                        {% else %}
+                                            <option  value=""  selected>Select Entity</option>
+                                        {% endif %}
+                                    </select> 
+                                </div>
+
+                            
+                                 <!-- Region Dropdown -->
+                                 <!-- <div class="col-lg-3">
+                                    <select name="region" id="id_region" class="form-control" required>
+                                        <option hidden value="">Region</option>
+                                        {% for region in regions %}
+                                            <option name="{{ region.region_name }}" value="{{ region.id }}"  >{{ region.region_name }}</option>
+
+                                        {% endfor %}
+                                    </select>
+                                </div> -->
+                                <!-- Entity (BLF) Dropdown -->
+                                <!-- <div class="col-lg-2">
+                                    <select name="blf" id="associated_entity" class="form-control" required>
+                                        <option hidden value="">Entity</option>
+                                        {% for entity in entities %}
+                                            <option value="{{ entity.id }}">{{ entity.entity_name }}</option>
+                                        {% endfor %}
+                                        <option value=""> Entity</option>
+                                    </select>
+                                </div> -->
+                                <!-- Entity (BLF) Dropdown -->
+                                <!-- <div class="col-lg-3">
+                                    <select name="blf" id="associated_entity" class="form-control" required>
+                                       
+                                            <option  value="" selected>Entity</option>
+                                      
+                                    </select> 
+                                </div> -->
+                              
+                                <div class="col-lg-2 col-md-6 mt-4---">
+
+                                    <button type="submit" class="btn btn-success rounded-pill btn-block pl-4 pr-4"> <i
+                                            class="fas fa-search mr-2"></i> Search</button>
+                                </div>
+                                <div class="col-lg-2 col-md-6 mt-4---">
+
+                                    <a href="{% url 'user_profile:aggregator_register_reports' %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                            class="fa fa-refresh mr-2 text-white" ></i> Reset</a>
+                                </div>
+                                <!-- Add this hidden input to store selected values -->
+                                <!-- <input type="hidden" id="selected_region_name" name="selected_region_name" value="">
+                                <input type="hidden" id="selected_entity_name" name="selected_entity_name" value=""> -->
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                {% if selected_region_id and selected_blf_id %}
+                <div class="col-sm-6">
+                    
+                    <h6 class="font-weight-bold mt-3 text-muted">Aggregator Register of {{blf_name | default:"NA"}}({{blf_username| default:"NA"}})</h6>
+                   
+                </div>
+                {% endif %}
+                {% if selected_region_id and selected_blf_id and result %}
+                    <div class="col-sm-6 text-right modalright">
+                        <a href="{% url 'user_profile:report_aggregator_register_pdf' %}?selected_region_id={{ selected_region_id }}&selected_blf_id={{ selected_blf_id }}" style="width: 10rem" class="btn bg-danger text-white pl-3 pr-3">
+                            <i class="fa fa-download mr-2" aria-hidden="true"></i>Download PDF
+                        </a>
+                        <a href="{% url 'user_profile:report_aggregator_register_excel' %}?selected_region_id={{ selected_region_id }}&selected_blf_id={{ selected_blf_id }}" style="width: 10rem" class="btn bg-success text-white pl-3 pr-3">
+                            <i class="fa fa-download mr-2" aria-hidden="true"></i>Download XLS
+                        </a>
+                    </div>
+                
+                {% endif %}
+
+              
+            </div>
+
+            <div class="row ml-2 mr-2">
+
+                <div class="col-lg-12">
+
+                    <div class="card report-page">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+
+                                        <tr>
+                                            <th>SL No.</th>
+                                            <th>Tracetea ID</th>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Region</th>
+                                            <th>State</th>
+                                            <th>District</th>
+                                            <th>Address</th>
+                                            <th>Mobile No.</th>
+                                            <th>GISTIN ID</th>
+                                        </tr>
+
+
+
+                                        
+
+                                    </thead>
+                                    <tbody>
+
+                                        {% if result %}
+                                            {% for item in result %}
+
+                                                    <tr>
+                                                        <!-- Populate the table with Aggregator Profile details -->
+                                                        <!-- <td>{{ forloop.counter }}</td> -->
+                                                        <td>{{ item.serial_number }}</td>
+
+                                                        <td>{{ item.user | default:"NA"}}</td>
+                                                        <td>{{ item.name | default:"NA"}}</td>
+                                                        <td>{{ item.aggregator_type | default:"NA"}}</td>
+                                                        <td>{{ item.region | default:"NA"}}</td>
+                                                        <td>{{ item.state | default:"NA"}}</td>
+                                                        <td>{{ item.district | default:"NA"}}</td>
+                                                        <td>{{ item.address | default:"NA" }}</td>
+                                                        <td>{{ item.mobile_number | default:"NA" }}</td>
+                                                        <td>{{ item.gstin_no | default:"NA"}}</td>
+                                                    </tr>
+                                                  
+                                            {% endfor %}
+                                        {% else %}
+
+                                        <tr>
+                                            <td colspan="10" class="text-center text-danger">Sorry! No Record Found.</td>
+                                        </tr>
+
+                                        {% endif %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    
+                        <!-- /.card-body -->
+                    </div>
+
+                  
+<!-- Existing code for pagination -->
+{% if result.has_other_pages %}
+    <div class="d-flex justify-content-center paggination-sec">
+        <div class="">
+            <nav class="">
+                <ul class="pagination">
+                    <!-- Previous page link -->
+                    {% if result.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ result.previous_page_number }}&entity_id={{ entity_id }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}" tabindex="-1">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    {% endif %}
+
+                    <!-- Page links -->
+                    {% for i in result.paginator.page_range %}
+                    <!-- Adjust the link to reflect the current page number -->
+                    {% if result.number == i %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
+                    {% elif i > result.number|add:'-2' and i < result.number|add:'2' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}&entity_id={{ selected_blf_id }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Next page link -->
+                    {% if result.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ result.next_page_number }}&entity_id={{ selected_blf_id }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+{% endif %}
+
+
+                     
+                    
+
+
+                </div>
+
+            </div>
+
+
+
+
+            <!-- /.row -->
+
+
+
+
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+
+{% endblock %}
+
+
+{% block js %}
+
+<script src="{% static 'select2/select2.full.min.js' %}"></script>
+
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+ <script>
+    $(document).ready(function () {
+        // console.log({{ grower }})
+        // $("#grower_id").val({{ grower }});
+        $("#id_region").val({{ region }});
+        // $("#associated_entity").val({{ entity_id }});
+    });
+  
+</script>
+
+<script>
+    // Region Wise BLF list AJAX
+    $('#id_region').on('change', function () {
+        var data = $(this).find('option').filter(':selected').val(); 
+        // console.log(data);
+        // console.log("subh#########")
+        $.ajax({
+            url: "{% url 'user_profile:blf_list_region_wise' %}",
+            data: {
+                'id': data,
+            },
+            success: function (data) {
+                $("#associated_entity").html(data);
+                // console.log("associated entity ###")
+                $("#associated_entity").val({{ entity_id }});
+            },
+            error: function (rs, e) {
+                console.log(rs);
+                console.log(e)
+            }
+        });
+    });
+
+    // // Set selected region and entity IDs in dropdowns after search
+    // $(document).ready(function () {
+    //     var selectedRegionId = "{{ selected_region_id }}";
+    //     var selectedEntityId = "{{ selected_blf_id }}";
+    //     console.log(selectedEntityId)
+    //     // If selectedRegionId and selectedEntityId are not empty, set selected values
+    //     if (selectedRegionId !== "" && selectedEntityId !== "") {
+    //         $("#id_region").val(selectedRegionId);
+    //         $("#associated_entity").val(selectedEntityId);
+    //     } else {
+    //         // If no selections are made or after a reset, display default values
+    //         $("#id_region").val(""); // Set to default value for region dropdown
+    //         $("#associated_entity").val(""); // Set to default value for entity dropdown
+    //     }
+    // });
+
+
+ </script> 
+<script>
+    $(document).ready(function () {
+        // Region Wise BLF list AJAX
+        $('#id_region').on('change', function () {
+            var regionId = $(this).val();
+            $.ajax({
+                url: "{% url 'user_profile:blf_list_region_wise' %}",
+                data: {
+                    'id': regionId,
+                },
+                success: function (data) {
+                    $("#associated_entity").html(data);
+                },
+                error: function (rs, e) {
+                    console.log(rs);
+                    console.log(e)
+                }
+            });
+        });
+
+        // Clear the selected entity on region change
+        $('#id_region').change(function () {
+            $("#associated_entity").val('').trigger('change');
+        });
+    });
+</script>
+<script>
+    $(document).ready(function () {
+      $(".select2_entity_id").select2({
+        placeholder: "Select Entity",
+        width: '100%',
+        allowClear: false,
+      });
+    });
+  </script>>
+
+  
+
+{% endblock %}

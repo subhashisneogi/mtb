@@ -1,0 +1,10 @@
+<!-- <select name="state" class="form-control" id="id_state" name="state_id"> -->
+<option value="">---------</option>    
+{% for data in states %}
+<option value="{{data.state__id}}"  >{{ data.state__name }}</option>
+<!-- value="{{data.state__state_id}}" -->
+{% endfor %}
+<!-- </select> -->
+
+
+

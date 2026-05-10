@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_header_title %}Supply Management Report{% endblock %}
+
+{% block css %}
+<style>
+    .supply-filter-panel {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px 26px 12px;
+    }
+    .supply-filter-panel label {
+        color: #5d6a75;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .supply-filter-panel .form-control {
+        height: 46px;
+    }
+    .supply-filter-clear {
+        background: #0D7A3D;
+        border-color: #0D7A3D;
+        color: #fff;
+        height: 46px;
+        min-width: 140px;
+        white-space: nowrap;
+    }
+    .supply-filter-clear:hover,
+    .supply-filter-clear:focus {
+        background: #096b34;
+        border-color: #096b34;
+        color: #fff;
+    }
+    .supply-search-status {
+        font-size: 13px;
+        min-height: 20px;
+    }
+    @media (max-width: 991px) {
+        .supply-filter-panel {
+            padding: 18px;
+        }
+        .supply-filter-clear {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">Supply Management List ({{ total_count }})</h6>
+                </div>
+            </div>
+
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12">
+                    <div class="supply-filter-panel">
+                        <div class="row align-items-end">
+                            <div class="col-xl-4 col-lg-12 col-md-12 mb-2">
+                                <label for="supply-live-search">Search Supply</label>
+                                <input type="text"
+                                       id="supply-live-search"
+                                       class="form-control"
+                                       value="{{ search_query }}"
+                                       placeholder="Search challan, supply to, vehicle, consumer, created by"
+                                       autocomplete="off"
+                                       data-list-url="{{ list_url }}">
+                            </div>
+                            <div class="col-xl-3 col-lg-4 col-md-4 mb-2">
+                                <label for="date-of-supply-from-filter">Date Of Supply From</label>
+                                <input type="date"
+                                       id="date-of-supply-from-filter"
+                                       class="form-control"
+                                       value="{{ date_of_supply_from }}">
+                            </div>
+                            <div class="col-xl-3 col-lg-4 col-md-4 mb-2">
+                                <label for="date-of-supply-to-filter">Date Of Supply To</label>
+                                <input type="date"
+                                       id="date-of-supply-to-filter"
+                                       class="form-control"
+                                       value="{{ date_of_supply_to }}">
+                            </div>
+                            <div class="col-xl-2 col-lg-4 col-md-4 mb-2">
+                                <button type="button" id="supply-clear-filter" class="btn supply-filter-clear">
+                                    <i class="fa fa-sync-alt mr-1"></i>
+                                    Filter Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div id="supply-search-status" class="supply-search-status text-muted"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="supply-list-container" class="row ml-2 mr-2 mt-4">
+                {% include 'reports/_supply_management_table.html' %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    (function () {
+        var input = document.getElementById('supply-live-search');
+        var dateOfSupplyFrom = document.getElementById('date-of-supply-from-filter');
+        var dateOfSupplyTo = document.getElementById('date-of-supply-to-filter');
+        var clearButton = document.getElementById('supply-clear-filter');
+        var container = document.getElementById('supply-list-container');
+        var status = document.getElementById('supply-search-status');
+        var timer = null;
+
+        if (!input || !container) {
+            return;
+        }
+
+        function buildUrl(page) {
+            var url = new URL(input.dataset.listUrl, window.location.origin);
+            var query = input.value.trim();
+            if (query) {
+                url.searchParams.set('q', query);
+            }
+            if (dateOfSupplyFrom && dateOfSupplyFrom.value) {
+                url.searchParams.set('date_of_supply_from', dateOfSupplyFrom.value);
+            }
+            if (dateOfSupplyTo && dateOfSupplyTo.value) {
+                url.searchParams.set('date_of_supply_to', dateOfSupplyTo.value);
+            }
+            if (page) {
+                url.searchParams.set('page', page);
+            }
+            return url;
+        }
+
+        function loadResults(page) {
+            var url = buildUrl(page);
+            status.textContent = 'Searching...';
+
+            fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Search request failed');
+                    }
+                    return response.text();
+                })
+                .then(function (html) {
+                    container.innerHTML = html;
+                    window.history.replaceState({}, '', url);
+                    status.textContent = '';
+                })
+                .catch(function () {
+                    status.textContent = 'Unable to load results. Please try again.';
+                });
+        }
+
+        input.addEventListener('input', function () {
+            window.clearTimeout(timer);
+            timer = window.setTimeout(function () {
+                loadResults(1);
+            }, 300);
+        });
+
+        function syncDateToWithFrom() {
+            if (!dateOfSupplyFrom || !dateOfSupplyTo) {
+                return;
+            }
+            dateOfSupplyTo.min = dateOfSupplyFrom.value || '';
+        }
+
+        if (dateOfSupplyFrom) {
+            dateOfSupplyFrom.addEventListener('change', function () {
+                if (dateOfSupplyTo) {
+                    dateOfSupplyTo.value = '';
+                }
+                syncDateToWithFrom();
+                loadResults(1);
+            });
+        }
+
+        if (dateOfSupplyTo) {
+            dateOfSupplyTo.addEventListener('change', function () {
+                if (dateOfSupplyFrom && dateOfSupplyFrom.value && dateOfSupplyTo.value < dateOfSupplyFrom.value) {
+                    dateOfSupplyTo.value = dateOfSupplyFrom.value;
+                }
+                loadResults(1);
+            });
+        }
+
+        syncDateToWithFrom();
+
+        if (clearButton) {
+            clearButton.addEventListener('click', function () {
+                input.value = '';
+                if (dateOfSupplyFrom) {
+                    dateOfSupplyFrom.value = '';
+                }
+                if (dateOfSupplyTo) {
+                    dateOfSupplyTo.value = '';
+                }
+                loadResults(1);
+            });
+        }
+
+        container.addEventListener('click', function (event) {
+            var link = event.target.closest('[data-page]');
+            if (!link) {
+                return;
+            }
+            event.preventDefault();
+            loadResults(link.getAttribute('data-page'));
+        });
+    })();
+</script>
+{% endblock %}

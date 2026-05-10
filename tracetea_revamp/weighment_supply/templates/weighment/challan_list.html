@@ -1,0 +1,99 @@
+<div class="delivery_chalan text-center mt-3">
+    <div class="text-center">
+        <h5 class="pb-2">Delivery Challans</h5>
+    </div>
+    <ul class="nav nav-pills delivery_navtab mb-3" id="pills-tab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="pills-profile-tab" data-toggle="pill" href="#pills_non_proceed" role="tab"
+                aria-controls="pills-profile" aria-selected="false">Non-proceed</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " id="pills-home-tab" data-toggle="pill" href="#pills_proceed" role="tab"
+                aria-controls="pills-home" aria-selected="true">Proceed</a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="pills-tabContent">
+
+        <!-- Non Proceed -->
+        <div class="tab-pane fade show active" id="pills_non_proceed" role="tabpanel" aria-labelledby="pills-profile-tab">
+            <div class="delivery_tabs">
+                <div class="table-resposive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td><strong>Date</strong></td>
+                                <td><strong>Challan No.</strong></td>
+                                <td><strong>Challan</strong></td>
+                                <td>Procced</td>
+                            </tr>
+                            {% if challan_list %}
+    
+                            {% for item in challan_list %}
+                            <tr>
+                                <td>{{ item.date_of_supply|date:'d-m-Y' }}</td>
+                                <td> {{ item.supply_challan_id }}</td>
+
+                                <td><a href="{% url 'weighment_supply:challan_details' challn_pk=item.pk item_pk=item.pk  %}"
+                                        target="_blank">View Challan</a></td>
+                                <td><a href="{% url 'weighment_supply:weighment_add' supplier_type=supplier_type supplier_id=supplier_id challan_id=item.supply_challan_id %}"
+                                        class="btn btn-info btn-sm">Procced</a></td>
+                            </tr>
+    
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-danger">Sorry! No Record Found.</td>
+                            </tr>
+                            {% endif %}
+    
+                        </tbody>
+                    </table>
+                </div>
+            
+            </div>
+        </div>
+
+
+
+        <!-- Proceed -->
+        <div class="tab-pane fade " id="pills_proceed" role="tabpanel" aria-labelledby="pills-home-tab">
+            <div class="delivery_tabs">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td><strong>Date</strong></td>
+                                <td><strong>Challan No.</strong></td>
+                                <td><strong>Challan</strong></td>
+                                <td>Procced</td>
+                            </tr>
+                            {% if proceed_challan_list %}
+
+                            {% for item in proceed_challan_list %}
+                            <tr>
+                                <td>{{ item.date_of_supply|date:'d-m-Y' }}</td>
+                                <td> {{ item.supply_challan_id }}</td>
+                                <td><a href="{% url 'weighment_supply:challan_details' challn_pk=item.pk item_pk=item.pk %}"
+                                        target="_blank">View Challan</a></td>
+                                <td><a href="javascript:void()"
+                                        class="btn btn-light btn-sm isDisabled">Procced</a></td>
+                            </tr>
+
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-danger">Sorry! No Record Found.</td>
+                            </tr>
+                            {% endif %}
+
+                        </tbody>
+                    </table>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+

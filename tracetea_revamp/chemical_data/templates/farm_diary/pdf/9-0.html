@@ -1,0 +1,212 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>other work Schedule</title>
+
+    <style>
+        table,
+        td,
+        div,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
+            font-family: Arial, sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
+            padding: 0;
+            margin: 0;
+        }
+
+        img {
+            width: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        table {
+            width: 800px;
+            border-collapse: collapse;
+            border-spacing: 0;
+            background: #f7f7f7;
+            margin: 0px auto;
+        }
+
+        td {
+            border: 1px solid #43443d;
+            padding: 8px;
+        }
+
+        .backgrnd-color {
+            background-color: #43443d;
+        }
+
+        table tr td h1 {
+            color: #fff;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        table tr td p {
+            font-size: 13px;
+            line-height: 25px;
+            padding: 0px;
+        }
+        .frst-col p {
+            padding: 5px 5px 5px 0px;
+        }
+        table tr td h3 {
+            text-align: center;
+            padding: 5px;
+            color: #43443d;
+            font-size: 16px;
+        }
+
+        .backgrnd-color h2 {
+            color: #fff;
+            font-size: 18px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .backgrnd-color td {
+            border-right: 1px solid #fff;
+        }
+
+        .backgrnd-color td:last-child {
+            border-right: 1px solid #000;
+        }
+
+        .top-section img {
+            height: 600px;
+        }
+
+        .bottom-sec img {
+            height: 600px;
+        }
+
+        .top-section {
+            width: 800px;
+            margin: -4px auto;
+        }
+
+        .bottom-sec {
+            width: 800px;
+            margin: 0 auto;
+        }
+
+        .tble-heading td h6 {
+            font-size: 13px;
+            color: #43443d;
+            padding: 5px;
+            text-align: center;
+            font-weight: 700;
+        }
+        .fix-wdth{
+            width: 14%;
+        }
+
+        .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 15px 0;
+        background-color: #fff;
+    }
+    .page-number {
+        font-size: 14px;
+        color: #333;
+        position: absolute;
+        bottom: 0px;
+        text-align: centers;
+        left: 0;
+        right: 0;
+    }
+    .main-box{
+        position: relative;
+        min-height: 29.7cm;
+        padding: 0;
+        margin: 0;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="main-box">
+    <table>
+        <tr class="backgrnd-color">
+            <td colspan="6">
+                <h1>List of Stored Materials</h1>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" style="border: 0px !important;">
+                <h3 style="text-align: left !important;">Acaricides Application :</h3>
+            </td>
+        </tr>
+        <tr class="fix-wdth">
+            <td style="width: 15%;">
+                <p>Name</p>
+            </td>
+            <td  style="width: 35%;">
+                <p>Date and Quantity Purchased</p>
+            </td>
+            <td  style="width: 35%;">
+                <p>Section /<br> Plot </p>
+            </td>
+            <td  style="width: 15%;">
+                <p>Section /<br> Plot Area<br> (ha)</p>
+            </td>
+            <td  style="width: 15%;">
+                <p>Worker<br> Name</p>
+            </td>
+            <td  style="width: 15%;">
+                <p>Qty</p>
+            </td>
+        </tr>
+
+        {% if acaricides_chemical_list %}
+            {% for data in acaricides_chemical_list %}	
+            <tr>
+                <!-- <td ><p style="text-align: center;">{{ forloop.counter }}</p></td> -->
+                <td><p>{{ data.chemical | default:"NA" }}</p></td>
+                <td><p>{{ data.date|date:'d-m-Y' | default:"NA" }}</p></td>
+                <td><p> {{ data.plot.name | default:"NA"}}</p></td>
+                <td><p>{{ data.plot.plot_area | default:"NA"}}</p></td>
+                <td><p> {{ data.labour.name | default:"NA" }}</p></td>
+                <td><p> {{ data.quantity | default:0}}({{data.unit| default:"Kg"}})</p></td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr><td  colspan="6" style="text-align: center;" ><p class="text-center text-danger">No Record Found</p></td></tr>
+        {% endif %} 
+    </table>
+
+
+    <br><br><br>
+    <div class="footer">
+        <div class="page-number">
+            Page {{ current_page }} of {{ total_pages }}
+        </div>
+    </div>
+    </div>
+</body>
+</html>

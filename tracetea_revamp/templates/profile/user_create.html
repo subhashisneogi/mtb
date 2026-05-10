@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} User Create for
+<span class="text-capitalize">{{ profile_type }}</span>
+{% endblock %}
+{% block css %}
+<style>
+    .password-field {
+        position: relative;
+    }
+
+    #create-form .form-group {
+        margin-bottom: 18px;
+    }
+
+    .password-field input {
+        padding-right: 48px !important;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 14px;
+        top: 34px;
+        width: 28px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #666;
+        font-size: 18px;
+        line-height: 1;
+        z-index: 2;
+    }
+
+    .password-field input.is-invalid {
+        background-image: none !important;
+        padding-right: 48px !important;
+    }
+
+    .field-error {
+        color: #dc3545;
+        display: block;
+        font-size: 13px;
+        line-height: 18px;
+        margin-top: 4px;
+        min-height: 40px;
+        visibility: hidden;
+    }
+
+    #create-form .white-box-submit,
+    #create-form .white-box-reset {
+        margin-top: 0;
+    }
+
+    #create-form .action-row {
+        margin-top: 6px;
+    }
+
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">Add New
+                        <span class="text-capitalize">{{ profile_type }}</span>
+                    </h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    {% if request.user.id == 1 %}
+                    <a type="button" href="{{ next_url }}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>
+                        Back
+                    </a>
+                    {% else %}
+                    <a type="button" href="{% url 'user_profile:aggregator_list' usertype_slug=profile_type %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>
+                        Back
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Small boxes (Stat box) -->
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12 col-12">
+                    <div class="row">
+                        <div class="white-box">
+                            <form method="POST" role="form" id="create-form" data-validate-url="{% url 'user_profile:validate_user_create_fields' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ next_url }}">
+                                <div class="row">
+                                    <div class="col-sm-8">
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <!-- text input -->
+                                                <div class="form-group">
+                                                    <label class="required_field">Username/User ID</label>
+                                                    {{ form.username }}
+                                                </div>
+                                                <!-- {{ form.username.errors }} -->
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <!-- text input -->
+                                                <div class="form-group">
+                                                    <label>Email</label>
+                                                    {{ form.email }}
+                                                </div>
+                                                <!-- {{ form.email.errors }} -->
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <!-- text input -->
+                                                <div class="form-group password-field">
+                                                    <label class="required_field">Password</label>
+                                                    {{ form.password1 }}
+                                                    <span class="toggle-password" data-target="[name='password1']">
+                                                        <i class="fa fa-eye-slash"></i>
+                                                    </span>
+                                                    <div class="field-error" id="password1-error"></div>
+                                                </div>
+                                                {{ form.password1.errors }}
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <!-- text input -->
+                                                <div class="form-group password-field">
+                                                    <label class="required_field">Confirm Password</label>
+                                                    {{ form.password2 }}
+                                                    <span class="toggle-password" data-target="[name='password2']">
+                                                        <i class="fa fa-eye-slash"></i>
+                                                    </span>
+                                                    <div class="field-error" id="password2-error"></div>
+                                                </div>
+                                                {{ form.password2.errors }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row action-row">
+                                    <div class="col-lg-3 white-box-submit">
+                                        <button type="submit" class="btn btn-block btn-success pt-2 pb-2">Continue</button>
+                                    </div>
+                                    {% if not form.instance.pk %}
+                                    <div class="col-lg-3 white-box-reset">
+                                        <button type="button" id="resetButton" class="btn btn-block btn-default pt-2 pb-2">Reset</button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+{% endblock %}
+{% block js %}
+<script>
+$(document).ready(function(){
+    $("body").removeClass("sidebar-collapse");
+
+    const currentListUrl = "{% url 'user_profile:all_users' usertype_slug=profile_type %}";
+    const currentMenuLink = $('.nav-sidebar a[href="' + currentListUrl + '"]');
+
+    currentMenuLink.addClass("active");
+    currentMenuLink.closest(".has-treeview").addClass("menu-open");
+    currentMenuLink.closest(".has-treeview").children(".nav-link").addClass("active");
+    localStorage.removeItem("sidebar-collapse");
+
+    const form = $("#create-form");
+    const username = $("#id_username");
+    const email = $("#id_email");
+    const password1 = $("[name='password1']");
+    const password2 = $("[name='password2']");
+    const password1Error = $("#password1-error");
+    const password2Error = $("#password2-error");
+    const submitBtn = form.find("button[type='submit']");
+    const validateUserUrl = form.data("validate-url");
+    let passwordIsValid = false;
+    let userFieldsAreValid = true;
+    let userValidationRequest = null;
+    let formIsSubmitting = false;
+    let visibleUserErrors = {
+        username: "",
+        email: ""
+    };
+
+    function showToastrError(fieldName, message) {
+        if (typeof toastr === "undefined") {
+            return;
+        }
+
+        if (visibleUserErrors[fieldName] === message) {
+            return;
+        }
+
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            showMethod: "slideDown",
+            timeOut: 12000
+        };
+        toastr.error("", message);
+        visibleUserErrors[fieldName] = message;
+    }
+
+    function updateSubmitState() {
+        submitBtn.prop("disabled", !(passwordIsValid && userFieldsAreValid));
+    }
+
+    function setFieldError(field, errorContainer, messages) {
+        if (messages.length) {
+            field.addClass("is-invalid");
+            errorContainer.html(messages.join("<br>")).css("visibility", "visible");
+            return;
+        }
+
+        field.removeClass("is-invalid");
+        errorContainer.empty().css("visibility", "hidden");
+    }
+
+    function getPasswordValidation(showRequired) {
+        const passwordErrors = [];
+        const confirmErrors = [];
+        const pwd = $.trim(password1.val());
+        const confirmPwd = $.trim(password2.val());
+        const usernameValue = $.trim(username.val()).toLowerCase();
+        const emailValue = $.trim(email.val()).toLowerCase();
+        const emailName = emailValue ? emailValue.split("@")[0] : "";
+        const commonPasswords = ["password", "password123", "123456", "12345678", "qwerty", "abc123", "admin123"];
+
+        if (!pwd) {
+            if (showRequired) {
+                passwordErrors.push("Password is required.");
+            }
+        } else {
+            if (pwd.length < 8) {
+                passwordErrors.push("Password must be at least 8 characters long.");
+            }
+
+            if (/^\d+$/.test(pwd)) {
+                passwordErrors.push("Password cannot be entirely numeric.");
+            }
+
+            if (commonPasswords.includes(pwd.toLowerCase())) {
+                passwordErrors.push("Password is too common.");
+            }
+
+            if (usernameValue && pwd.toLowerCase().includes(usernameValue)) {
+                passwordErrors.push("Password is too similar to the username.");
+            }
+
+            if (emailName && pwd.toLowerCase().includes(emailName)) {
+                passwordErrors.push("Password is too similar to the email.");
+            }
+        }
+
+        if (!confirmPwd) {
+            if (showRequired) {
+                confirmErrors.push("Confirm password is required.");
+            }
+        } else if (pwd && pwd !== confirmPwd) {
+            confirmErrors.push("Passwords do not match.");
+        }
+
+        return {
+            passwordErrors: passwordErrors,
+            confirmErrors: confirmErrors
+        };
+    }
+
+    function validatePasswords(showRequired) {
+        const validation = getPasswordValidation(showRequired);
+
+        setFieldError(password1, password1Error, validation.passwordErrors);
+        setFieldError(password2, password2Error, validation.confirmErrors);
+
+        passwordIsValid = !validation.passwordErrors.length && !validation.confirmErrors.length;
+        updateSubmitState();
+
+        return passwordIsValid;
+    }
+
+    function validateUserFields(showMessage) {
+        const usernameValue = $.trim(username.val());
+        const emailValue = $.trim(email.val());
+
+        if (!usernameValue && !emailValue) {
+            userFieldsAreValid = true;
+            updateSubmitState();
+            return $.Deferred().resolve({
+                is_valid: true,
+                errors: {}
+            }).promise();
+        }
+
+        if (userValidationRequest) {
+            userValidationRequest.abort();
+        }
+
+        userValidationRequest = $.ajax({
+            url: validateUserUrl,
+            method: "GET",
+            data: {
+                username: usernameValue,
+                email: emailValue
+            }
+        }).done(function(response) {
+            const errors = response.errors || {};
+            userFieldsAreValid = response.is_valid === true;
+
+            username.toggleClass("is-invalid", Boolean(errors.username));
+            email.toggleClass("is-invalid", Boolean(errors.email));
+            if (!errors.username) {
+                visibleUserErrors.username = "";
+            }
+            if (!errors.email) {
+                visibleUserErrors.email = "";
+            }
+
+            if (showMessage) {
+                if (errors.username) {
+                    showToastrError("username", "Username/User ID: " + errors.username);
+                }
+                if (errors.email) {
+                    showToastrError("email", "Email: " + errors.email);
+                }
+            }
+
+            updateSubmitState();
+        }).fail(function(xhr) {
+            if (xhr.statusText !== "abort") {
+                userFieldsAreValid = false;
+                updateSubmitState();
+            }
+        });
+
+        return userValidationRequest;
+    }
+
+    password1.add(password2).add(username).add(email).on("input blur", function() {
+        validatePasswords(false);
+    });
+
+    username.add(email).on("input", function() {
+        userFieldsAreValid = true;
+        $(this).removeClass("is-invalid");
+        if ($(this).is(username)) {
+            visibleUserErrors.username = "";
+        }
+        if ($(this).is(email)) {
+            visibleUserErrors.email = "";
+        }
+        validatePasswords(false);
+    });
+
+    $("#resetButton").on("click", function(){
+        form.get(0).reset();
+        setFieldError(password1, password1Error, []);
+        setFieldError(password2, password2Error, []);
+        username.add(email).removeClass("is-invalid");
+        passwordIsValid = false;
+        userFieldsAreValid = true;
+        visibleUserErrors.username = "";
+        visibleUserErrors.email = "";
+        submitBtn.prop("disabled", false);
+    });
+
+    $(".toggle-password").click(function() {
+        const input = $($(this).data("target"));
+        const icon = $(this).find("i");
+
+        if (input.attr("type") === "password") {
+            input.attr("type", "text");
+            icon.removeClass("fa-eye-slash").addClass("fa-eye");
+        } else {
+            input.attr("type", "password");
+            icon.removeClass("fa-eye").addClass("fa-eye-slash");
+        }
+    });
+
+    form.on("submit", function(e) {
+        if (formIsSubmitting) {
+            return;
+        }
+
+        e.preventDefault();
+
+        if (!validatePasswords(true)) {
+            return;
+        }
+
+        validateUserFields(true).done(function(response) {
+            if (response.is_valid === true && passwordIsValid) {
+                formIsSubmitting = true;
+                submitBtn.prop("disabled", false);
+                form.get(0).submit();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,156 @@
+
+<div class="content-wrapper">
+	<section class="content">
+		<div class="container-fluid">
+			<div class="row mb-3 ml-1 mr-1">
+				<div class="col-sm-6">
+					<h6 class="font-weight-bold mt-3 text-muted"></h6>
+				</div>
+				<div class="col-sm-6 text-right modalright">
+					
+				</div>
+			</div>
+			<div class="row ml-1 mr-1">
+				<div class="col-lg-12 col-12">
+					<div class="row">
+
+						<div class="white-box">
+
+							<div id="printableArea">
+
+								<!-- <h1 style="text-align:center; margin:10px 0px;">Grower  Profile</h1> -->
+								<!-- Include grower details here -->
+								<table  style="width: 100%;border-collapse:collapse;border:1;background:#ffffff;">
+                <!-- <table style="width:100%;border-collapse:collapse;border:0;border-spacing:0; font-size: 14px;"> -->
+ 
+								<!-- Grower details content -->
+                                <tr style="margin: 0px 0px; padding: 0px 0px;">
+                                    <td colspan="2"><img src="http://43.204.201.209:8000/static/dist/img/trustea_banner.png" style="width:100%"></td>
+                                  </tr>
+                                  <tr style="margin: 0px 0px; padding: 0px 0px;">
+                                    <td colspan="2" style="text-align: center;"><a href="#"><img src="http://43.204.201.209:8000/static/dist/img/trustea_Logo.png" title="Trustea"></a> </td>
+                                  </tr>
+                        
+                                  <tr style="margin: 0px 0px; padding: 0px 0px;">
+                                    <td colspan="2" style="text-align: center;color: #548235;font-size: 23px;font-weight: 600;padding: 15px 0px 35px 0px;">Supplier Wise Leaf Collections</td>
+                                  </tr>
+                                  
+                                 
+                                  <br>
+
+
+                                  
+                                <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                        <table style="width:100%; border-collapse: collapse;" border="1">    
+                                           
+                                            {% if supplier_type == "aggregator" %}
+                                            <tr>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Sr. No</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">TXN ID</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Aggregator ID</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Aggregator Name</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Supply Date</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Supply Qty</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">FLC % </td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Deduction % </td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Vehicle No. (if any)</td>
+                                              </tr>
+
+                                              {% else %}
+
+
+                                              <tr>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Sr. No</th>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">TXN ID</th>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Grower ID</th>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Grower Name</th>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Supply Date</th>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Supply Qty</th>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">FLC %</th>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Deduction %</th>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">By Aggregator (if any)</th>
+                                                  
+                                              </tr>
+      
+                                              {% endif %} 
+
+
+                                            {% if result %}
+                                                {% for data in result %}	
+                                                <tr >
+                                                <!-- <tr>   -->
+                                                <td style="padding: 5px;">{{ forloop.counter }}</td>
+                                                <td class="text-capitalize" style="padding: 5px;">
+                                                    {{ item.weighment_supply_id }}
+                                                </td>
+                                                <td class="text-capitalize" style="padding: 5px;">
+                                                    {% if item.supplier  %}
+                                                        {{ item.supplier}}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                
+                                                <td class="text-capitalize" style="padding: 5px;">
+
+                                                    {% if item.aggregator.name %}
+                                                        {{ item.aggregator.name }}
+                                                    {% elif item.grower.name %}
+                                                        {{ item.grower.name }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                
+                                                <td class="text-capitalize" style="padding: 5px;">
+                                                    {% if item.supply_date  %}
+                                                        {{ item.supply_date|date:'d-m-Y' }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %} 
+                                                </td>
+                                                <td class="text-capitalize" style="padding: 5px;">
+                                                   {{ item.nt_wght }} Kg
+                                                </td>
+                                                <td style="padding: 5px;">
+                                                   {{ item.leaf_receipt_id.final_leaf_count }}&nbsp;%
+                                                </td>
+                                                <td style="padding: 5px;">
+                                                    {{ item.leaf_receipt_id.deduction }}&nbsp;%
+                                                </td>
+
+                                                <td style="padding: 5px;">
+                                                    {% if item.supply_id.alloted_vehicle %}
+                                                        {{ item.supply_id.alloted_vehicle }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+
+                                                  
+                                            
+                                                </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr><td colspan=6 style="text-align: center; color: crimson;">No Record Found</td></tr>
+                                            {% endif %}
+                                            
+                                        </table>
+                                    </td>
+                                </tr> 
+                               
+								</table>
+									
+							</div>
+						</div>
+
+
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</div>
+

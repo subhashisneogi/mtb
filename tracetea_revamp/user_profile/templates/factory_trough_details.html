@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Trough Details {% endblock %}
+{% block css %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{% static 'switchery/switchery.css' %}" rel="stylesheet">
+
+<style>
+    .white-box .form-control {
+    display: block;
+    width: 100%;
+    height: calc(2.6rem + 2px);
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #6F96AA;
+    background-color: #ededed;
+    background-clip: padding-box;
+    border: 1px solid #dfe3e5;
+    border-radius: 7px;
+    box-shadow: inset 0 0 0 transparent;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+</style>
+
+{% endblock %}
+
+
+
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1 ">
+                <div class="col-sm-6 ">
+                    <!-- <h6 class="font-weight-bold  text-muted text-capitalize">Grower Name - {{ grower_details.name }} </h6> -->
+                </div>
+                <div class="col-sm-6  text-right modalright">
+
+                    <a type="button" href="{% url 'user_profile:estate_trough_details_list' user_create_pk=user_id %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back 
+                    </a>
+
+                    <a type="button" href="{% url 'user_profile:estate_trough_details_update' user_create_pk=user_id factory_pk=factory_details.pk %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-edit mr-2" aria-hidden="true" class="text-white"></i>Edit 
+                    </a>
+                    
+                </div>
+            </div>
+            <!-- Small boxes (Stat box) -->
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12 col-12">
+                    <div class="row">
+                        <div class="white-box">
+
+                            
+                               
+                                <h5>Trough Factory Name - <strong>{{ factory_details.name }}</strong></h5>
+                                <div class="row">
+                                    <div class="col-sm-8">
+
+
+                                        <div class="row">
+                                          
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field---">Name</label>
+                                                    <input type="text" value="{{ factory_details.name }}" class="form-control" readonly>
+                                                </div>
+                                            </div>
+
+                                        
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <!--  Trough Details Formset  -->
+
+                                <div>
+                                    <h5>Trough Details List</h5>
+                                    <div class="row">
+                                        <div class="col-lg-12 col-sm-12">
+                                            <div class="table-responsive">
+                                                <table class="table table-striped--- ">
+                                                    
+                                                    <thead>
+                                                        <tr>
+                                                            <th >Trough Name</th>
+                                                            <th>Leaf Type</th>
+                                                            <th>Size Width</th>
+                                                            <th>Size Height</th>
+                                                            <th>Capacity Qty</th>
+
+                                                            
+
+                                                        </tr>
+                                                    </thead>
+
+                                                    <tbody>
+                                                        {% if trough_list %}
+                                                            {% for item in trough_list %}
+                                                            <tr class='{% cycle "row1" "row2" %}'>
+                                                                <td class="text-capitalize"> {{ item.name }}</td>
+                                                                <td class="text-capitalize">{{ item.leaf_type }}</td>
+                                                                <td class="text-capitalize">{{ item.size_width }}</td>
+                                                                <td class="text-capitalize">{{ item.size_height }}</td>
+                                                                <td class="text-capitalize">{{ item.capacity_qty }}</td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                        
+                                                        <tr>
+                                                            <td class="text-capitalize" colspan="5">
+                                                                <p class="alert  text-danger text-center">
+                                                                    No Data Found!
+                                                                </p>
+                                                            </td>
+                                                        </tr>
+                                                        
+                                                        {% endif %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+
+
+{% endblock %}
+
+{% block js %}
+
+<script src="{% static 'select2/select2.full.min.js' %}"></script>
+
+<script src="{% static 'switchery/switchery.js' %}"></script>
+<script src="{% static 'formset/jquery.formset.js' %}"></script>
+
+
+
+
+
+
+
+<script>
+    // Reset Form
+    $(document).ready(function(){
+        $("#resetButton").on("click", function(e){
+            console.log("reset btn");
+            // location.reload();
+            $("#create-form").get(0).reset()
+            $('#select2-grower').val(null).trigger('change');
+            $('#select2-land_type').val(null).trigger('change');
+            
+        });
+    });
+
+</script>
+
+<script>
+    $(document).ready(function () {
+
+      $(".select2_demo_1").select2({
+        placeholder: "Select Grower",
+        width: '100%',
+        allowClear: true,
+
+      });
+
+      $(".select2_demo_2").select2({
+        placeholder: "Select Land Type",
+        width: '100%',
+        allowClear: true,
+
+      });
+    });
+  </script>
+
+
+<script>
+    $(document).ready(function () {
+
+        $('.formset_row').formset({
+            addText: 'add more extra',
+            deleteText: 'remove',
+            prefix: '{{ plot_details_form_set.prefix }}',
+            formCssClass: 'dynamic-formset1',
+        });
+
+        $('.formset_row2').formset({
+            addText: 'add more extra',
+            deleteText: 'remove',
+            prefix: '{{ division_form_set.prefix }}',
+            formCssClass: 'dynamic-formset1',
+        });
+
+    });
+</script>
+
+<script type="text/javascript">
+    var elem = document.querySelector('.js-switch_1');
+    var init = new Switchery(elem);
+</script>
+
+<script>
+    $(document).ready(function(){
+
+      $("#id_is_division").change(function(e){
+        console.log("Hello world!");
+        console.log(e.target.checked);
+        if (e.target.checked) {
+            console.log("True Here");
+            $("#show-p").hide();
+
+        } else {
+            console.log("False Here");
+            $("#show-p").show();
+             
+        }
+        
+      });
+      
+    });
+
+    $("#submit").click(function(e){
+        if($("#id_is_division").is(':checked'))
+        {
+            $("#plot_name_id").prop('required',false);     
+
+        }else{
+            $("#plot_name_id").prop('required',true);
+        }
+        
+    });
+
+    $(document).ready(function () {
+        if($("#id_is_division").is(':checked'))
+        {
+            $("#show-p").hide();   
+
+        }else{
+            $("#show-p").show();
+        }
+    });
+
+
+
+
+
+
+
+</script>
+
+
+{% endblock %}

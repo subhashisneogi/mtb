@@ -1,0 +1,142 @@
+
+    <style>
+      #factory {
+          height: 150px;
+          width: 82%;
+          margin: 10px auto;
+          border: 2px solid #6cbb02;
+      }
+  
+      #marged-boundary {
+          height: 350px;
+          width: 98%;
+          margin: 10px auto;
+          border: 2px solid #6cbb02;
+      }
+  </style>
+
+
+
+
+<body>
+    <div id="marged-boundary" style=" width: 100%;
+    height: 100%;"></div>
+</body>
+
+
+
+
+
+
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+<script>
+
+
+    var coordinates = {{coordinates|safe}};
+    
+    function initDrawingMap() {
+
+        const map = new google.maps.Map(document.getElementById("marged-boundary"), {
+            center: {
+                lat: -34.397,
+                lng: 150.644
+            },
+            zoom: 8,
+        });
+
+        // Construct the polygon.
+        const bermudaTriangle = new google.maps.Polygon({
+            paths: coordinates,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+
+
+        bermudaTriangle.setMap(map);
+
+        var latlngbounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < coordinates.length; i++) {
+            latlngbounds.extend(coordinates[i]);
+        }
+        map.fitBounds(latlngbounds);
+
+        function overlayCompleteListener(event) {
+            console.log('overlayCompleteListener');
+            drawingManager.setDrawingMode(null);
+            currentOverlay = event.overlay;
+            currentOverlay.addListener('click', overlayClickListener);
+        };
+
+        // remove the overlay
+        function overlayClickListener(event) {
+            console.log('overlayClickListener');
+            event.stop();
+            if (typeof event.path === 'undefined') { // ignore clicks on polygon paths
+                drawingManager.setDrawingMode(nextOverlayType());
+                currentOverlay.setMap(null);
+                google.maps.event.clearInstanceListeners(currentOverlay);
+                currentOverlay = null;
+            }
+        };
+    }
+
+    window.initDrawingMap = initDrawingMap;
+</script>
+
+<!-- 
+<script>
+    function factoryMap(e) {
+        let mapdata = $(e).find(':selected').attr("data-cordinate");
+        let divisionName = $(e).find(':selected').attr("data-division-name");
+
+        if (mapdata) {
+            var coordinates = JSON.parse(mapdata);
+        } else {
+            var coordinates = JSON.parse($("#cordinate_data").val());
+        }
+        if ((divisionName)) {} else {
+            divisionName = $("#cordinate_division_name").val();
+        }
+
+        divisionName = 1;
+        // The map, centered at Uluru
+        const map = new google.maps.Map(document.getElementById("factory"), {
+            zoom: 14,
+            center: coordinates[0]
+        });
+
+        console.log(coordinates);
+        // Construct the polygon.
+        const bermudaTriangle = new google.maps.Polygon({
+            paths: coordinates,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+
+        bermudaTriangle.setMap(map);
+        var latlngbounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < coordinates.length; i++) {
+            latlngbounds.extend(coordinates[i]);
+        }
+        map.fitBounds(latlngbounds);
+    }
+    $(document).ready(function() {
+        factoryMap();
+    });
+</script> -->
+<script async defer 
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrRtkwvBcSh3_uISG8CVAX2IqykHdQEP4&callback=initDrawingMap&libraries=drawing&v=weekly">
+</script>
+
+
+
+</body>
+</html>

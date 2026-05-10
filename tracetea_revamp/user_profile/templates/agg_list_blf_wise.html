@@ -1,0 +1,4 @@
+<option value="">---------</option>
+{% for item in agg_list_blf_wise %}
+<option value="{{ item.pk }}">{{ item.name }} - [{{ item.user }}]</option>
+{% endfor %}

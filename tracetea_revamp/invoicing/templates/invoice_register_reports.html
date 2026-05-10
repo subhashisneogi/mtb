@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Invoice Register Reports {% endblock %}
+{% block css %}  
+<link href="{% static 'select2/select2.min.css' %}" rel="stylesheet" />
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+    <style>
+        .p-user-image{
+            height: 40px;
+            border-radius: 30px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        td{
+            background-color: #eeecec!important;
+            
+        }
+    </style>
+{% endblock %}
+{% block content %} 
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form role="form"  method = "GET">
+                            
+                            {% if logged_user_type == "ADMIN" %}
+                            <div class="row">
+                                <!-- Region Dropdown -->
+                                <div class="col-lg-6">
+                                    <select class="form-control" id="id_region" name="region" required>
+                                        <option value="">Select Region </option>
+                                        {% for item in region_list %}
+                                        <option value="{{ item.pk }}" {% if selected_region_id == item.pk %} selected  {% endif %}>{{ item.region_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <select name="entity_id" id="associated_entity" class="form-control select2_entity_id" required>
+                                        {% if entity_id %}
+                                            <option  value="{{ entity_id }}"  selected> {{ blf_name }}-[{{ blf_username }}]  </option>
+
+                                            {% for item in entity_list %}
+
+
+                                            <option>{{ item.entity_name }} - [{{ item.user }}]</option>
+                                            {% endfor %}
+
+
+
+
+                                        {% else %}
+                                            <option  value=""  selected>Select Entity</option>
+                                        {% endif %}
+
+
+
+
+                                    </select> 
+                                </div>
+                            </div>
+                            {% endif %}
+                            <br>
+                            <div class="row">
+                                
+                                <div class="col-lg-3">
+                                    <input type="date" name="start_date" id="start_date" class="form-control"  value="{{ request.GET.start_date }}"  >
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <input type="date" name="end_date" id="end_date" class="form-control"  value="{{ request.GET.end_date }}"  >
+                                </div>
+                               
+                                <div class="col-lg-3 col-md-6 mt-4---">
+                                    <button type="submit" class="btn btn-success rounded-pill btn-block pl-4 pr-4"> <i
+                                            class="fas fa-search mr-2"></i> Search</button>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mt-4---">
+                                    <a href="{% url 'invoicing:invoice_register_reports_admin' %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                            class="fa fa-refresh mr-2 text-white" ></i> Reset</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                <div class="col-sm-6">
+                    {% if supplier_type %}
+                    <h6 class="font-weight-bold mt-3 text-muted">Invoice Register Reports from - {{supplier_type}}</h6>
+                    {% else %}
+                    <h6 class="font-weight-bold mt-3 text-muted">Invoice Register Reports</h6>
+                    {% endif %}
+                </div>
+
+                <div class="col-sm-6 text-right modalright">
+
+
+                    {% if result %}
+
+                        {% if logged_user_type == "ADMIN" %}
+                        
+                        <a type="button" href="{% url 'invoicing:invoice_register_reports_pdf_admin' %}?region={{ request.GET.region }}&entity_id={{ request.GET.entity_id }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" style="width: 10rem" class="btn bg-danger text-white pl-3 pr-3">
+                            <i class="fa fa-download  mr-2"  aria-hidden="true"></i>Download PDF
+                        </a>
+                        {% else %}
+
+                        <a type="button" href="{% url 'invoicing:invoice_register_reports_pdf' %}?start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" style="width: 10rem" class="btn bg-danger text-white pl-3 pr-3">
+                            <i class="fa fa-download  mr-2"  aria-hidden="true"></i>Download PDF
+                        </a>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <button type="button" href="" style="width: 10rem" class="btn bg-danger text-white pl-3 pr-3" disabled>
+                            <i class="fa fa-download  mr-2"  aria-hidden="true"></i>Download PDF
+                        </button>
+
+
+                    {% endif %}
+
+                    
+                </div>
+               
+            </div>
+
+            <div class="row ml-2 mr-2">
+                <div class="col-lg-12">
+                    <div class="card report-page">
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    
+                                    {% if result %}
+                                    {% for item in result %}
+                                    <thead>
+                                        <tr>
+                                            {% if forloop.counter == 1 %}
+                                            <th>Sr. No</th>
+                                            {% else %}
+                                            <th></th>
+                                            {% endif %}
+                                            <th>Invoice No.</th>
+                                            <th>Invoice Date</th>
+                                            <th>Type of Dispatch</th>
+                                            <th>Consignee / Warehouse CTM No.</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan="{% if item.batchlist_invoice_no.all %}
+                                            {{item.batchlist_invoice_no.count|add:2 }} {% else %} 3 {% endif %}">
+                                                <p style="padding-top: 9pt;text-indent: 0pt;text-align: left;"><br /></p>
+                                                <p class="s4" style="text-indent: 0pt;text-align: center;">
+                                                    {{ forloop.counter }}
+                                                </p></td>   
+                                            <td class="text-capitalize" rowspan="{% if item.batchlist_invoice_no.all %}
+                                            {{item.batchlist_invoice_no.count|add:2 }} {% else %} 3 {% endif %}">
+                                                <p style="padding-top: 9pt;text-indent: 0pt;text-align: left;"><br /></p>
+                                                <p class="s4" style="text-indent: 0pt;text-align: center;">
+                                                    {{ item.invoice_no|default:'NA' }}
+                                                </p>
+                                            </td>
+                                            <td class="text-capitalize">
+                                                {% if item.invoice_date  %}
+                                                    {{ item.invoice_date|date:'d-m-Y' }}
+                                                {% else %}
+                                                    NA
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <td class="text-capitalize">
+                                                {% if item.lot_batch_range.all %}
+                                                    {% for obj in item.lot_batch_range.all %}   
+                                                        {{ obj.type_of_dispatch }}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    NA
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <td class="text-capitalize">
+
+                                                {% if item.lot_batch_range.all %}
+                                                    {% for obj in item.lot_batch_range.all %}
+                                                        {% if obj.type_of_dispatch == "Auction"  %}
+                                                            {% if obj.warehouse %}
+                                                                {{ obj.warehouse }}
+                                                            {% else %}
+                                                                NA
+                                                            {% endif %}
+                                                        {% elif not obj.type_of_dispatch == "Auction" %}
+                                                            {% if obj.consignee %}
+                                                                {{ obj.consignee }}
+                                                            {% else %}
+                                                                NA
+                                                            {% endif %}    
+                                                        
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% else %}  
+                                                    NA
+                                                {% endif %}
+
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Batch / Lot No.</th>
+                                            <th>Bag No. from and To</th>
+                                            <th>Bag Weight (Kg.)</th>
+                                        </tr>
+                                        {% if item.batchlist_invoice_no.all %}
+
+                                        {% for obj in item.batchlist_invoice_no.all %}
+
+                                                
+                                                <td class="text-capitalize">
+                                                    {{ obj.lot_batch|default:'NA' }}
+                                                </td>
+                                                <td>
+
+                                                    {{ obj.bag_no_range|default:'NA' }}
+                                                    
+                                                </td>
+                                                <td>
+                                                    {{ obj.lot_batch.bag_weight_kg|default:'NA' }} Kg
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="9" class="text-center text-danger">Sorry! No Record Found.</td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="9" class="text-center text-danger">Sorry! No Record Found.</td>
+                                        </tr>
+                                    {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+
+            
+                    {% if result.has_other_pages %}
+                    <div class="d-flex justify-content-cente paggination-sec">
+                        <div class="">
+                            <nav class="">
+                                <ul class="pagination">
+                                    {% if result.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ result.previous_page_number }}&region={{ request.GET.region }}&entity_id={{ request.GET.entity_id }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+                    
+                                    {% for i in result.paginator.page_range %} 
+                                        {% if result.number == i %}
+                                            <li class="page-item active">
+                                                <a class="page-link" href="#">{{ i }} </a>
+                                            </li>
+                                            
+                                        {% elif i > result.number|add:'-3' and i < result.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ i }}&region={{ request.GET.region }}&entity_id={{ request.GET.entity_id }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">{{ i }} </a>
+                                            </li>
+                                            
+                                        {% endif %} 
+                                    {% endfor %} 
+                                    {% if result.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ result.next_page_number }}&region={{ request.GET.region }}&entity_id={{ request.GET.entity_id }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item">
+                                        <a class="next" href="javascript:void(0);"><i class="ion-ios-arrow-right"></i></a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+
+            <!-- /.row -->
+
+
+
+
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+
+{% endblock %}
+
+
+{% block js %}
+
+<script src="{% static 'select2/select2.full.min.js' %}"></script>
+<script>
+    $("#end_date").change(function() {
+      var start_date = document.getElementById("start_date").value;
+      var end_date = document.getElementById("end_date").value;
+  
+      if ((Date.parse(end_date) <= Date.parse(start_date))) {
+        alert("End date should be greater than Start date");
+        document.getElementById("end_date").value = "";
+      }
+    });
+  </script>
+
+
+<script>
+    $(document).ready(function () {
+        $(".select2_entity_id").select2({
+            placeholder: "Select Entity",
+            width: '100%',
+            allowClear: false,
+        });
+    
+        $('#id_region').on('change', function () {
+            var data = $(this).find('option:selected').val(); 
+            console.log(data);
+            
+            $("#associated_entity").empty().trigger('change'); 
+            $.ajax({
+                url: "{% url 'user_profile:blf_list_region_wise' %}",
+                data: {
+                    'id': data,
+                },
+                success: function (data) {  
+                    
+                    $("#associated_entity").html(data);
+                    $(".select2_entity_id").select2({
+                        placeholder: "Select Entity",
+                        width: '100%',
+                        allowClear: false,
+                    });
+                },
+                error: function (rs, e) {
+                    console.log(rs);
+                    console.log(e);
+                }
+            });
+        });
+    });
+    </script>
+
+
+
+<script>
+    $(document).ready(function () {
+        // console.log({{ grower }})
+        // $("#grower_id").val({{ grower }});
+        $("#id_region").val({{ region }});
+        // $("#associated_entity").val({{ entity_id }});
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+
+{% endblock %}

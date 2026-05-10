@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %}Farm - My Diary{% endblock %}
+
+{% block css %}
+<style>
+    .farm-diary-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .farm-diary-tile {
+        align-items: center;
+        border-radius: 8px;
+        color: #fff;
+        display: flex;
+        gap: 14px;
+        min-height: 74px;
+        padding: 18px 20px;
+        text-decoration: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .farm-diary-tile:hover {
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+        color: #fff;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    .farm-diary-tile i {
+        font-size: 24px;
+        width: 28px;
+    }
+    .farm-diary-tile span {
+        font-size: 18px;
+        font-weight: 700;
+    }
+    .farm-diary-tile-blue { background: #0b7ded; }
+    .farm-diary-tile-green { background: #0d7a3d; }
+    .farm-diary-tile-red { background: #de3246; }
+    .farm-diary-tile-yellow { background: #f3ad00; }
+    .farm-diary-tile-gray { background: #6c757d; }
+    .farm-diary-tile-cyan { background: #1d9aaa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1 pt-3">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">
+                        Grower - {{ grower_details }}
+                    </h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a href="{% url 'chemical_data:farmdiary_user_list' %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2"></i>Back
+                    </a>
+                </div>
+            </div>
+
+            <div class="row ml-1 mr-1 mb-3">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <div class="row align-items-end">
+                            <div class="col-lg-5 col-md-6 mb-2">
+                                <label for="date_from" class="font-weight-bold text-muted">From Date</label>
+                                <input type="date" id="date_from" class="form-control">
+                            </div>
+                            <div class="col-lg-5 col-md-6 mb-2">
+                                <label for="date_to" class="font-weight-bold text-muted">To Date</label>
+                                <input type="date" id="date_to" class="form-control">
+                            </div>
+                            <div class="col-lg-2 col-md-6 mb-2">
+                                <button type="button" id="reset-diary-dates" class="btn bg-success2 text-white btn-block">
+                                    <i class="fa fa-sync-alt mr-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-lg-3 col-md-6">
+                                <a href="{% url 'chemical_data:stg_farm_diary_pdf_generate' grower_id=grower_pk %}"
+                                   id="download-farmdiary"
+                                   class="btn bg-danger text-white pl-3 pr-3 disabled"
+                                   aria-disabled="true">
+                                    <i class="fa fa-download mr-2"></i>Download Farmdiary
+                                </a>
+                            </div>
+                            <div class="col-lg-9 col-md-6">
+                                <div id="download-status" class="text-muted pt-2">Select a date range to enable download.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row ml-2 mr-2">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <h5 class="mb-3 text-success font-weight-bold">My Diary List</h5>
+                        <div class="farm-diary-grid">
+                            {% for item in diary_links %}
+                            <a href="{{ item.url }}" class="farm-diary-tile {{ item.class }}">
+                                <i class="fa {{ item.icon }}"></i>
+                                <span>{{ item.title }}</span>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    (function () {
+        var baseDownloadUrl = "{% url 'chemical_data:stg_farm_diary_pdf_generate' grower_id=grower_pk %}";
+        var availabilityUrl = "{% url 'chemical_data:farm_diary_download_available' grower_pk=grower_pk %}";
+        var $from = $("#date_from");
+        var $to = $("#date_to");
+        var $download = $("#download-farmdiary");
+        var $status = $("#download-status");
+        var timer = null;
+
+        function setDownloadEnabled(enabled, message) {
+            $download.toggleClass("disabled", !enabled).attr("aria-disabled", enabled ? "false" : "true");
+            $status.text(message || "");
+        }
+
+        function updateDownloadUrl() {
+            var fromDate = $from.val();
+            var toDate = $to.val();
+            if (fromDate && toDate && Date.parse(toDate) < Date.parse(fromDate)) {
+                alert("To date should be greater than or equal to From date");
+                $to.val("");
+                toDate = "";
+            }
+            if (fromDate && toDate) {
+                $download.attr("href", baseDownloadUrl + "?date_from=" + encodeURIComponent(fromDate) + "&date_to=" + encodeURIComponent(toDate));
+                clearTimeout(timer);
+                $status.text("Checking farm diary data...");
+                setDownloadEnabled(false, "Checking farm diary data...");
+                timer = setTimeout(function () {
+                    $.ajax({
+                        url: availabilityUrl + "?date_from=" + encodeURIComponent(fromDate) + "&date_to=" + encodeURIComponent(toDate),
+                        headers: {"X-Requested-With": "XMLHttpRequest"},
+                        success: function (response) {
+                            setDownloadEnabled(response.has_data, response.has_data ? "Data found. Download is ready." : "No data found for this date range.");
+                        },
+                        error: function () {
+                            setDownloadEnabled(false, "Unable to check data. Please try again.");
+                        }
+                    });
+                }, 250);
+            } else {
+                $download.attr("href", baseDownloadUrl);
+                setDownloadEnabled(false, "Select a date range to enable download.");
+            }
+        }
+
+        $from.on("change", updateDownloadUrl);
+        $to.on("change", updateDownloadUrl);
+        $("#reset-diary-dates").on("click", function () {
+            $from.val("");
+            $to.val("");
+            updateDownloadUrl();
+        });
+        $download.on("click", function (event) {
+            if ($(this).hasClass("disabled")) {
+                event.preventDefault();
+            }
+        });
+    })();
+</script>
+{% endblock %}

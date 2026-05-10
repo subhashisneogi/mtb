@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Farm - My Diary{% endblock %}
+{% block css %}
+<style>
+    .p-user-image {
+        height: 40px;
+        border-radius: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+
+            <div class="row mb-3 ml-1 mr-1 pt-3">
+                <div class="col-sm-6">
+                    
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    
+                    
+                    
+                    <a type="button" href="{% url 'chemical_data:grower_farmdiary_pdf' %}?grower_pk={{ grower_pk }}" style="width: 10rem" class="btn bg-danger text-white pl-3 pr-3">
+                        <i class="fa fa-download  mr-2"  aria-hidden="true"></i>Download PDF
+                    </a>
+
+                    <a type="button" href="{% url 'chemical_data:farmdiary_user_list'  %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back 
+                    </a>
+                    
+                </div>
+            </div>
+
+            <div class="row ml-2 mr-2">
+                <div class="col-lg-12">
+                    <div class="card report-page">
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table ">
+                                    <thead>
+                                        <tr>
+                                            <th>My Diary List</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                         
+                                        {% if not domain == 'tracetea.org' %}
+                                        <tr>
+                                            <td class="text-capitalize text-center">
+                                                <a href="{% url 'chemical_data:farm_diary_map_create' grower_pk=grower_pk %}" class="btn btn-primary btn-block">Map of the Land</a>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+
+                                        {% endif %}
+
+                                        {% for item in chemical_type_list %}
+                                        
+                                        <tr>
+                                            <td class="text-capitalize text-center">
+                                                {% if item.pk == 1 %}
+                                                <a href="{% url 'chemical_data:chemical_view_list' grower_pk=grower_pk chemical_type=item.id  %}"  class="btn btn-block btn-success">{{ item.name }}</a>
+                                                {% elif item.pk == 2 %}
+                                                <a href="{% url 'chemical_data:chemical_view_list' grower_pk=grower_pk chemical_type=item.id  %}"  class="btn btn-block btn-danger">{{ item.name }}</a>
+                                                {% elif item.pk == 3 %}
+                                                <a href="{% url 'chemical_data:chemical_view_list' grower_pk=grower_pk chemical_type=item.id  %}"  class="btn btn-block btn-warning text-white">{{ item.name }}</a>
+                                                {% elif item.pk == 5 %}
+                                                <a href="{% url 'chemical_data:chemical_view_list' grower_pk=grower_pk chemical_type=item.id  %}"  class="btn btn-block btn-secondary">{{ item.name }}</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        
+                                        {% endfor %}
+                                        
+                    
+                                        <tr>
+                                            <td class="text-capitalize text-center">
+                                                <a href="{% url 'chemical_data:plucking_data_view_list' grower_pk=grower_pk %}" class="btn btn-success btn-block">Plucking Data</a>
+                                            </td>
+                                        </tr>
+
+
+                                        <tr>
+                                            <td class="text-capitalize text-center">
+                                                <a href="{% url 'chemical_data:farmdiary_labour_list' grower_pk=grower_pk %}" class="btn btn-danger btn-block">Labour List Entry</a>
+                                            </td>
+                                        </tr>
+
+                                        
+                                        <tr>
+                                            <td class="text-capitalize text-center">
+                                                <a href="{% url 'chemical_data:farmdiary_monthly_shedule_list' grower_pk=grower_pk %}" class="btn btn-primary btn-block">Monthly Schedule Of
+                                                    Work</a>
+                                            </td>
+                                        </tr>
+
+                                        {% if not domain == 'tracetea.org' %}
+                                            <tr>
+                                                <td class="text-capitalize text-center">
+                                                    <a href="{% url 'chemical_data:farmers_aggreements_forms_list' grower_pk=grower_pk %}" class="btn btn-info btn-block text-white">Forms and Registration</a>
+                                                </td>
+                                            </tr>
+                                        {% else %}
+                                            
+                                        {% endif %}
+
+                                       
+
+
+
+                                        
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                </div>
+            </div>
+
+
+            
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+{% endblock %}
+{% block js %}
+<script>
+    $(document).ready(function () {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+
+{% endblock %}

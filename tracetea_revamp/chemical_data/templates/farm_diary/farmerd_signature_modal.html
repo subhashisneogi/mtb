@@ -1,0 +1,107 @@
+{% load static %}
+
+<div class="modal fade" id="exampleModal{{ obj.id }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Edit Farmer Signature {{ item.name }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <button id="img-btn" class="btn btn-sm btn-success">
+                    File Upload
+                </button>
+                <button id="digital-btn" class="btn btn-sm btn-success">
+                    Digital Signature Upload
+                </button>
+
+                <div id="digital-file-upload">
+
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h1>Digital-Signature</h1>
+                                <p>Sign in the below</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <canvas id="sig-canvas" width="620" height="160">
+
+                                </canvas>
+                            </div>
+                        </div>
+                        <div class="row ">
+                            <div class="col-md-12">
+                                <button class="btn btn-primary" id="sig-submitBtn">Submit Signature</button>
+                                <button class="btn btn-default" id="sig-clearBtn">Clear Signature</button>
+                            </div>
+                        </div>
+                        <br />
+                        <!-- <div class="row">
+                            <div class="col-md-12">
+                                <textarea id="sig-dataUrl" class="form-control" rows="5">Data URL for your signature will go here!</textarea>
+                            </div>
+                        </div> -->
+                        <br />
+                        <div class="row">
+                            <div class="col-md-12">
+                                <img id="sig-image" src="" alt="Your signature will go here!" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{% url 'chemical_data:edit_farmers_signature' %}"
+                        enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="grower_pk" value="{{ grower_pk }}">
+                        <input type="hidden" name="form_master_pk" value="{{ item.pk }}">
+
+                        <div class="form-group">
+                            <label for="signature_file">Signature File</label>
+                            <input type="file" name="farmer_signature_file" class="form-control-file"
+                                id="farmer_signature_file" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </form>
+
+                </div>
+
+
+                <div id="image-file-upload">
+
+
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h1>Digital-Signature</h1>
+                                <p>Sign in the below</p>
+                            </div>
+                        </div>
+
+                        <h2>image FIle</h2>
+                        <form method="POST" action="{% url 'chemical_data:edit_farmers_signature' %}"
+                            enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="grower_pk" value="{{ grower_pk }}">
+                            <input type="hidden" name="form_master_pk" value="{{ item.pk }}">
+
+                            <div class="form-group">
+                                <label for="signature_file">Signature File</label>
+                                <input type="file" name="farmer_signature_file" class="form-control-file"
+                                    id="farmer_signature_file" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

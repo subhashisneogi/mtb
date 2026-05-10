@@ -1,0 +1,4 @@
+<option value="">---------</option>
+{% for item in blf_list_region_wise %}
+<option value="{{ item.pk }}">{{ item.entity_unit }} - [{{ item.user }}]</option>
+{% endfor %}

@@ -1,0 +1,534 @@
+{% load l10n %}
+{% load poll_extras %}
+
+<style>
+  .card-danger:not(.card-outline)>.card-header {
+      background-color: #61a147;
+  }
+  .card-title {
+      float: left;
+      font-size: 18px;
+      font-weight: 500;
+      margin: 0;
+  }
+</style>
+
+<div class="content-wrapper" style="min-height: 124px;">
+
+  <section class="content">
+    <div class="container-fluid">
+      <!-- Leaf Collection Graph -->
+      <div class="row">
+        <div class="col-md-6">
+          <!-- BLF pie chart -->
+          <div class="card card-danger">
+            <div class="card-header">
+              <h3 class="card-title">BLF registered region wise</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="myChart" style="width:100%; max-width:600px;  display: block;;"
+                class="chartjs-render-monitor text-center">
+              </canvas>
+            </div>
+          </div>
+
+        </div>
+        <div class="col-md-6">
+
+          
+
+          <!-- STG pie chart -->
+          <div class="card card-danger">
+            <div class="card-header">
+              <h3 class="card-title">STG registered region wise</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="myChart2" style="width:100%; max-width:600px;  display: block;;"
+                class="chartjs-render-monitor text-center">
+              </canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <!-- Aggregator pie chart -->
+          <div class="card card-danger">
+            <div class="card-header">
+              <h3 class="card-title">Aggregator registered region wise</h3>
+            </div>
+            <div class="card-body">
+              <!-- <div id="stateValuesContainer" class="text-center"></div> -->
+              <canvas id="myChart3" style="width:100%; max-width:600px;  display: block;"
+                class="chartjs-render-monitor text-center">
+              </canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <!-- Farms Diary pie chart -->
+          <div class="card card-danger">
+            <div class="card-header">
+              <h3 class="card-title">No. of farmers using farm diary region wise</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="farmersPieChart" style="width:100%;max-width:600px; "></canvas>
+            </div>
+          </div>
+
+        </div>
+
+      
+      <!-- BAR CHART   REGION WISE SUPPLY COLLECTION -->
+
+        <div class="col-md-12">
+          <form  method="GET" id="region_eise_collection"  action="{% url 'dashboard_supply_collection_region_wise_graph' %}">
+          <!-- search -->
+          <div class="row">
+            <div class="col-lg-2 col-sm-3 col-12">
+                  <select class="form-select form-control" name="region" id="year_select" onchange="year_graph_data(value);">
+                    <option value="" disabled selected>Select region</option>
+                    {% for region in region_list %}
+                    <option value="{{region.pk}}"  >{{ region.region_name }}</option>
+                    {% endfor %}
+                  </select>
+            </div>
+
+            <div class="col-lg-2 col-sm-3 col-12">
+              
+                <select class="form-select form-control" name="year" id="year_select" onchange="year_graph_data(value);" required>
+                  <option value="" disabled selected>Select year</option>
+                  {% for year_list in year %}
+                  <option value="{{ year_list }}" {% if selected_year == year_list %} selected {% endif %} >{{ year_list }}</option>
+
+                  {% endfor %}
+                </select>
+             </div>
+
+             <div class="col-lg-2">
+                <button type="submit" class="btn btn-success btn-block rounded-pill"> <i
+                  class="fas fa-search mr-2"></i> Search</button>
+              </div>
+            </form>
+
+        </div>
+
+          <div id="default_entity_region_supply">
+            <div class="card card-success mt-3">
+              <div class="card-header" id="invoice_card_id">
+                <h3 class="card-title">Supply/Collection Volume month wise</h3>
+              </div>
+              <div class="card-body">
+  
+                  <div class="chart">
+                    <canvas id="leafCollectionBarChart" style="width:100%;max-width:100%; height: 350px;"></canvas>
+                  </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="ajax_entity_supply_region">
+           
+          </div>
+
+        </div>
+
+        <!-- ENTITY WISE COLLECTION -->
+        <div class="col-md-12">
+            <form id="supply_entity_wise"  method="GET" action="{% url 'dashboard_supply_collection_entity_wise_graph' %}">
+              <!-- search -->
+              <div class="row">
+                <div class="col-lg-2 col-sm-3 col-12">
+                  <select class="form-control" id="id_region_entity" name="region">
+                      <option>Select Region </option>
+                      {% for item in region_list %}
+                      <option value="{{ item.pk }}" {% if selected_region_id == item.pk %} selected  {% endif %}>{{ item.region_name }}</option>
+                      {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-lg-4 col-sm-3 col-12">
+                  
+                  <select name="entity_id" id="associated_entity" class="form-control select2_entity_id" required>
+                    {% if entity_id %}
+                        <option  value="{{ entity_id }}"  selected> {{ blf_name }}-[{{ entity_id }}]  </option>
+                    {% else %}
+                        <option  value=""  selected>Select Entity</option>
+                    {% endif %}
+                  </select>
+                </div>
+
+                <div class="col-lg-2 col-sm-3 col-12">
+                  
+                    <select class="form-select form-control" name="year" id="year_select" onchange="year_graph_data(value);" required>
+                      <option value="" disabled selected>Select year</option>
+                      {% for year_list in year %}
+                      <option value="{{ year_list }}" {% if selected_year == year_list %} selected {% endif %} >{{ year_list }}</option>
+
+                      {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-2">
+                      <button type="submit" class="btn btn-success btn-block rounded-pill"> <i
+                          class="fas fa-search mr-2"></i> Search</button>
+                  </div>
+              </div>
+
+            </form>
+
+            <div id="default_entity_supply">
+              <div class="card card-success mt-3" >
+                <div class="card-header" id="invoice_card_id">
+                  <h3 class="card-title">Supply/Collection Volume month wise</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                      <canvas id="leafCollectionEntityBarChart" style="width:100%;max-width:100%; height: 350px;"></canvas>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="ajax_entity_supply">
+             
+            </div>
+
+
+        </div>
+
+
+
+
+        <!-- INVOICE BAR CHART -->
+        <div class="col-md-12">
+              <!-- search -->
+              <form id="invoice_graph_admin" method="GET" action="{% url 'dashboard_invoice_entity_wise_graph' %}">
+
+              <div class="row">
+                
+                <div class="col-lg-2 col-sm-3 col-12">
+                  <select class="form-control" id="id_region_entity_invoice" name="region">
+                      <option>Select Region </option>
+                      {% for item in region_list %}
+                      <option value="{{ item.pk }}" {% if selected_region_id == item.pk %} selected  {% endif %}>{{ item.region_name }}</option>
+                      {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="col-lg-4 col-sm-3 col-12">
+                  <select name="entity_id" id="associated_entity_invoice" class="form-control select2_entity_id" required>
+                    {% if entity_id %}
+                        <option  value="{{ entity_id }}"  selected> {{ blf_name }}-[{{ entity_id }}]  </option>
+                    {% else %}
+                        <option  value=""  selected>Select Entity</option>
+                    {% endif %}
+                  </select>
+                </div>
+
+                <div class="col-lg-2 col-sm-3 col-12">
+                  
+                    <select class="form-select form-control" name="year" id="year_select" onchange="year_graph_data(value);" required>
+                      <option value="" disabled selected>Select year</option>
+                      {% for year_list in year %}
+                      <option value="{{ year_list }}" {% if selected_year == year_list %} selected {% endif %} >{{ year_list }}</option>
+
+                      {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-2">
+                      <button type="submit" class="btn btn-success btn-block rounded-pill"> <i
+                          class="fas fa-search mr-2"></i> Search</button>
+                  </div>
+              
+              </div>
+
+              </form>
+
+            <div id="default_invoice_graph_admin">
+              <div class="card card-success mt-3">
+                <div class="card-header" id="invoice_card_id">
+                  <h3 class="card-title">Invoices generated month wise</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                      <canvas id="invoiceChart" style="width:100%;max-width:100%; height: 350px;"></canvas>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+        <div id="ajax_invoice_graph_admin">
+
+
+        </div>
+
+
+
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+
+
+<script>
+  const xValues = ['West Bengal,', '	South India,', 'Assam,', 'North East', 'Others'];
+  const yValues = [{{ west_bengal_blf_count }}, {{ south_india_blf_count }}, {{ assam_blf_count }}, {{ north_east_blf_count }}, {{ others_blf }}];
+  const barColors = [
+  '#3366cc',
+  '#D35400',
+  '#F39C12',
+  '#28a745'
+  ];
+
+  new Chart("myChart", {
+    type: "pie",
+    data: {
+      labels: xValues,
+      datasets: [{
+        backgroundColor: barColors,
+        data: yValues
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: "Total No. of Registered BLF in Tracetea : {{ tot_blf }}"
+      }
+    }
+  });
+
+  
+// piechart 2
+const xValues2 = ['West Bengal,', '	South India,', 'Assam', 'North East', 'Others'];
+  const yValues2 = [{{ west_bengal_stg_count }}, {{ south_india_stg_count }}, {{ assam_stg_count }}, {{ north_east_stg_count }}, {{ others_stg }}];
+  const barColors2 = [
+  '#3366cc',
+  '#D35400',
+  '#F39C12',
+  '#28a745'
+  ];
+
+  new Chart("myChart2", {
+    type: "pie",
+    data: {
+      labels: xValues2,
+      datasets: [{
+        backgroundColor: barColors2,
+        data: yValues2
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: "Total No. of Registered STG in Tracetea : {{ tot_stg }}"
+      }
+    }
+  });
+
+  // piechart 3
+  const xValues3 = ['West Bengal', 'South India', 'Assam', 'North East', 'Others'];
+  const yValues3 = [{{ west_bengal_agg_count }}, {{ south_india_agg_count }}, {{ assam_agg_count }}, {{ north_east_agg_count }}, {{ others_agg }}];
+  const barColors3 = [
+    '#3366cc',
+    '#D35400',
+    '#F39C12',
+    '#28a745'
+  ];
+
+  // Reference to the container element where you want to display state values
+  const stateValuesContainer = document.getElementById('stateValuesContainer');
+
+  new Chart("myChart3", {
+    type: "pie",
+    data: {
+      labels: xValues3,
+      datasets: [{
+        backgroundColor: barColors3,
+        data: yValues3
+      }]
+    },
+    options: {
+      tooltips: {
+        callbacks: {
+          label: function (tooltipItem, data) {
+            var label = data.labels[tooltipItem.index];
+            var value = data.datasets[0].data[tooltipItem.index];
+            return label + ': ' + value;
+          }
+        }
+      },
+      title: {
+        display: true,
+        text: "Total No. of Registered Aggregator in Tracetea : {{ tot_agg }}"
+      }
+    }
+  });
+
+  // Generate HTML content for each state's value
+  xValues3.forEach((state, index) => {
+    const stateValueHTML = `<span style="color: ${barColors3[index]}">${state} - ${yValues3[index]}&nbsp; </span>`;
+    stateValuesContainer.innerHTML += stateValueHTML;
+  });
+
+</script>
+
+<script>
+  const FarmersPieX = ['West Bengal', 'South India', 'Assam', 'North East'];
+  const FarmersPieY = [{{ wb_total_farm_diary }}, {{ si_total_farm_diary }}, {{ assam_total_farm_diary }}, {{ north_east_total_farm_diary }}];
+  const FarmersPieColors = [
+    '#3366cc',
+    '#D35400',
+    '#F39C12',
+    '#28a745'
+  ];
+  
+  new Chart("farmersPieChart", {
+    type: "pie",
+    data: {
+      labels: FarmersPieX,
+      datasets: [{
+        backgroundColor: FarmersPieColors,
+        data: FarmersPieY
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: "Total No. of Farmers using tracetea Farm Diary : {{ tot_farms }} "
+      }
+    }
+  });
+  </script>
+
+
+  <!-- ######################################################### -->
+  <!-- BAR CHAT -->
+
+
+  <script>
+
+    var barx = [{% for key, value in invoice_result %}'{{ key.0|month_name }}', {% endfor %}];
+    var bary = [{% for key, value in results %}{{ value.0| unlocalize }}, {% endfor %}];
+
+    var barInvoiceColors = ["#28a745", "#28a745","#28a745","#28a745","#28a745"];
+    
+    new Chart("invoiceChart", {
+      type: "bar",
+      data: {
+        labels: barx,
+        datasets: [{
+          backgroundColor: 'rgba(60,141,188,0.9)',
+          borderColor: 'rgba(60,141,188,0.8)',
+          pointRadius: false,
+          pointColor: '#3b8bba',
+          pointStrokeColor: 'rgba(60,141,188,1)',
+          pointHighlightFill: '#fff',
+          pointHighlightStroke: 'rgba(60,141,188,1)',
+          data: bary
+        }]
+      },
+      options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            // min: 0,  // Explicitly set the minimum value to 0
+                            // precision: 0
+                        }
+                    }]
+                },
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: ""
+                }
+            }
+    });
+
+
+    // leafCollectionBarChart
+
+    var leafCollectionBarX = [{% for key, value in results %}'{{ key.0|month_name }}', {% endfor %}];
+    var leafCollectionBarY = [{% for key, value in results %}{{ value.0| unlocalize }}, {% endfor %}];
+    var leafCollectionBarColors = ["red", "green","blue","orange","brown"];
+
+    new Chart("leafCollectionBarChart", {
+      type: "bar",
+      data: {
+        labels: leafCollectionBarX,
+        datasets: [{
+          backgroundColor: 'rgba(60,141,188,0.9)',
+          borderColor: 'rgba(60,141,188,0.8)',
+          pointRadius: false,
+          pointColor: '#3b8bba',
+          pointStrokeColor: 'rgba(60,141,188,1)',
+          pointHighlightFill: '#fff',
+          pointHighlightStroke: 'rgba(60,141,188,1)',
+          data: bary
+        }]
+      },
+      options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            // min: 0,  // Explicitly set the minimum value to 0
+                            // precision: 0
+                        }
+                    }]
+                },
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: ""
+                }
+            }
+    });
+    
+
+    // leafCollectionEntityBarChart
+    var leafCollectionEntityBarX = [{% for key, value in results %}'{{ key.0|month_name }}', {% endfor %}];
+    var leafCollectionEntityBarY = [{% for key, value in results %}{{ value.0| unlocalize }}, {% endfor %}];
+    var leafCollectionEntityColors = ["red", "green","blue","orange","brown"];
+
+    new Chart("leafCollectionEntityBarChart", {
+      type: "bar",
+      data: {
+        labels: leafCollectionEntityBarX,
+        datasets: [{
+          backgroundColor: 'rgba(60,141,188,0.9)',
+          borderColor: 'rgba(60,141,188,0.8)',
+          pointRadius: false,
+          pointColor: '#3b8bba',
+          pointStrokeColor: 'rgba(60,141,188,1)',
+          pointHighlightFill: '#fff',
+          pointHighlightStroke: 'rgba(60,141,188,1)',
+          data: bary
+        }]
+      },
+      options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            // min: 0,  // Explicitly set the minimum value to 0
+                            // precision: 0
+                            // min: 0,
+                            // stepSize: 500
+                        }
+                    }]
+                },
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: ""
+                }
+            }
+    });
+    
+    </script>

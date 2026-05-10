@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Map</title>
+    <style>
+      #factory {
+          height: 150px;
+          width: 82%;
+          margin: 10px auto;
+          border: 2px solid #6cbb02;
+      }
+  
+      #marged-boundary {
+          height: 350px;
+          width: 98%;
+          margin: 10px auto;
+          border: 2px solid #6cbb02;
+      }
+  </style>
+</head>
+<body>
+
+    <div id="marged-boundary"></div>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+<script>
+    var triangleCoords = [{
+            "lat": 22.5810914275319,
+            "lng": 88.48095070570709
+        },
+        {
+            "lat": 22.580044757750134,
+            "lng": 88.4820557758212
+        },
+        {
+            "lat": 22.579090024519793,
+            "lng": 88.48102044314147
+        },
+        {
+            "lat": 22.578993745931236,
+            "lng": 88.48079815506935
+        },
+        {
+            "lat": 22.579238002412193,
+            "lng": 88.48050881177187
+        },
+        {
+            "lat": 22.579619091190043,
+            "lng": 88.48039280623198
+        },
+        {
+            "lat": 22.580294275136897,
+            "lng": 88.48062213510275
+        },
+        {
+            "lat": 22.5810914275319,
+            "lng": 88.48095070570709
+        }
+    ];
+    var triangleCoords1 = [{
+            "lat": 27.47531923958809,
+            "lng": 94.89623509347439
+        },
+        {
+            "lat": 27.4751077451712,
+            "lng": 94.89838253706694
+        },
+        {
+            "lat": 27.47216909086506,
+            "lng": 94.89824037998915
+        },
+        {
+            "lat": 27.473656126966112,
+            "lng": 94.8967121914029
+        },
+        {
+            "lat": 27.473454445710633,
+            "lng": 94.89572379738091
+        },
+        {
+            "lat": 27.47531923958809,
+            "lng": 94.89623509347439
+        }
+    ];
+    var triangleCoords2 = [{
+            "lat": 22.5810914275319,
+            "lng": 88.48095070570709
+        },
+        {
+            "lat": 22.580044757750134,
+            "lng": 88.4820557758212
+        },
+        {
+            "lat": 22.579090024519793,
+            "lng": 88.48102044314147
+        },
+        {
+            "lat": 22.578993745931236,
+            "lng": 88.48079815506935
+        },
+        {
+            "lat": 22.579238002412193,
+            "lng": 88.48050881177187
+        },
+        {
+            "lat": 22.579490307448015,
+            "lng": 88.47910534590483
+        },
+        {
+            "lat": 22.579921624158615,
+            "lng": 88.47735486924648
+        },
+        {
+            "lat": 22.57943592356233,
+            "lng": 88.4759244765155
+        },
+        {
+            "lat": 22.580376747731503,
+            "lng": 88.47440825309604
+        },
+        {
+            "lat": 22.58202062665617,
+            "lng": 88.47566734068096
+        },
+        {
+            "lat": 22.580999706870468,
+            "lng": 88.47738776821643
+        },
+        {
+            "lat": 22.581014423682536,
+            "lng": 88.47785006160848
+        },
+        {
+            "lat": 22.581071313760134,
+            "lng": 88.47807047946844
+        },
+        {
+            "lat": 22.58108857849433,
+            "lng": 88.4782908973284
+        },
+        {
+            "lat": 22.581009042432612,
+            "lng": 88.47919402644038
+        },
+        {
+            "lat": 22.580055747669395,
+            "lng": 88.4799388423562
+        },
+        {
+            "lat": 22.580541934627274,
+            "lng": 88.48005350679159
+        },
+        {
+            "lat": 22.581022083196036,
+            "lng": 88.48087560385466
+        },
+        {
+            "lat": 22.581055517076596,
+            "lng": 88.48091315478086
+        }
+    ];
+
+    function initDrawingMap() {
+        const map = new google.maps.Map(document.getElementById("marged-boundary"), {
+            center: {
+                lat: -34.397,
+                lng: 150.644
+            },
+            zoom: 8,
+        });
+        const drawingManager = new google.maps.drawing.DrawingManager({
+            drawingMode: google.maps.drawing.OverlayType.MARKER,
+            drawingControl: true,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: [
+                    google.maps.drawing.OverlayType.MARKER,
+                    google.maps.drawing.OverlayType.CIRCLE,
+                    google.maps.drawing.OverlayType.POLYGON,
+                    google.maps.drawing.OverlayType.POLYLINE,
+                    google.maps.drawing.OverlayType.RECTANGLE,
+                ],
+            },
+            markerOptions: {
+                icon: "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png",
+            },
+            circleOptions: {
+                fillColor: "#ffff00",
+                fillOpacity: 1,
+                strokeWeight: 5,
+                clickable: false,
+                editable: true,
+                zIndex: 1,
+            },
+            polygonOptions: {
+                editable: true
+            },
+        });
+
+        drawingManager.setMap(map);
+        drawingManager.addListener('overlaycomplete', overlayCompleteListener);
+
+        // Construct the polygon.
+        const bermudaTriangle = new google.maps.Polygon({
+            paths: triangleCoords,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+        const bermudaTriangle2 = new google.maps.Polygon({
+            paths: triangleCoords1,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+        const bermudaTriangle3 = new google.maps.Polygon({
+            paths: triangleCoords2,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+
+        bermudaTriangle.setMap(map);
+        bermudaTriangle2.setMap(map);
+        bermudaTriangle3.setMap(map);
+        var latlngbounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < triangleCoords.length; i++) {
+            latlngbounds.extend(triangleCoords[i]);
+        }
+        map.fitBounds(latlngbounds);
+
+        function overlayCompleteListener(event) {
+            console.log('overlayCompleteListener');
+            drawingManager.setDrawingMode(null);
+            currentOverlay = event.overlay;
+            currentOverlay.addListener('click', overlayClickListener);
+        };
+
+        // remove the overlay
+        function overlayClickListener(event) {
+            console.log('overlayClickListener');
+            event.stop();
+            if (typeof event.path === 'undefined') { // ignore clicks on polygon paths
+                drawingManager.setDrawingMode(nextOverlayType());
+                currentOverlay.setMap(null);
+                google.maps.event.clearInstanceListeners(currentOverlay);
+                currentOverlay = null;
+            }
+        };
+    }
+
+    window.initDrawingMap = initDrawingMap;
+</script>
+
+<!-- 
+<script>
+    function factoryMap(e) {
+        let mapdata = $(e).find(':selected').attr("data-cordinate");
+        let divisionName = $(e).find(':selected').attr("data-division-name");
+
+        if (mapdata) {
+            var triangleCoords = JSON.parse(mapdata);
+        } else {
+            var triangleCoords = JSON.parse($("#cordinate_data").val());
+        }
+        if ((divisionName)) {} else {
+            divisionName = $("#cordinate_division_name").val();
+        }
+
+        divisionName = 1;
+        // The map, centered at Uluru
+        const map = new google.maps.Map(document.getElementById("factory"), {
+            zoom: 14,
+            center: triangleCoords[0]
+        });
+
+        console.log(triangleCoords);
+        // Construct the polygon.
+        const bermudaTriangle = new google.maps.Polygon({
+            paths: triangleCoords,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+
+        bermudaTriangle.setMap(map);
+        var latlngbounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < triangleCoords.length; i++) {
+            latlngbounds.extend(triangleCoords[i]);
+        }
+        map.fitBounds(latlngbounds);
+    }
+    $(document).ready(function() {
+        factoryMap();
+    });
+</script> -->
+<script async defer 
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrRtkwvBcSh3_uISG8CVAX2IqykHdQEP4&callback=initDrawingMap&libraries=drawing&v=weekly">
+</script>
+
+
+
+</body>
+</html>

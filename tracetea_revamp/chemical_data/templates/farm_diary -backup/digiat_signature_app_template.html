@@ -1,0 +1,28 @@
+
+<html>
+    <body>
+        <div class="row">
+            <div class="col-md-12">
+                <canvas id="signature-pad" class="signature-pad" width="620" height="160"></canvas>
+            </div>
+        </div>
+        <script>
+        // Added onclick event handling to set the value of signature_data input
+            $('#signature-pad').click(function () {
+            var dataURL = signaturePad.toDataURL();
+            var inputElement = document.getElementById('signature_data');
+            inputElement.value = dataURL;
+            console.log("######## dataURL", dataURL)
+        });
+        
+        var canvas = document.getElementById('signature-pad');
+        var signaturePad = new SignaturePad(canvas);
+        </script>
+    </body>
+</html>
+
+
+
+
+
+

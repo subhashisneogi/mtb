@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% endblock %}
+
+{% block page_header_title %}
+{% if is_fertilizer %}Fertilizer{% else %}Chemical{% endif %} Management
+{% endblock %}
+
+{% block css %}
+<style>
+    .chemical-search-box {
+        max-width: 420px;
+    }
+
+    .search-status {
+        min-height: 20px;
+        font-size: 13px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">
+                        {% if is_fertilizer %}Fertilizer{% else %}Chemical{% endif %} List
+                    </h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a href="{% url 'chemical_data:chemical_create' %}?is_fertilizer={{ is_fertilizer|yesno:'1,0' }}"
+                       class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-plus mr-2"></i>Add New
+                    </a>
+                </div>
+            </div>
+
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <label for="chemical-live-search" class="font-weight-bold text-muted">
+                            Search {% if is_fertilizer %}Fertilizer{% else %}Chemical{% endif %}
+                        </label>
+                        <input type="text"
+                               id="chemical-live-search"
+                               class="form-control chemical-search-box"
+                               value="{{ search_query }}"
+                               placeholder="Search name, type, manufacturer, brand, composition"
+                               autocomplete="off"
+                               data-list-url="{{ list_url }}">
+                        <div id="chemical-search-status" class="search-status text-muted mt-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chemical-list-container" class="row ml-2 mr-2 mt-4">
+                {% include 'chemical/_chemical_table.html' %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    (function () {
+        var input = document.getElementById('chemical-live-search');
+        var container = document.getElementById('chemical-list-container');
+        var status = document.getElementById('chemical-search-status');
+        var timer = null;
+
+        if (!input || !container) {
+            return;
+        }
+
+        function buildUrl(page) {
+            var url = new URL(input.dataset.listUrl, window.location.origin);
+            var query = input.value.trim();
+            if (query) {
+                url.searchParams.set('q', query);
+            }
+            if (page) {
+                url.searchParams.set('page', page);
+            }
+            return url;
+        }
+
+        function loadResults(page) {
+            var url = buildUrl(page);
+            status.textContent = 'Searching...';
+
+            fetch(url, {
+                headers: {'X-Requested-With': 'XMLHttpRequest'}
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Search request failed');
+                    }
+                    return response.text();
+                })
+                .then(function (html) {
+                    container.innerHTML = html;
+                    window.history.replaceState({}, '', url);
+                    status.textContent = '';
+                })
+                .catch(function () {
+                    status.textContent = 'Unable to load results. Please try again.';
+                });
+        }
+
+        input.addEventListener('input', function () {
+            window.clearTimeout(timer);
+            timer = window.setTimeout(function () {
+                loadResults(1);
+            }, 300);
+        });
+
+        container.addEventListener('click', function (event) {
+            var link = event.target.closest('[data-page]');
+            if (!link) {
+                return;
+            }
+            event.preventDefault();
+            loadResults(link.getAttribute('data-page'));
+        });
+    })();
+</script>
+{% endblock %}

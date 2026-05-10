@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Manage STG Farm Diary  {% endblock %}
+{% block css %}
+
+<link href="{% static 'select2/select2.min.css' %}" rel="stylesheet" />
+    <style>
+        .p-user-image{
+            height: 40px;
+            border-radius: 30px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form role="form"  method ="GET" action="{% url 'chemical_data:farmdiary_user_list_search'  %}">
+                            <div class="row">
+                              
+                                <div class="col-lg-8">
+                                    
+                                    <select name="grower" class="form-control select2_demo_1" required>
+                                        <option value=""></option>
+                                        {% for item in associated_grower_list %}    
+                                         <option value="{{ item.user_id }}" selected {% if request.GET.grower == item.user_id %} selected {% endif %}>{{ item.name }}-[{{ item.user }}]</option>
+                                        {% endfor %}
+                                    </select>
+
+                                </div>  
+                               
+                                <div class="col-lg-2 col-md-6 mt-4---">
+                                    <button type="submit" class="btn btn-success rounded-pill btn-block pl-4 pr-4"> <i
+                                            class="fas fa-search mr-2"></i> Search</button>
+                                </div>
+                                <div class="col-lg-2 col-md-6 mt-4---">
+                                    <a href="{% url 'chemical_data:farmdiary_user_list' %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                            class="fas fa-eye mr-2 text-white" ></i> Show All</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted">Associated Growers List</h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+
+
+                    
+                </div>
+            </div>
+
+            <div class="row ml-2 mr-2">
+
+                <div class="col-lg-12">
+
+                    <div class="card report-page">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Sr. No</th>
+                                            <th>Tracetea ID</th>
+                                            <th>Growers Name</th>
+                                            <th>Associted Aggregator</th>
+                                            <th>Mobile No.</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        {% if associated_grower_list %}
+                                            {% for item in associated_grower_list %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                               
+                                               
+                                                <td class="text-capitalize">
+                                                    {% if item.user  %}
+                                                        {{ item.user }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                                
+                                                <td class="text-capitalize">
+                                                        {% if item.name  %}
+                                                            {{ item.name }}
+                                                        {% else %}
+                                                            NA
+                                                        {% endif %}
+                                                   
+                                                </td>
+                                                
+                                                <td class="text-capitalize" style="white-space: normal;">
+                                                    {% for item_agg in item.associated_aggregator.all  %}
+                                                        <!-- {{ item_agg.id }} -->
+                                                        {{ item_agg.name }}{% if not forloop.last %},&nbsp;{% endif %}
+                                                    {%  endfor %}
+                                                </td>
+
+                                                <td class="text-capitalize">
+
+                                                    {% if item.mobile_number  %}
+                                                        {{ item.mobile_number }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                    
+                                                    
+                                                </td>
+                                               
+                                               
+
+                                                <td class="project-actions ">   
+                                                    
+                                                    <!-- <a class=" mr-3" href=""><i class="fa fa-eye"></i></a> -->
+                                                    <a style="width: 7rem" class="btn btn-info btn-sm" href="{% url 'user_profile:grower_visting_card' grower_pk=item.pk %}" target="_blank" ><i class="fa fa-print"></i>&nbsp;Visiting Card</a>
+                                                    <a class="btn btn-primary btn-sm mr-3" href="{% url 'chemical_data:chemical_type_list' grower_pk=item.user.id %}"><i class="fa fa-eye text-white" ></i>&nbsp;View</a>
+                                                   
+                                                    <!-- <a class="btn btn-danger btn-sm mr-3" href=""><i class="fa fa-edit text-white" ></i>&nbsp;Edit</a> -->
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+
+                                        <tr>
+                                            <td colspan="9" class="text-center text-danger">Sorry! No Record Found.</td>
+                                        </tr>
+
+                                        {% endif %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    
+                        <!-- /.card-body -->
+                    </div>
+
+                    <!-- 
+                    <div class="d-flex justify-content-center">    
+                        <ul class="pagination pagination-sm mt-3 float-right">      
+                          <li class="page-item"><a class="page-link active" href="#">1</a></li>
+                          <li class="page-item"><a class="page-link" href="#">2</a></li>
+                          <li class="page-item"><a class="page-link" href="#">3</a></li>       
+                        </ul>
+                     </div> -->
+
+
+                     <div class="d-flex justify-content-cente paggination-sec">
+                        {% if is_paginated %}
+        
+                        <div class="">
+                            <nav  class="">
+                                <ul class="pagination">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+        
+                                    {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ i }} <span class="sr-only">(current)</span></a>
+                                    </li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                                    {% endif %}
+                                    {% endfor %}
+        
+        
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if associated_grower_list.has_other_pages %}
+                    <div class="d-flex justify-content-cente paggination-sec">
+                        <div class="">
+                            <nav class="">
+                                <ul class="pagination">
+                                    {% if associated_grower_list.has_previous %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="?page={{ associated_grower_list.previous_page_number }}" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+
+
+                                    {% for i in associated_grower_list.paginator.page_range %} 
+                                        {% if associated_grower_list.number == i %}
+                                            <li class="page-item active">
+                                                <a class="page-link" href="#">{{ i }} </a>
+                                            </li>
+                                            
+                                        {% elif i > associated_grower_list.number|add:'-3' and i < associated_grower_list.number|add:'3' %}
+                                            <li class="page-item ">
+                                                <a class="page-link" href="?page={{ i }}">{{ i }} </a>
+                                            </li>
+                                        
+                                        {% endif %} 
+                                    {% endfor %} 
+
+                                    <!-- <li class="page-item active">
+                                        <a class="page-link" href="#">1 <span class="sr-only">(current)</span></a>
+                                    </li> -->
+
+
+
+
+                                    {% if associated_grower_list.has_next %}
+
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ associated_grower_list.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li>
+                                        <a class="next" href="javascript:void(0);"><i class="ion-ios-arrow-right"></i></a>
+                                    </li>
+                                    {% endif %}
+                    
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+
+
+                </div>
+
+            </div>
+
+
+
+
+            <!-- /.row -->
+
+
+
+
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+
+{% endblock %}
+
+
+{% block js %}
+<script src="{% static 'select2/select2.full.min.js' %}"></script>
+
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+  
+      $(".select2_demo_1").select2({
+        placeholder: "Select Associated Growers",
+        width: '100%',
+        allowClear: false,
+        
+      });
+    });
+  
+  </script>
+{% endblock %}

@@ -1,0 +1,269 @@
+
+{% block content %}
+
+<div class="content-wrapper">
+	<section class="content">
+		<div class="container-fluid">
+			<div class="row mb-3 ml-1 mr-1">
+				<div class="col-sm-6">
+					<h6 class="font-weight-bold mt-3 text-muted">Challan Invoice</h6>
+				</div>
+				<div class="col-sm-6 text-right modalright">
+					
+				</div>
+			</div>
+			<div class="row ml-1 mr-1">
+				<div class="col-lg-12 col-12">
+					<div class="row">
+
+						<div class="white-box">
+
+							<div id="printableArea">
+
+								<table style="border:0px; max-width:900px; width:900px; margin:0 auto;">
+									<tr>
+										<td>
+											<h1 style="text-align:center; margin:10px 0px;">Delivery Challan</h1>
+											<!-- <h3 style="text-align:center; margin:10px 0px;">Collection Point A</h3> -->
+											<p
+												style="text-align:center; margin:10px auto 10px auto; max-width:273px; line-height:125%;">
+												 
+
+												{% if profile_type == "aggregator" %}
+												Aggregator Name : {% if agg_supplier_details.name %}
+												{{ agg_supplier_details.name|capfirst }} ({{ agg_supplier_details.user }})
+												{% else %}
+													<!-- NA -->
+												{% endif %}
+												<br>
+												Address - {{ agg_supplier_details.address |default:"NA" }}
+												<!-- {% if agg_supplier_details.state %}
+												, {{ agg_supplier_details.state }}, 
+												{% else %} -->
+													<!-- NA -->
+												<!-- {% endif %}
+												{% if agg_supplier_details.district %}
+												{{ agg_supplier_details.district }}
+												{% else %} -->
+													<!-- NA -->
+												<!-- {% endif %} -->
+												<br>
+												{% if agg_supplier_details.mobile_number %}
+													Ph. No. - {{ agg_supplier_details.mobile_number }}
+												{% else %}
+													Ph. No. - NA
+												{% endif %}
+											
+												{% else %}
+
+												<!-- {{ profile_type }} -->
+												Grower Name : {% if grower_supplier_details.name %}
+												{{ grower_supplier_details.name|capfirst }} ({{ grower_supplier_details.user }})
+												{% else %}
+													<!-- NA -->
+												{% endif %}
+												<br>
+												Address - {{ grower_supplier_details.address |default:"NA" }}
+												<!-- {% if grower_supplier_details.state %}
+												, {{ grower_supplier_details.state }}, 
+												{% else %}
+												{% endif %}
+												{% if grower_supplier_details.district %}
+													{{ grower_supplier_details.district }}
+												{% else %}
+												{% endif %} -->
+												{% endif %}
+											</p>
+
+											
+
+											<table style="border:0px; width:100%;  border-collapse: collapse;">
+												<tr>
+													<td>
+														<p style="margin:5px 0px;">To</p>
+														<p style="margin:5px 0px;">
+															{% if logged_user_type == "blf" %}
+    															{{ blf_details.entity_unit|capfirst }} ({{ challan_details.consumer }})
+															{% else %}
+															    {{ blf_details.entity_unit|capfirst | default:"" }} ({{ challan_details.consumer }})
+															{% endif %}
+
+														</p>
+														<!-- <p style="margin:5px 0px;">To</p> -->
+														<p style="margin:5px 0px;"> Address:
+															{% if logged_user_type == "blf" %}
+    															{{ blf_details.address |default:"NA"}}
+																<!-- {% if blf_details.state %}
+																, {{ blf_details.state }}, 
+																{% else %}
+																{% endif %}
+																{% if blf_details.district %}
+																	{{ blf_details.district }}
+																{% else %}
+																{% endif %} -->
+															{% else %}
+															    {{ blf_details.address |default:"NA" }} 
+																<!-- {% if blf_details.state %}
+																	, {{ blf_details.state }}, 
+																{% else %}
+																{% endif %}
+																{% if blf_details.district %}
+																	{{ blf_details.district }}
+																{% else %}
+																{% endif %} -->
+															{% endif %}
+
+														</p>
+														<!-- <p style="margin:5px 0px;">
+															{% if logged_user_type == "blf" %}
+																{{ blf_details.address }}
+															{% else %}
+																{{ challan_details.consumer }}
+															{% endif %}
+														</p> -->
+														<!-- <p style="margin:5px 0px;">GSTIN No.:   </p> -->
+														<br>
+													</td>
+													<td>
+														<p style="margin:5px 0px; text-align:right;">Date: {{ challan_details.date_of_supply|date:'d-m-Y' }}
+														</p>
+														<p style="margin:5px 0px; text-align:right;">Challan No.:
+															{{ challan_details.supply_challan_id }}
+														</p>
+														<p style="margin:5px 0px; text-align:right;">Vehicle No.:
+															{{ vehicle_details |default:'NA'  }}
+														</p>
+										
+
+													</td>
+												</tr>
+											</table>
+
+											<table style="width:100%; border-collapse: collapse;" border="1">
+												{% if profile_type == "aggregator" %}	
+													<tr>
+														<th style="text-align:left; padding:5px;font-size: 12px">Grower Name</th>
+														<!-- <th style="text-align:left;  padding:5px;">Collected Qty(Kg)</th> -->
+														<th style="text-align:left;  padding:5px;font-size: 12px;">Collected Qty(Kg)</th>
+														<th style="text-align:left;  padding:5px;font-size: 12px">Supply Qty(Kg)</th>
+														<!-- <th style="text-align:left; padding:5px;font-size: 12px;">Vehicle No.</th> -->
+													
+													</tr>
+												{% else %}		
+													<th style="text-align:left; padding:5px;font-size: 12px">Grower Name</th>
+													<th style="text-align:left;  padding:5px;font-size: 12px;">Supply Quantity(Kg)</th>
+													<!-- <th style="text-align:left; padding:5px;font-size: 12px;">Supply Txn Id</th> -->
+													<!-- <th style="text-align:left; padding:5px;font-size: 12px;">Supply Bag Id</th> -->
+
+													<th style="text-align:left; padding:5px;font-size: 12px;">Driver Name</th>
+												{% endif %}		
+												<!-- <tr> -->
+												{% if profile_type == "aggregator" %}	
+													{% for supply in grower_details_supply %}	
+														<tr>
+															<td style="padding: 5px;">{{ supply.grower.name }} ({{ supply.grower }})</td>
+															<td style="padding: 5px;">{{  supply.collected_quantity |default:0 }}</td>
+															<td style="padding: 5px;">{{  supply.supply_quantity |default:0 }}</td>
+															<!-- <td style="padding: 5px;">{{  supply.alloted_vehicle  }}</td> -->
+															
+															<!-- <td style="padding: 5px;">Kg</td> -->
+														</tr>
+													{% endfor %}
+												{% else %}			
+													<tr>
+														<td style="padding: 5px;">{{ grower_supplier_details.name }} ({{ grower_supplier_details.user }})</td>
+														<td style="padding: 5px;"> {{  challan_details.quantity |default:0 }}</td>
+														<!-- <td style="padding: 5px;"> {{  challan_details.supply_bag_id |default:"NA" }}</td> -->
+														<td style="padding: 5px;"> {{  challan_details.driver_name |default:"NA"}}</td>
+													</tr>
+												{% endif %}	
+												<tr>
+													{% if profile_type == "aggregator" %}
+													<td colspan="3" style="padding:5px;">
+														<p style="text-align:right; margin:0px;font-size: 13px;">
+															<!-- {% if profile_type == "aggregator" %} -->
+																<b>Total Collected Qty: {{  total_collected_qty |default:0  }} Kg
+																<br>
+																Total Supply Qty: {{  total_qty |default:0  }} Kg</b>
+															<!-- {% else %}
+																Total Qty: {{  challan_details.quantity |default:0  }} Kg
+															{% endif %}</p> -->
+													</td>
+													{% else %}
+													<td colspan="3" style="padding:5px;">
+														<p style="text-align:right; margin:0px;font-size: 13px;">
+															<!-- {% if profile_type == "aggregator" %}
+																Total Qty: {{  total_qty }} Kg
+															{% else %} -->
+																<b>Total Supply Qty: {{  challan_details.quantity |default:0  }} Kg</b>
+															<!-- {% endif %}</p> -->
+													</td>
+													{% endif %}</p>
+												</tr>
+											</table>
+										</td>
+									</tr>
+									<!-- <table>
+
+
+									</table> -->
+
+							</div>
+
+
+<!-- 
+							<div class="row ">
+
+								<div class="col-lg-3 white-box-submit mt-3 mb-3">
+									<button type="button"
+										class="btn  btn-danger pt-2 pb-2 text-white" onclick="printDiv('printableArea')"> <i class="fa fa-print"></i> Print PDF</button>
+								</div>
+
+							</div> -->
+
+
+						</div>
+
+
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+
+<!-- <script type="text/javascript">
+
+	function printDiv(divName) {
+		var printContents = document.getElementById(divName).innerHTML;
+		var originalContents = document.body.innerHTML;
+
+		document.body.innerHTML = printContents;
+
+		window.print();
+
+		document.body.innerHTML = originalContents;
+	}
+
+</script> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

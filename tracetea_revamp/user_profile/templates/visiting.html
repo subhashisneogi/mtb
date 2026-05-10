@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <link rel="stylesheet"
+        href="{% static 'plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}">
+
+
+    <!-- bootstrap -->
+    <link rel="stylesheet" href="{% static 'visiting_card/css/bootstrap.min.css' %}">
+
+
+    <!-- custom css -->
+    <link rel="stylesheet" href="{% static 'visiting_card/css/visiting.css' %}">
+
+    <!-- fav icon -->
+    <link rel="icon" type="image/png" href="{% static 'visiting_card/images/fav-icon.png' %}">
+
+    <title>TRACE TEA</title>
+    <!-- custom CSS for download button -->
+    <style>
+        .download-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+           /* New styles for text truncation and tooltip */
+        .vscr_box p {
+        font-size: 12px; 
+        }
+        
+    </style>
+</head>
+
+<body>
+     <a href="{% url 'user_profile:visting_card_download' user_pk=details.user.id user_type=user_type %}" target="_blank" class="btn btn-primary download-btn" download>
+        <i class="fas fa-download"></i> Download
+    </a>
+    <!-- <input type="hidden" id="growerUserId" value="{{ details.user }}"> -->
+    <section class="visiting_card">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="visit_cardbody">
+                        <div class="visitc_main">
+                            <div class="visitc_head">
+                                <div class="visitch_left">
+                                    <img src="{% static 'visiting_card/images/tracetea-logo.png' %}" class="img-fluid" alt="">
+                                    <h4>TRACEABILITY CARD</h4>
+                                </div>
+                                <div class="visitch_right">
+                                    <h4>Initiative of</h4>
+                                    <img src="{% static 'visiting_card/images/trusttea-logo.png' %}" class="img-fluid" alt="">
+                                </div>
+                            </div>
+                            <div class="visitc_body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="vsitcd_left">
+                                            <!-- <img src="{% static 'visiting_card/images/client.jpg' %}" class="img-fluid" alt=""> -->
+                                            {% if details_photo_url %}
+                                                <img  src="{{ details_photo_url }}" class="img-fluid" alt="">
+                                            {% else %}
+                                                <img src="https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg" class="img-fluid" alt="">
+                                            <!-- <img src="https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg" title="" style="width: 30%;"> -->
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+
+                                    <div class="col-md-8">
+                                        <div class="vsitcd_right">
+                                            <div class="vscr_box">
+                                                <div class="vscr_label">
+                                                    <p >User Type</p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="vscr_con">
+                                                        <p>{{user_type |capfirst | default:"NA"}}</p>
+                                                    </div>
+                                                </div>    
+                                            </div>
+                                            <div class="vscr_box">
+                                                <div class="vscr_label">
+                                                    <p>Name</p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="vscr_con">
+                                                        <p>{{details.name |capfirst | default:"NA"}}</p>
+                                                    </div>
+                                                </div>    
+                                            </div>
+                                            <div class="vscr_box">
+                                                <div class="vscr_label">
+                                                    <p>Address</p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="vscr_con">
+                                                        <p>{{details.address | default:"NA"}}</p>
+                                                    </div>
+                                                </div>    
+                                            </div>
+                                            <div class="vscr_box">
+                                                <div class="vscr_label">
+                                                    <p>tracetea ID</p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="vscr_con">
+                                                        <p>{{details.user | default:"NA"}}</p>
+                                                    </div>
+                                                </div>    
+                                            </div>
+                                            <div class="vscr_box">
+                                                <div class="vscr_label">
+                                                    <p>Gender</p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="vscr_con">
+                                                        <p>{{details.gender | default:"NA"}}</p>
+                                                    </div>
+                                                </div>    
+                                            </div>
+                                        
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="visit_cardfooter">
+                            <p>TRUSTEA SUSTAINABLE TEA FOUNDATION</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="visit_cardbody visit_back">
+                        <div class="visitc_main">
+
+                            <div class="visitc_body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="visitback_left">
+                                            <h6 >Instruction :</h6>
+                                            <p style ="font-size: 14px;">This card is issued only for the purpose of Trace Tea traceability system 
+                                                and is not to be considered for any other purpose. The validity of This
+                                            card is restricted to the validity of the trustea certification no. of the factory.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="visitback_right" >
+                                            <img src="{{ absolute_qr_code_image_url }}" class="img-fluid" alt="">
+                                        </div>
+                                    </div>
+                                
+                                    
+                             
+                                    <!-- <div class="col-12">
+                                        <div class="card_no">
+                                            <h6>CARD NO. 4578937454282629382672840</h6>
+                                        </div>
+                                    </div> -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="visit_cardfooter">
+                            <h6 >Non-Transferable</h6>
+                            <p class="cardlost_text">
+                                If this card is lost / someone's lost card if found. Please inform / return to:
+                            </p>
+                            <p>TRUSTEA SUSTAINABLE TEA FOUNDATION KOLKATA, WEST BENGAL</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- JS Files -->
+    <!-- bootstrap JS -->
+    <script src="{% static 'visiting_card/js/jquery.min.js' %}"></script>
+    <script src="{% static 'visiting_card/js/bootstrap.bundle.min.js' %}"></script>
+
+    <!-- font awesome kit -->
+    <script src="https://kit.fontawesome.com/c7890550ed.js" crossorigin="anonymous"></script>
+
+</body>
+
+</html>

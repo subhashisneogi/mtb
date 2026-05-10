@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Backward Traceability Report {% endblock %}
+{% block css %}  
+<link href="{% static 'select2/select2.min.css' %}" rel="stylesheet" />
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+    <style>
+        .p-user-image{
+            height: 40px;
+            border-radius: 30px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form role="form" method ="GET" >
+                            
+                            {% if logged_user_type == "ADMIN" %}
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <select class="form-control" id="id_region" name="region">
+                                        <option>Select Region </option>
+                                        {% for item in region_list %}
+                                        <option value="{{ item.pk }}" {% if selected_region_id == item.pk %} selected  {% endif %}>{{ item.region_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-4">
+                                    <select name="entity_id" id="associated_entity" class="form-control select2_entity_id" required>
+                                        {% if entity_id %}
+                                            <option  value="{{ entity_id }}"  selected> {{ blf_name }}-[{{ entity_id }}]  </option>
+
+                                            {% for item in blf_list %}
+                                                <option  value="{{ item.pk }}">{{ item.entity_unit }}-[{{ item.user }}]</option>
+                                            {% endfor %}
+
+
+                                        {% else %}
+                                            <option  value=""  selected>Select Entity</option>
+                                        {% endif %}
+                                    </select> 
+                                </div>
+                            </div>
+                            <br>
+                            {% endif %}
+                            <div class="row">
+                                <div class="col-lg-3">
+                                    <input type="date" name="start_date" id="start_date" class="form-control"  value="{{ request.GET.start_date }}"  >
+                                </div>
+                                <div class="col-lg-3">
+                                    <input type="date" name="end_date" id="end_date" class="form-control"  value="{{ request.GET.end_date }}"  >
+                                </div>
+                                <div class="col-lg-2">
+                                    <input type="text" name="invoice_no" class="form-control" placeholder="Invoice No"  value="{{ request.GET.invoice_no }}"  >
+                                </div>
+   
+                                <div class="col-lg-2 col-md-6 mt-4---">
+                                    <button type="submit" class="btn btn-success rounded-pill btn-block pl-4 pr-4"> <i
+                                            class="fas fa-search mr-2"></i> Search</button>
+                                </div>
+                                <div class="col-lg-2 col-md-6 mt-4---">
+                                    <a href="{% url 'invoicing:backward_traceability_report' %}" class="btn btn-success rounded-pill btn-block pl-4 pr-4 text-white"> <i
+                                            class="fa fa-refresh mr-2 text-white" ></i> Reset</a>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                <div class="col-sm-6">
+                    {% if supplier_type %}
+                    <h6 class="font-weight-bold mt-3 text-muted">Backward Traceability Report from - {{supplier_type}}</h6>
+                    {% else %}
+                    <h6 class="font-weight-bold mt-3 text-muted">Backward Traceability Report</h6>
+                    {% endif %}
+                </div>
+               
+            </div>
+
+            <div class="row ml-2 mr-2">
+
+                <div class="col-lg-12">
+
+                    <div class="card report-page">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Sr. No</th>
+                                            <th>Invoice No.</th>
+                                            <th>Invoice Date</th>
+                                            <th>Action</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        {% if result %}
+                                            {% for item in result %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                               
+                                                <td class="text-capitalize">
+                                                    {{ item.invoice_no }}
+                                                </td>
+                                                <td class="text-capitalize">
+                                                    {% if item.invoice_date  %}
+                                                        {{ item.invoice_date|date:'d-m-Y' }}
+                                                    {% else %}
+                                                        NA
+                                                    {% endif %}
+                                                </td>
+                                               <td>
+
+                                                {% if logged_user_type == "ADMIN" %}
+                                                    <a href="{% url 'invoicing:admin_backward_traceability_details' id=item.pk entity_id=entity_id %}" 
+                                                    class="btn btn-sm btn-success"> <i class="fa fa-eye text-white" ></i>&nbsp; 
+                                                    Trace</a>
+                                                {% else %}
+                                                    <a href="{% url 'invoicing:backward_traceability_details' id=item.pk %}" 
+                                                    class="btn btn-sm btn-success"> <i class="fa fa-eye text-white" ></i>&nbsp; 
+                                                    Trace</a>
+                                                {% endif %}
+                                            
+                                            
+                                            </td>
+                                               <td></td>
+                                            </tr>
+                                            {% endfor %}
+
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="9" class="text-center text-danger">Sorry! No Record Found.</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    
+                        <!-- /.card-body -->
+                    </div>
+
+                    <!-- 
+                    <div class="d-flex justify-content-center">    
+                        <ul class="pagination pagination-sm mt-3 float-right">      
+                          <li class="page-item"><a class="page-link active" href="#">1</a></li>
+                          <li class="page-item"><a class="page-link" href="#">2</a></li>
+                          <li class="page-item"><a class="page-link" href="#">3</a></li>       
+                        </ul>
+                     </div> -->
+
+
+                     <div class="d-flex justify-content-cente paggination-sec">
+                        {% if is_paginated %}
+        
+                        <div class="">
+                            <nav  class="">
+                                <ul class="pagination">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+        
+                                    {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ i }} <span class="sr-only">(current)</span></a>
+                                    </li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                                    {% endif %}
+                                    {% endfor %}
+        
+        
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Next</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if result.has_other_pages %}
+                    <div class="d-flex justify-content-cente paggination-sec">
+                        <div class="">
+                            <nav class="">
+                                <ul class="pagination">
+                                    {% if result.has_previous %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="?page={{ result.previous_page_number }}" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                    </li>
+                                    {% endif %}
+
+
+                                    {% for i in result.paginator.page_range %} 
+                                        {% if result.number == i %}
+                                            <li class="page-item active">
+                                                <a class="page-link" href="#">{{ i }} </a>
+                                            </li>
+                                            
+                                        {% elif i > result.number|add:'-3' and i < result.number|add:'3' %}
+                                            <li class="page-item ">
+                                                <a class="page-link" href="?page={{ i }}">{{ i }} </a>
+                                            </li>
+                                        
+                                        {% endif %} 
+                                    {% endfor %} 
+
+                                    <!-- <li class="page-item active">
+                                        <a class="page-link" href="#">1 <span class="sr-only">(current)</span></a>
+                                    </li> -->
+
+
+                                    {% if result.has_next %}
+
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ result.next_page_number }}">Next</a>
+                                    </li>
+                                    {% else %}
+                                    <li>
+                                        <a class="next" href="javascript:void(0);"><i class="ion-ios-arrow-right"></i></a>
+                                    </li>
+                                    {% endif %}
+                    
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+
+
+                </div>
+
+            </div>
+
+
+
+
+            <!-- /.row -->
+
+
+
+
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+
+{% endblock %}
+
+
+{% block js %}
+
+<script src="{% static 'select2/select2.full.min.js' %}"></script>
+<script>
+    $("#end_date").change(function() {
+      var start_date = document.getElementById("start_date").value;
+      var end_date = document.getElementById("end_date").value;
+  
+      if ((Date.parse(end_date) <= Date.parse(start_date))) {
+        alert("End date should be greater than Start date");
+        document.getElementById("end_date").value = "";
+      }
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        // console.log({{ grower }})
+        // $("#grower_id").val({{ grower }});
+        $("#id_region").val({{ region }});
+        // $("#associated_entity").val({{ entity_id }});
+    });
+  
+</script>
+
+<script>
+    // Region Wise BLF list AJAX
+    $('#id_region').on('change', function () {
+        var data = $(this).find('option').filter(':selected').val(); 
+        // console.log(data);
+        // console.log("subh#########")
+        $("#associated_entity").empty().trigger('change');
+
+        $.ajax({
+            url: "{% url 'user_profile:blf_list_region_wise' %}",
+            data: {
+                'id': data,
+            },
+            success: function (data) {
+                $("#associated_entity").html(data);
+                // console.log("associated entity ###")
+                $("#associated_entity").val({{ entity_id }});
+            },
+            error: function (rs, e) {
+                console.log(rs);
+                console.log(e)
+            }
+        });
+    });
+
+    // // Set selected region and entity IDs in dropdowns after search
+    // $(document).ready(function () {
+    //     var selectedRegionId = "{{ selected_region_id }}";
+    //     var selectedEntityId = "{{ selected_blf_id }}";
+    //     console.log(selectedEntityId)
+    //     // If selectedRegionId and selectedEntityId are not empty, set selected values
+    //     if (selectedRegionId !== "" && selectedEntityId !== "") {
+    //         $("#id_region").val(selectedRegionId);
+    //         $("#associated_entity").val(selectedEntityId);
+    //     } else {
+    //         // If no selections are made or after a reset, display default values
+    //         $("#id_region").val(""); // Set to default value for region dropdown
+    //         $("#associated_entity").val(""); // Set to default value for entity dropdown
+    //     }
+    // });
+
+
+</script>
+
+<script>
+    $(document).ready(function () {
+      $(".select2_entity_id").select2({
+        placeholder: "Select Entity",
+        width: '100%',
+        allowClear: false,
+      });
+    });
+  </script>
+
+
+{% endblock %}

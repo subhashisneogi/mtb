@@ -1,0 +1,724 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Tracetea {% block title %} {% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- fav icon -->
+    <link rel="icon" type="image/png" href="{% static 'tracetea-logo.png' %}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Tempusdominus Bbootstrap 4 -->
+    <link rel="stylesheet"
+        href="{% static 'plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}">
+    <!-- iCheck -->
+    <link rel="stylesheet" href="{% static 'plugins/icheck-bootstrap/icheck-bootstrap.min.css' %}">
+    <!-- JQVMap -->
+    <link rel="stylesheet" href="{% static 'plugins/jqvmap/jqvmap.min.css' %}">
+    <!-- Adminlte style -->
+    <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}">
+    <!-- style -->
+    <link rel="stylesheet" href="{% static 'dist/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'dist/css/responsive.css' %}">
+    <!-- overlayScrollbars -->
+    <link rel="stylesheet" href="{% static 'plugins/overlayScrollbars/css/OverlayScrollbars.min.css' %}">
+    <!-- Daterange picker -->
+    <link rel="stylesheet" href="{% static 'plugins/daterangepicker/daterangepicker.css' %}">
+    <!-- summernote -->
+    <link rel="stylesheet" href="{% static 'plugins/summernote/summernote-bs4.css' %}">
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+
+
+    <link href="{% static 'select2/select2.min.css' %}" rel="stylesheet" />
+
+	<!-- toaster css -->
+	<link rel="stylesheet" href="{% static 'toaster/toastr.min.css' %}" type="text/css" />
+	<link rel="stylesheet" href="{% static 'toaster/sweetalert2/sweetalert2.min.css' %}" type="text/css" />
+
+    <style>
+
+    .profile-filter-box .btn {
+        font-weight: 600;
+    }
+    .user-add-btn .bg-success2 {
+        width: 11rem !important;
+    }
+    .profile-table-card {
+        overflow: hidden;
+    }
+    .profile-table thead th {
+        color: #55b735;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .profile-table td {
+        vertical-align: middle;
+    }
+    .profile-table .btn-xs {
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 7px 12px;
+    }
+    .status-button {
+        background: transparent;
+        border: 0;
+        padding: 0;
+    }
+    .action-link {
+        align-items: center;
+        color: #333;
+        display: flex;
+        font-size: 14px;
+        gap: 8px;
+        padding: 8px 14px;
+        white-space: nowrap;
+    }
+    .action-link:hover {
+        background: #f4f6f7;
+        color: #0d7a3d;
+        text-decoration: none;
+    }
+    .action-menu-button {
+        background: transparent;
+        border: 0;
+        color: #333;
+        font-size: 13px;
+        padding: 4px 10px;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .global-page-loader {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.72);
+        display: flex;
+        inset: 0;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        position: fixed;
+        transition: opacity 0.18s ease, visibility 0.18s ease;
+        visibility: hidden;
+        z-index: 99999;
+    }
+    .global-page-loader.is-active {
+        opacity: 1;
+        pointer-events: all;
+        visibility: visible;
+    }
+    .global-page-loader__box {
+        align-items: center;
+        color: #173f2a;
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        padding: 12px;
+    }
+    .global-page-loader__spinner {
+        animation: global-loader-spin 0.75s linear infinite;
+        border: 5px solid rgba(13, 122, 61, 0.16);
+        border-radius: 50%;
+        border-top-color: #0D7A3D;
+        height: 42px;
+        width: 42px;
+    }
+    .global-page-loader__text {
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1;
+    }
+    @keyframes global-loader-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    @media (max-width: 991px) {
+        .profile-filter-box .form-group,
+        .profile-filter-box .btn {
+            margin-bottom: 12px;
+            width: 100%;
+        }
+    }
+
+
+
+
+
+
+        .page-item.active .page-link :hover{
+            color: #f3f3f3!important;
+        }
+
+
+        .select2-container .select2-selection--multiple {
+            box-sizing: border-box;
+            cursor: pointer;
+            display: block;
+            min-height: 44px!important;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 6px 0 0 0!important;
+            color: #000!important;
+            font-size: 1rem!important;
+            font-weight: 400!important;
+            line-height: 1.5!important;
+            color: #6F96AA!important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #f3f3f3!important;
+            border: 1px solid #ab9c9c!important;
+            border-radius: 4px;
+            box-sizing: border-box;
+            display: inline-block;
+            margin-left: 5px!important;
+            margin-top: 6px!important;
+            padding-left: 31px!important;
+            padding-right: 13px!important;
+            padding-bottom: 4px!important;
+            position: relative;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: bottom;
+            white-space: nowrap;
+            color: #000!important;
+            font-size: 1rem!important;
+            font-weight: 400!important;
+            line-height: 1.5!important;
+
+
+        }
+        /* Header CSS */
+        .dropdown-menu-lg {
+            max-width: 264px;
+            min-width: 190px;
+            padding: 0;
+        }
+        .text-sm {
+            font-size: 1rem!important;
+        }
+        .admintext1 label {
+            padding: 7px 0 0 0;
+            margin: 0px;
+            font-size: 16px;
+            font-weight: 300;
+            color: #000;
+            line-height: 17px;
+        }
+        .dropdown-toggle::after {
+            display: inline-block;
+            margin-left: 0.255em;
+            vertical-align: 0.255em;
+            content: "";
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-bottom: 0;
+            border-left: 0.3em solid transparent;
+        }
+
+
+        .select2-container .select2-selection--single {
+            box-sizing: border-box;
+            cursor: pointer;
+            display: block;
+            height: 39px !important;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    
+        .password .errorlist li {
+            color: rgb(237 94 94);
+            padding: 12px 0 0;
+            list-style-type: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .errorlist li {
+            color: rgb(237 94 94)!important;
+            padding: 10px 0px 0;
+            list-style-type: none;
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: -36px;
+        }
+
+
+        .brand-text-logo img {
+            padding-left: 16px;
+        }
+        
+        .required_field::after {
+            content: " *";
+            color: #ff0000;
+        }
+        
+        textarea.form-control {
+            height: 136px !important;
+        }
+    /* upload image */
+
+    .profile-pic {
+        width: 200px;
+        max-height: 200px;
+        display: inline-block;
+    }
+
+    .file-upload {
+        display: none !important;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .p-image {
+        /* position: absolute; */
+        top: 167px;
+        right: 30px;
+        color: #666666;
+        transition: all .3s cubic-bezier(.175, .885, .32, 1.275);
+        margin-top: -42px;
+        margin-left: 91px;
+    }
+
+    .p-image:hover {
+        transition: all .3s cubic-bezier(.175, .885, .32, 1.275);
+    }
+
+    .upload-button {
+        font-size: 1.2em;
+        color: #0D7A3D;
+    }
+
+    .upload-button:hover {
+        transition: all .3s cubic-bezier(.175, .885, .32, 1.275);
+        color: #999;
+    }
+
+    .circle {
+        border-radius: 100% !important;
+        overflow: hidden;
+        width: 128px;
+        height: 128px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        /* position: absolute; */
+        top: 72px;
+        border: 1px solid #cfbfbf;
+        margin-bottom: 18px;
+    }
+
+
+    .img-uplod-section{
+        padding: 20px;
+        align-items: center;
+        margin-left: 90px;
+    }
+    </style>
+
+    {% block css %}
+
+    {% endblock %}
+
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div id="global-page-loader" class="global-page-loader" aria-hidden="true" aria-live="polite">
+        <div class="global-page-loader__box">
+            <div class="global-page-loader__spinner" role="status" aria-label="Loading"></div>
+            <div class="global-page-loader__text">Loading...</div>
+        </div>
+    </div>
+
+    <div class="wrapper">
+
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <h2>{% block page_header_title %}  {% endblock %}</h2>
+                </li>
+            </ul>
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <!-- Messages Dropdown Menu -->
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link d-flex justify-content-start" data-toggle="dropdown" href="{% url 'index' %}">
+                    
+                        <div class="admintext1">
+
+                            {% if  logged_user_type == "blf" %}  
+        
+                              <label class="w-100 mb-0 pb-0 text-capitalize">{{ blf_details.entity_unit }} ({{ request.user }})
+                            {% else %} 
+                                <label class="w-100 mb-0 pb-0 text-capitalize">{{ request.user }}
+                            {% endif %}
+                              </div>&nbsp;
+                    <div class="">
+                      <i class="far user-img"> 
+                        <img src="{% static 'profile.png' %}" alt="User" class="">
+                      </i>
+                    </div>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+
+                        {% if logged_user_type == "ADMIN" %}
+
+                        <a href="{% url 'account_details' %}" class="dropdown-item">
+                        
+                            <div class="media">
+                              
+                              <div class="media-body">
+                                <p class="text-sm">My Account</p>
+                              </div>
+                            </div>
+                        </a>
+
+                        {% elif  logged_user_type == "blf" %}
+
+                        <a href="{% url 'user_profile:blf_profile_view' user_create_pk=request.user.id %}" class="dropdown-item">
+                        
+                            <div class="media">
+                              
+                              <div class="media-body">
+                                <p class="text-sm">My Account</p>
+                              </div>
+                            </div>
+                        </a>
+
+                        {% endif %}
+                   
+                      <div class="dropdown-divider"></div>
+                      <a href="{% url 'accounts:logout' %}" class="dropdown-item">
+                        
+                        <div class="media">
+                          
+                          <div class="media-body">
+                            <p class="text-sm">Logout</p>
+                          </div>
+                        </div>
+                       
+                      </a>
+                      
+                  </li>
+
+
+
+
+                <!-- <li class="nav-item dropdown">
+                    <a class="nav-link d-flex justify-content-start" data-toggle="dropdown" href="#">
+                        <div class="">
+                            <i class="far user-img"> 
+                                <img src="{% static 'profile.png' %}" alt="User" class="">
+                            </i>
+                        </div>
+                        
+
+                        
+                    </a>
+                </li> -->
+
+                <!-- <div class="dropdown">
+                    <button class="btn btn-primary--- dropdown-toggle" type="button" data-toggle="dropdown">
+                        <img src="{% static 'profile.png' %}" alt="User" class=""> {{ request.user }}
+                    <span class="caret"></span></button>
+                    <ul class="dropdown-menu">
+                      <li class=""><a href="#">Account</a></li>
+
+                    </ul>
+                  </div> -->
+
+            </ul>
+        </nav>
+
+        {% include 'sidebar.html' %}
+
+        {% block content %}
+
+        {% endblock %}
+        <!-- /.content-wrapper -->
+
+        
+        <!-- <footer class="main-footer">
+            <div class="float-right d-none d-sm-inline-block">
+                © COPYRIGHT - 2022 | Small Tea Growers
+            </div>
+        </footer> -->
+
+        <!-- Control Sidebar -->
+        <aside class="control-sidebar control-sidebar-dark">
+            <!-- Control sidebar content goes here -->
+        </aside>
+        <!-- /.control-sidebar -->
+    </div>
+    <!-- ./wrapper -->
+
+    <!-- jQuery -->
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <!-- jQuery UI 1.11.4 -->
+    <script src="{% static 'plugins/jquery-ui/jquery-ui.min.js' %}"></script>
+    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+    <script>
+        $.widget.bridge('uibutton', $.ui.button)
+    </script>
+    <!-- Bootstrap 4 -->
+    <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- ChartJS -->
+    <!-- <script src="{% static 'plugins/chart.js' %}/Chart.min.js' %}"></script> -->
+    <!-- Sparkline -->
+    <script src="{% static 'plugins/sparklines/sparkline.js' %}"></script>
+    <!-- JQVMap -->
+    <script src="{% static 'plugins/jqvmap/jquery.vmap.min.js' %}"></script>
+    <script src="{% static 'plugins/jqvmap/maps/jquery.vmap.usa.js' %}"></script>
+    <!-- jQuery Knob Chart -->
+    <script src="{% static 'plugins/jquery-knob/jquery.knob.min.js' %}"></script>
+    <!-- daterangepicker -->
+    <script src="{% static 'plugins/moment/moment.min.js' %}"></script>
+    <script src="{% static 'plugins/daterangepicker/daterangepicker.js' %}"></script>
+    <!-- Tempusdominus Bootstrap 4 -->
+    <script src="{% static 'plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js' %}"></script>
+    <!-- Summernote -->
+    <script src="{% static 'plugins/summernote/summernote-bs4.min.js' %}"></script>
+    <!-- overlayScrollbars -->
+    <script src="{% static 'plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js' %}"></script>
+    <!-- App -->
+    <script src="{% static 'dist/js/adminlte.js' %}"></script>
+    <!-- demo purposes -->
+    <script src="{% static 'dist/js/demo.js' %}"></script>
+
+    <!-- Toaster JS -->
+    <script src="{% static 'toaster/toastr.min.js' %}"></script>
+    <script src="{% static 'toaster/sweetalert2/sweetalert2.all.min.js' %}"></script>
+
+    <script src="{% static 'select2/select2.full.min.js' %}"></script>
+
+    <script>
+        (function () {
+            var loader = document.getElementById('global-page-loader');
+            var activeRequests = 0;
+            var showTimer = null;
+            var hideTimer = null;
+            var failSafeTimer = null;
+            var showDelay = 180;
+
+            if (!loader) {
+                return;
+            }
+
+            function showLoader(immediate) {
+                clearTimeout(hideTimer);
+                clearTimeout(showTimer);
+                showTimer = setTimeout(function () {
+                    loader.classList.add('is-active');
+                    loader.setAttribute('aria-hidden', 'false');
+                }, immediate ? 0 : showDelay);
+            }
+
+            function hideLoader() {
+                clearTimeout(showTimer);
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(function () {
+                    loader.classList.remove('is-active');
+                    loader.setAttribute('aria-hidden', 'true');
+                }, 120);
+            }
+
+            function beginRequest(immediate) {
+                activeRequests += 1;
+                showLoader(immediate);
+                clearTimeout(failSafeTimer);
+                failSafeTimer = setTimeout(function () {
+                    window.hideGlobalLoader();
+                }, 30000);
+            }
+
+            function endRequest() {
+                activeRequests = Math.max(0, activeRequests - 1);
+                if (activeRequests === 0) {
+                    hideLoader();
+                }
+            }
+
+            function shouldSkipLink(link, event) {
+                var href = link.getAttribute('href') || '';
+                var lowerHref = href.toLowerCase();
+
+                return event.defaultPrevented ||
+                    event.button !== 0 ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey ||
+                    link.target === '_blank' ||
+                    link.dataset.noLoader === 'true' ||
+                    link.hasAttribute('data-page') ||
+                    link.closest('[data-ajax-container]') ||
+                    link.classList.contains('dropdown-toggle') ||
+                    link.classList.contains('js-delete-confirm') ||
+                    link.classList.contains('js-status-confirm') ||
+                    lowerHref.indexOf('/delete/') !== -1 ||
+                    lowerHref === '' ||
+                    lowerHref === '#' ||
+                    lowerHref.indexOf('javascript:') === 0 ||
+                    href.charAt(0) === '#' ||
+                    link.hasAttribute('data-toggle') ||
+                    link.hasAttribute('data-widget') ||
+                    link.hasAttribute('download');
+            }
+
+            window.showGlobalLoader = function () {
+                beginRequest(true);
+            };
+
+            window.hideGlobalLoader = function () {
+                activeRequests = 0;
+                clearTimeout(failSafeTimer);
+                hideLoader();
+            };
+
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('a');
+                if (!link || shouldSkipLink(link, event)) {
+                    return;
+                }
+                beginRequest(false);
+            }, true);
+
+            document.addEventListener('submit', function (event) {
+                var form = event.target;
+                if (!form || form.dataset.noLoader === 'true' || event.defaultPrevented) {
+                    return;
+                }
+                beginRequest(true);
+            }, true);
+
+            if (window.fetch) {
+                var originalFetch = window.fetch;
+                window.fetch = function () {
+                    beginRequest(false);
+                    return originalFetch.apply(this, arguments).then(function (response) {
+                        endRequest();
+                        return response;
+                    }, function (error) {
+                        endRequest();
+                        throw error;
+                    });
+                };
+            }
+
+            if (window.jQuery) {
+                $(document).ajaxStart(function () {
+                    beginRequest(false);
+                }).ajaxStop(function () {
+                    activeRequests = 0;
+                    hideLoader();
+                });
+            }
+
+            window.addEventListener('pageshow', function () {
+                window.hideGlobalLoader();
+            });
+            document.addEventListener('DOMContentLoaded', function () {
+                window.hideGlobalLoader();
+            });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            function isDeleteLink(link) {
+                if (!link || link.dataset.noSweetalert === 'true') {
+                    return false;
+                }
+                return link.classList.contains('js-delete-confirm') || link.classList.contains('js-status-confirm') || (link.getAttribute('href') || '').toLowerCase().indexOf('/delete/') !== -1;
+            }
+
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('a');
+                if (!isDeleteLink(link)) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                Swal.fire({
+                    title: link.dataset.confirmTitle || 'Are you sure?',
+                    text: link.dataset.confirmText || 'This record will be deleted.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0D7A3D',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: link.dataset.confirmButton || 'Yes, delete it',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        if (window.showGlobalLoader) {
+                            window.showGlobalLoader();
+                        }
+                        window.location.href = link.href;
+                    }
+                });
+            });
+        })();
+    </script>
+
+    {% block js %}
+
+
+    {% endblock %}
+
+    {% if messages  %}
+    {% for message in messages %}
+    {% if message.tags == 'error' %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            setTimeout(function () {
+                toastr.options = {
+                    closeButton: true,
+                    progressBar: true,
+                    showMethod: 'slideDown',
+                    timeOut: 12000
+                };
+                toastr.error('', '{{ message|escapejs }}');
+
+            }, 1300);
+        });
+    </script>
+    {% else %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            setTimeout(function () {
+                toastr.options = {
+                    closeButton: true,
+                    progressBar: true,
+                    showMethod: 'slideDown',
+                    timeOut: 12000
+                };
+                toastr.success('', '{{ message|escapejs }}');
+
+            }, 1300);
+        });
+    </script>
+
+
+    {% endif %}
+    {% endfor %}    
+    {% endif %}
+
+</body>
+
+</html>

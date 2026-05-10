@@ -1,0 +1,184 @@
+
+<style>
+    #factory {
+        height: 150px;
+        width: 82%;
+        margin: 10px auto;
+        border: 2px solid #6cbb02;
+    }
+    #marged-boundary {
+        height: 350px;
+        width: 98%;
+        margin: 10px auto;
+        border: 2px solid #6cbb02;
+    }
+</style>
+<style>
+.print-btn {
+    text-align: right;
+    margin: 27px 25px 0px;
+}
+.print-btn-danger{
+    color: #fff;
+    background-color: #d9534f;
+    border-color: #d43f3a;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    
+}
+
+.btn {
+display: inline-block;
+margin-bottom: 0;
+font-weight: 400;
+text-align: center;
+white-space: nowrap;
+vertical-align: middle;
+-ms-touch-action: manipulation;
+touch-action: manipulation;
+cursor: pointer;
+background-image: none;
+border: 1px solid transparent;
+padding: 6px 12px;
+font-size: 14px;
+line-height: 1.42857143;
+-webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
+}
+
+table img{
+    height: 53px;
+width: 144px;
+}
+
+
+</style>
+
+<body>
+
+    <div class="row">
+        <div class="print-btn">
+            <!-- <a type="button"
+                class="btn  print-btn-danger pt-2 pb-2 text-white" onclick="printDiv('printableArea')"> <i class="fa fa-print"></i>
+                    Print PDF</a> -->
+            <a type="button" href="{% url 'chemical_data:farm_diary_pdf_generate' grower_pk=grower_pk %}"
+                    class="btn  print-btn-danger pt-2 pb-2 text-white" > <i class="fa fa-print"></i>
+                        Print PDF</a>
+
+            <a type="button" href="{% url 'chemical_data:map_area_take_screenshot' %}" class="btn btn-warning">take screenshot</a>
+        </div>
+    </div>  
+
+  <div id="marged-boundary" style=" width: 100%;
+  height: 60%"></div>
+
+
+</body>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+<script>
+
+  var coordinates = {{map_area_details_1.coordinate|safe}};
+
+  var coordinates2 = {{map_area_details_2.coordinate|safe}};
+  
+  var coordinates3 = {{map_area_details_3.coordinate|safe}};
+
+  var coordinates4 = {{map_area_details_4.coordinate|safe}};
+  
+  function initDrawingMap() {
+
+      const map = new google.maps.Map(document.getElementById("marged-boundary"), {
+          center: {
+              lat: -34.397,
+              lng: 150.644
+          },
+          zoom: 2,
+      });
+
+    //   map.setZoom(map.getZoom() - 5);
+
+      // Construct the polygon.
+        const bermudaTriangle = new google.maps.Polygon({
+            paths: coordinates,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+        const bermudaTriangle2 = new google.maps.Polygon({
+                paths: coordinates2,
+                strokeColor: "#FF0000",
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: "#6CBB45",
+                fillOpacity: 0.45
+            });
+
+        const bermudaTriangle3 = new google.maps.Polygon({
+            paths: coordinates3,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+
+        const bermudaTriangle4 = new google.maps.Polygon({
+            paths: coordinates4,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6CBB45",
+            fillOpacity: 0.45
+        });
+
+      bermudaTriangle.setMap(map);
+      bermudaTriangle2.setMap(map);
+      bermudaTriangle3.setMap(map);
+      bermudaTriangle4.setMap(map);
+
+
+      var latlngbounds = new google.maps.LatLngBounds();
+      for (var i = 0; i < coordinates.length; i++) {
+          latlngbounds.extend(coordinates[i]);
+      }
+      map.fitBounds(latlngbounds);
+
+      function overlayCompleteListener(event) {
+          console.log('overlayCompleteListener');
+          drawingManager.setDrawingMode(null);
+          currentOverlay = event.overlay;
+          currentOverlay.addListener('click', overlayClickListener);
+      };
+
+      // remove the overlay
+      function overlayClickListener(event) {
+          console.log('overlayClickListener');
+          event.stop();
+          if (typeof event.path === 'undefined') { // ignore clicks on polygon paths
+              drawingManager.setDrawingMode(nextOverlayType());
+              currentOverlay.setMap(null);
+              google.maps.event.clearInstanceListeners(currentOverlay);
+              currentOverlay = null;
+          }
+      };
+  }
+
+  window.initDrawingMap = initDrawingMap;
+</script>
+
+<script async defer 
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrRtkwvBcSh3_uISG8CVAX2IqykHdQEP4&callback=initDrawingMap&libraries=drawing&v=weekly">
+</script>
+
+</body>
+</html>

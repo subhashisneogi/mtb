@@ -1,0 +1,334 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns xmlns:o="urn:schemas-microsoft-com:office:office">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <!-- font-families -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
+        rel="stylesheet">
+    <title>Demand Bill</title>
+    <style>
+        table,
+        td,
+        div,
+        h1,
+        p {
+            font-family: Arial, sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
+            padding: 0;
+            margin: 0;
+        }
+
+        img {
+            width: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .inr-table tr td p {
+            font-size: 15px;
+            padding-bottom: 18px;
+        }
+
+        .inr-para td p {
+            font-size: 16px;
+        }
+
+        .last-table tr td p {
+            line-height: 0;
+            padding-bottom: 17px;
+        }
+
+        .dot-brdr {
+            min-width: 27%;
+            border-bottom: 2.4px dotted #0000004d;
+            display: inline-block;
+            text-align: center;
+        }
+
+
+        /* ======================= */
+        .header {
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            color: #4d4646;
+            padding-bottom: 5px;
+        }
+
+        .header h6 {
+            font-size: 14px;
+            color: #4d4646;
+
+        }
+
+        .pd-left {
+            padding-left: 10px;
+        }
+        .top-section img{
+            height: 600px;
+        }
+        .bottom-sec img{
+            height: 600px;
+        }
+
+        /* ======================= */
+        table img{
+            height: 53px;
+            width: 144px;
+        }
+
+        .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 15px 0;
+        background-color: #fff;
+    }
+    .page-number {
+        font-size: 14px;
+        color: #333;
+        position: absolute;
+        bottom: 0px;
+        text-align: centers;
+        left: 0;
+        right: 0;
+    }
+    .main-box{
+        position: relative;
+        min-height: 29.7cm;
+        padding: 0;
+        margin: 0;
+    }
+        
+
+    </style>
+</head>
+
+<body>
+
+    <div class="main-box">
+    <table role="presentation"
+        style=" width:800px;border-collapse:collapse;border-spacing:0;background:#fdfdfd; margin: 0px auto  ">
+        <tr style="background: #fafce6;padding: 10px; ">
+
+            <td colspan="1" style="width: 20%;">
+                <div class="sft-logo">
+                    <img style="height: 53px;padding:0 40px;border-radius: 5px; width: 100px;"
+                        src="https://tracetea.org/static/logo-icon.png" class="img-fluid" alt="Map Image" >
+                </div>
+            </td>
+            <td colspan="1" style="width: 60%; margin: 0 auto;">
+                <div class="header">
+                    <h1>Trustea Programme</h1>
+                    <h6>Agreement and Registration with Farmers</h6>
+                </div>
+            </td>
+            <td colspan="1" style="width:20%; padding: 8px; color: #000; text-align: center;">
+                <h5 style="margin: 0;font-size: 9px;
+							 font-size: 14px;color: #4d4646; padding-bottom: 5px;">
+                            
+                            Factory Copy
+                            
+
+                </h5>
+                <img src="https://tracetea.org/static/logo-icon.png" alt="Map Image"  style="height: 53px; width:100px">
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="3" style="padding: 28px 20px 20px 20px; background: #f7f7f7;">
+                <table class="inr-table" role="presentation"
+                    style=" width:800px;border-collapse:collapse;border-spacing:0;background: #f7f7f7; margin: 0 auto;">
+                    <tr>
+                        <td colspan="3">
+                            <p> Farmer's Name:<span class="dot-brdr">{{ grower_details.name| default:"NA" }}</span></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p> Address:<span class="dot-brdr">{{ grower_details.address | default:"NA" }}</span></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p> Total Area<span class="dot-brdr">{{ garden_details.production_area| default:"NA" }}</span>
+                                (in Acres) Tea Production Area<span
+                                    class="dot-brdr">{{ garden_details.production_area| default:"NA" }}</span>(in Acres)</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p> Total Production of Tea in Previous year
+                                <span class="dot-brdr">{{ grower_details.estimated_production_of_green_tea| default:"NA" }}</span>(in Kg)
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p> Terms between Farmer and Trustea I.D.S. as mentioned below:</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p>1. <span class="pd-left">Farmers to abide by the Rules and Regulations of Trustea.</span>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p>2. <span class="pd-left">Farmers to attend Seminars and Training Centres regularly set up
+                                    by I.D.S.</span> </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p>3. <span class="pd-left">Farmer's Note book, Purchase Bill, Tea Leaves Sales challan and
+                                    other details paper to be kept in
+                                    their possession..</span> </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p>3. <span class="pd-left">They will assist in Audit, assist Statutory and External Audit
+                                    as per Trustea Rules and Regulations
+                                    and will allow and assist any personnel of Trustea for examination of Accounts,
+                                    papers and godowns.
+                                </span> </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p>Trustea IDS Trust:</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="3">
+                            <p>1. <span class="pd-left">IDS will train the farmers and make them fit to work for
+                                    Trustea.</span> </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p>2. <span class="pd-left">IDS will attach farmers with an organisation to help them and
+                                    take help from the specialist.</span> </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p>3. <span class="pd-left">IDS will keep in touch with Internal and External Audit
+                                    team.</span> </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p>Trustea IDS Trust:</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td style="width: 488px;" colspan="3">
+                                        {% if factory_copy_form_details.farmer_signature_file %}
+                                            <img src="{{base_url}}{{ factory_copy_form_details.farmer_signature_file }}" alt="Map Image"  style="height:40px" ;="">
+                                        {% else %}
+                                            NA
+                                        {% endif %}
+                                        <p><span class="dot-brdr"></span><br>(Farmer's Signature)</p>
+                                    </td>s
+                                    <td colspan="3">
+                                        <p><span class="dot-brdr">
+                                           
+                                            {% if factory_copy_form_details.blf_grade_official_signature_file %}
+                                            
+                                            <img src="{{base_url}}{{ factory_copy_form_details.blf_grade_official_signature_file }}" alt="Map Image"  style="height:40px" ;="">
+    
+                                            {% else %}
+                                                NA
+                                            {% endif %}
+                                         
+                                        </span><br>(B LF Grade Officer's Signature)</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p style="line-height: 25px;"> Shri/Shrimati<span class="dot-brdr">{{ grower_details.name| default:"NA" }}</span>made an agreement with IDS and the given the
+                                following code number<span class="dot-brdr">{{ grower_details| default:"NA" }}</span></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <table>
+                                <tr>
+                                    <td>
+                                        <table class="last-table" style="width: 500px;">
+                                            <tr>
+                                                <td>
+                                                    &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                                    {{ factory_copy_form_details.date|date:'d-m-Y' }}
+                                                    <p>Date <span class="dot-brdr"></span></p>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                                    {{ factory_copy_form_details.place }}
+                                                    <p>Place <span class="dot-brdr"></span></p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        
+                                            
+                                        {% if factory_copy_form_details.blf_grade_official_signature_file %}
+                                            
+                                        <img src="{{ factory_copy_form_details.blf_grade_official_signature_file }}" alt="Map Image"  style="height:40px" ;="">
+
+                                        {% else %}
+                                            NA
+                                        {% endif %}
+                          
+                                        <p>(BLF Grade Officer's Signature)</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <br><br><br>
+    <div class="footer">
+        <div class="page-number">
+            Page {{ current_page }} of {{ total_pages }}
+        </div>
+    </div>
+    </div>
+</body>
+</html>

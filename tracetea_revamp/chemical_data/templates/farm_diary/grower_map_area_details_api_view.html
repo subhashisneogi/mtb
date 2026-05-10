@@ -1,0 +1,616 @@
+{% load static %}
+{% block title %}{% endblock %}
+{% block css %}
+{% endblock %}
+{% block content %}
+
+<div class="content-wrapper">
+  <section class="content">
+    <div class="container-fluid">
+
+      <input type="hidden" class="form-control" id="areaInput" name="total_area"  required>
+      <input type="hidden" id="coordinatesInput" name="coordinates" >
+      
+        <!-- MAIN MAP -->
+        <div class="row ml-2 mr-2">
+          <div class="col-lg-12">
+              <div class="p-0">
+                <div id="marged-boundary" style="height: 100%; border: 2px solid #44ec3e;"></div>
+                <div id="coordinates"></div>
+              </div>
+          </div>
+        </div>
+  </section>
+</div>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrRtkwvBcSh3_uISG8CVAX2IqykHdQEP4&libraries=drawing"></script>
+
+<script>
+  // Get the button element by its ID
+  var resetButton = document.getElementById('page-rerfresh');
+  
+  // Add an event listener to the button for the 'click' event
+  resetButton.addEventListener('click', function() {
+      // When the button is clicked, reload the page
+      location.reload();
+  });
+  </script>
+
+
+
+
+{% if check_land_details_list_count == 0  and method == "" %}
+
+<script>
+
+
+  // alert("wgdwduwvdtwv")
+
+  function initDrawingMap() {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      var userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+
+      const map = new google.maps.Map(document.getElementById("marged-boundary"), {
+        center: userLocation,
+        zoom: 19,
+      });
+
+
+      {% if land_details_data_1 %}
+
+      // Construct the polygon.
+      const bermudaTriangle = new google.maps.Polygon({
+          paths: coordinates,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#6CBB45",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+      bermudaTriangle.setMap(map);
+
+      {% endif %}
+
+      {% if land_details_data_2 %}
+
+        const bermudaTriangle2 = new google.maps.Polygon({
+            paths: coordinates2,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#0000ff",
+            fillOpacity: 0.45,
+            editable: false,
+            draggable: false,
+        });
+
+        bermudaTriangle2.setMap(map);
+
+      {% endif %}
+
+      {% if land_details_data_3 %}
+
+      const bermudaTriangle3 = new google.maps.Polygon({
+          paths: coordinates3,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#ffa500",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+
+      bermudaTriangle3.setMap(map);
+      {% endif %}
+
+      {% if land_details_data_4 %}
+      const bermudaTriangle4 = new google.maps.Polygon({
+          paths: coordinates4,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#6a5acd",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+
+      bermudaTriangle4.setMap(map);
+
+      {% endif %}
+
+      const drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: true,
+        drawingControlOptions: {
+          position: google.maps.ControlPosition.TOP_CENTER,
+          drawingModes: [
+          // google.maps.drawing.OverlayType.CIRCLE,
+          // google.maps.drawing.OverlayType.POLYGON,
+          google.maps.drawing.OverlayType.POLYLINE,
+          // google.maps.drawing.OverlayType.RECTANGLE,
+          ],
+        },
+        polygonOptions: {
+          editable: true,
+        },
+      });
+
+      drawingManager.setMap(map);
+
+      // Event listener for when a polygon is completed
+      google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
+        if (event.type === google.maps.drawing.OverlayType.POLYGON) {
+          const polygon = event.overlay;
+          const path = polygon.getPath();
+          const coordinatesArray = [];
+          path.forEach(function(point, index) {
+            coordinatesArray.push({ lat: point.lat(), lng: point.lng() });
+          });
+          updateCoordinatesAndArea(coordinatesArray);
+
+          // Add event listeners to update coordinates and area when the polygon is edited
+          google.maps.event.addListener(path, 'set_at', function() {
+            updateCoordinatesAndArea(coordinatesArray);
+          });
+          google.maps.event.addListener(path, 'insert_at', function() {
+            updateCoordinatesAndArea(coordinatesArray);
+          });
+        }
+      });
+
+      // Function to update coordinates and calculate area
+      function updateCoordinatesAndArea(coordinatesArray) {
+        // document.getElementById('coordinatesInput').value = JSON.stringify(coordinatesArray);
+     
+      let res = {
+                "type" : "coordinates",
+                "value" : coordinatesArray
+            }
+            window.ReactNativeWebView.postMessage(JSON.stringify(res));
+        calculateArea(coordinatesArray);
+      }
+
+      // Function to calculate area in acres
+      function calculateArea(coordinatesArray) {
+        const path = coordinatesArray.map(coord => new google.maps.LatLng(coord.lat, coord.lng));
+        const areaInSquareMeters = google.maps.geometry.spherical.computeArea(path);
+        const areaInAcres = areaInSquareMeters * 0.000247105;
+        // document.getElementById('areaInput').value = areaInAcres.toFixed(2);
+        let res = {
+                "type" : "areaInAcres",
+                "value" : areaInAcres.toFixed(2)
+            }
+            window.ReactNativeWebView.postMessage(JSON.stringify(res));
+      }
+
+    
+    });
+  }
+
+  window.initDrawingMap = initDrawingMap;
+
+</script>
+  
+
+{% endif %}
+
+
+{% if check_land_details_list_count < 4 and  check_land_details_list_count != 0 and method == "" %}
+
+<script>
+
+  // alert("wgudvuywduywdw YES")
+
+  {% if land_details_data_1 %}
+    var coordinates = {{ land_details_data_1.coordinate|safe }};
+  {% endif %}
+
+  {% if land_details_data_2 %}
+    var coordinates2 = {{ land_details_data_2.coordinate|safe }};
+  {% endif %}
+
+  {% if land_details_data_3 %}
+    var coordinates3 = {{ land_details_data_3.coordinate|safe }};
+  {% endif %}
+  {% if land_details_data_4 %}
+    var coordinates4 = {{ land_details_data_4.coordinate|safe }};
+  {% endif %}
+
+
+  function initDrawingMap() {
+    // navigator.geolocation.getCurrentPosition(function(position) {
+    //   var userLocation = {
+    //     lat: position.coords.latitude,
+    //     lng: position.coords.longitude
+    //   };
+
+      const map = new google.maps.Map(document.getElementById("marged-boundary"), {
+        center: {
+              lat: coordinates[0].lat,
+              lng: coordinates[0].lng
+          },
+        zoom: 19,
+      });
+
+
+      {% if land_details_data_1 %}
+
+      // Construct the polygon.
+      const bermudaTriangle = new google.maps.Polygon({
+          paths: coordinates,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#6CBB45",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+      bermudaTriangle.setMap(map);
+
+      {% endif %}
+
+      {% if land_details_data_2 %}
+
+        const bermudaTriangle2 = new google.maps.Polygon({
+            paths: coordinates2,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#0000ff",
+            fillOpacity: 0.45,
+            editable: false,
+            draggable: false,
+        });
+
+        bermudaTriangle2.setMap(map);
+
+      {% endif %}
+
+      {% if land_details_data_3 %}
+
+      const bermudaTriangle3 = new google.maps.Polygon({
+          paths: coordinates3,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#ffa500",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+
+      bermudaTriangle3.setMap(map);
+      {% endif %}
+
+      {% if land_details_data_4 %}
+      const bermudaTriangle4 = new google.maps.Polygon({
+          paths: coordinates4,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#6a5acd",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+
+      bermudaTriangle4.setMap(map);
+
+      {% endif %}
+
+      const drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: true,
+        drawingControlOptions: {
+          position: google.maps.ControlPosition.TOP_CENTER,
+          drawingModes: [
+          // google.maps.drawing.OverlayType.CIRCLE,
+          // google.maps.drawing.OverlayType.POLYGON,
+          google.maps.drawing.OverlayType.POLYLINE,
+          // google.maps.drawing.OverlayType.RECTANGLE,
+          ],
+        },
+        polygonOptions: {
+          editable: true,
+        },
+      });
+
+      drawingManager.setMap(map);
+
+      // Event listener for when a polygon is completed
+      google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
+        if (event.type === google.maps.drawing.OverlayType.POLYGON) {
+          const polygon = event.overlay;
+          const path = polygon.getPath();
+          const coordinatesArray = [];
+          path.forEach(function(point, index) {
+            coordinatesArray.push({ lat: point.lat(), lng: point.lng() });
+          });
+          updateCoordinatesAndArea(coordinatesArray);
+
+          // Add event listeners to update coordinates and area when the polygon is edited
+          google.maps.event.addListener(path, 'set_at', function() {
+            updateCoordinatesAndArea(coordinatesArray);
+          });
+          google.maps.event.addListener(path, 'insert_at', function() {
+            updateCoordinatesAndArea(coordinatesArray);
+          });
+        }
+      });
+
+      // Function to update coordinates and calculate area
+      function updateCoordinatesAndArea(coordinatesArray) {
+        // document.getElementById('coordinatesInput').value = JSON.stringify(coordinatesArray);
+     
+      let res = {
+                "type" : "coordinates",
+                "value" : coordinatesArray
+            }
+            window.ReactNativeWebView.postMessage(JSON.stringify(res));
+        calculateArea(coordinatesArray);
+      }
+
+      // Function to calculate area in acres
+      function calculateArea(coordinatesArray) {
+        const path = coordinatesArray.map(coord => new google.maps.LatLng(coord.lat, coord.lng));
+        const areaInSquareMeters = google.maps.geometry.spherical.computeArea(path);
+        const areaInAcres = areaInSquareMeters * 0.000247105;
+        // document.getElementById('areaInput').value = areaInAcres.toFixed(2);
+        let res = {
+                "type" : "areaInAcres",
+                "value" : areaInAcres.toFixed(2)
+            }
+            window.ReactNativeWebView.postMessage(JSON.stringify(res));
+      }
+
+    
+    // });
+  }
+
+  window.initDrawingMap = initDrawingMap;
+
+</script>
+
+{% endif %}
+
+
+{% if check_land_details_list_count == 4 and method == "" %}
+
+<script>
+
+  {% if land_details_data_1 %}
+    var coordinates = {{ land_details_data_1.coordinate|safe }};
+  {% endif %}
+
+  {% if land_details_data_2 %}
+    var coordinates2 = {{ land_details_data_2.coordinate|safe }};
+  {% endif %}
+
+  {% if land_details_data_3 %}
+    var coordinates3 = {{ land_details_data_3.coordinate|safe }};
+  {% endif %}
+  {% if land_details_data_4 %}
+    var coordinates4 = {{ land_details_data_4.coordinate|safe }};
+  {% endif %}
+
+
+  function initDrawingMap() {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      var userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+
+      const map = new google.maps.Map(document.getElementById("marged-boundary"), {
+        center: {
+              lat: coordinates[0].lat,
+              lng: coordinates[0].lng
+          },
+        zoom: 19,
+      });
+
+
+      {% if land_details_data_1 %}
+
+      // Construct the polygon.
+      const bermudaTriangle = new google.maps.Polygon({
+          paths: coordinates,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#6CBB45",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+      bermudaTriangle.setMap(map);
+
+      {% endif %}
+
+      {% if land_details_data_2 %}
+
+        const bermudaTriangle2 = new google.maps.Polygon({
+            paths: coordinates2,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#0000ff",
+            fillOpacity: 0.45,
+            editable: false,
+            draggable: false,
+        });
+
+        bermudaTriangle2.setMap(map);
+
+      {% endif %}
+
+      {% if land_details_data_3 %}
+
+      const bermudaTriangle3 = new google.maps.Polygon({
+          paths: coordinates3,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#ffa500",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+
+      bermudaTriangle3.setMap(map);
+      {% endif %}
+
+      {% if land_details_data_4 %}
+        const bermudaTriangle4 = new google.maps.Polygon({
+            paths: coordinates4,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6a5acd",
+            fillOpacity: 0.45,
+            editable: false,
+            draggable: false,
+        });
+        bermudaTriangle4.setMap(map);
+      {% endif %}
+
+    });
+  }
+
+  window.initDrawingMap = initDrawingMap;
+
+</script>
+
+{% endif %}
+
+{% if method == "edit" %}
+
+<script>
+  var coordinates = {{ check_details_data.coordinate|safe }};
+  function initDrawingMap() {
+
+      const map = new google.maps.Map(document.getElementById("marged-boundary"), {
+          center: {
+              lat: coordinates[0].lat,
+              lng: coordinates[0].lng
+          },
+          zoom: 19,
+      });
+
+      // Construct the polygon.
+      const bermudaTriangle = new google.maps.Polygon({
+          paths: coordinates,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#6CBB45",
+          fillOpacity: 0.45,
+          editable: true,
+          draggable: false,
+      });
+      bermudaTriangle.setMap(map);
+
+      const drawingManager = new google.maps.drawing.DrawingManager({
+            drawingMode: google.maps.drawing.OverlayType.MARKER,
+            drawingControl: true,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: [
+                    // google.maps.drawing.OverlayType.MARKER,
+                    google.maps.drawing.OverlayType.CIRCLE,
+                    google.maps.drawing.OverlayType.POLYGON,
+                    google.maps.drawing.OverlayType.POLYLINE,
+                    google.maps.drawing.OverlayType.RECTANGLE,
+                ],
+            },
+            circleOptions: {
+                fillColor: "#ffff00",
+                fillOpacity: 1,
+                strokeWeight: 5,
+                clickable: false,
+                editable: true,
+                zIndex: 1,
+            },
+            polygonOptions: {
+                editable: true
+            },
+        });
+
+        // drawingManager.setMap(map);
+        // drawingManager.addListener('overlaycomplete', overlayCompleteListener);
+
+      var latlngbounds = new google.maps.LatLngBounds();
+      for (var i = 0; i < coordinates.length; i++) {
+          latlngbounds.extend(coordinates[i]);
+      }
+      map.fitBounds(latlngbounds);
+
+      // Function to update coordinates and calculate area
+      function updateCoordinatesAndArea() {
+          const path = bermudaTriangle.getPath();
+          const coordinatesArray = [];
+          path.forEach(function (point, index) {
+              coordinatesArray.push({ lat: point.lat(), lng: point.lng() });
+          });
+
+          document.getElementById('coordinatesInput').value = JSON.stringify(coordinatesArray);
+          calculateArea(coordinatesArray);
+          let res = {
+                "type" : "coordinates",
+                "value" : coordinatesArray
+            }
+            window.ReactNativeWebView.postMessage(JSON.stringify(res));
+
+          // console.log("updateCoordinatesAndArea", coordinatesArray)
+      }
+
+      
+      // Function to calculate area in acres
+      function calculateArea(coordinatesArray) {
+        const path = coordinatesArray.map(coord => new google.maps.LatLng(coord.lat, coord.lng));
+        const areaInSquareMeters = google.maps.geometry.spherical.computeArea(path);
+        const areaInAcres = areaInSquareMeters * 0.000247105;
+        const total_area = areaInAcres.toFixed(2);
+        document.getElementById('areaInput').value = total_area;
+
+        let res = {
+                "type" : "areaInAcres",
+                "value" : total_area
+            }
+        window.ReactNativeWebView.postMessage(JSON.stringify(res));
+
+      }
+
+      // Add event listeners to update coordinates and area when the polygon is edited
+      google.maps.event.addListener(bermudaTriangle.getPath(), 'set_at', updateCoordinatesAndArea);
+      google.maps.event.addListener(bermudaTriangle.getPath(), 'insert_at', updateCoordinatesAndArea);
+      google.maps.event.addListener(bermudaTriangle.getPath(), 'remove_at', updateCoordinatesAndArea);
+
+      // Initial update of the coordinates input and area calculation
+
+  }
+
+  window.initDrawingMap = initDrawingMap;
+</script>
+
+{% endif %}
+
+
+<script async defer 
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrRtkwvBcSh3_uISG8CVAX2IqykHdQEP4&callback=initDrawingMap&libraries=drawing&v=weekly">
+</script>
+
+{% endblock %}
+
+{% block js %}
+
+{% endblock %}

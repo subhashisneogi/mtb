@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %}Plucking Data{% endblock %}
+{% block css %}
+<style>
+    .farm-filter-panel { background: #fff; border-radius: 8px; padding: 20px 26px 12px; }
+    .farm-filter-panel label { color: #5d6a75; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .farm-filter-panel .form-control, .farm-filter-panel .btn { height: 46px; }
+    .farm-filter-reset { background: #0D7A3D; border-color: #0D7A3D; color: #fff; white-space: nowrap; }
+    .farm-filter-reset:hover { color: #fff; background: #096b34; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="farm-filter-panel">
+                        <form method="GET" action="{% url 'chemical_data:plucking_data_view_list' grower_pk=grower_pk %}" id="plucking-filter">
+                            <div class="row align-items-end">
+                                <div class="col-lg-5 col-md-6 mb-2">
+                                    <label for="start_date">From Date</label>
+                                    <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}">
+                                </div>
+                                <div class="col-lg-5 col-md-6 mb-2">
+                                    <label for="end_date">To Date</label>
+                                    <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}">
+                                </div>
+                                <div class="col-lg-2 col-md-6 mb-2">
+                                    <a href="{% url 'chemical_data:plucking_data_view_list' grower_pk=grower_pk %}" class="btn farm-filter-reset btn-block">
+                                        <i class="fa fa-sync-alt mr-1"></i>Filter Reset
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3 ml-1 mr-1 mt-5">
+                <div class="col-sm-6">
+                    <h6 class="font-weight-bold mt-3 text-muted text-capitalize">Grower - {{ grower_details.name }} ({{ grower_details }})</h6>
+                </div>
+                <div class="col-sm-6 text-right modalright">
+                    <a href="{% url 'chemical_data:plucking_data_view_create' grower_pk=grower_pk %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-plus mr-2"></i>Add New
+                    </a>
+                    <a href="{% url 'chemical_data:chemical_type_list' grower_pk=grower_pk %}" class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2"></i>Back
+                    </a>
+                </div>
+            </div>
+
+            <div class="row ml-2 mr-2">
+                <div class="col-lg-12" id="plucking-results">
+                    {% include 'farm_diary/_plucking_data_table.html' %}
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    (function () {
+        var baseUrl = "{% url 'chemical_data:plucking_data_view_list' grower_pk=grower_pk %}";
+        var $results = $("#plucking-results");
+        var $start = $("#start_date");
+        var $end = $("#end_date");
+        var timer = null;
+        function loadResults(url) {
+            $.ajax({url: url, headers: {"X-Requested-With": "XMLHttpRequest"}, success: function (html) {
+                $results.html(html);
+                window.history.replaceState({}, "", url);
+            }});
+        }
+        function queue() {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                if ($start.val() && $end.val() && Date.parse($end.val()) < Date.parse($start.val())) {
+                    alert("End date should be greater than or equal to From date");
+                    $end.val("");
+                    return;
+                }
+                loadResults(baseUrl + "?start_date=" + encodeURIComponent($start.val()) + "&end_date=" + encodeURIComponent($end.val()));
+            }, 250);
+        }
+        $start.on("change", queue);
+        $end.on("change", queue);
+        $("#plucking-filter").on("submit", function (event) { event.preventDefault(); });
+        $results.on("click", ".pagination a", function (event) {
+            var href = $(this).attr("href");
+            if (!href || href === "#") { return; }
+            event.preventDefault();
+            loadResults(href);
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% endblock %}
+{% block page_header_title %} Farm Diary- Map Create{% endblock %}
+{% block css %}
+<style>
+    .google-map-img-section {
+        height: 300px;
+        width: 100%;
+    }
+    .google-map-img-section img {
+        /* height: 100%;*/
+        width: 100%;
+        height: 300px;
+        border: 2px solid #44ec3e;
+    }
+
+
+    .color-box-indicate-section {
+        display: flex;
+        align-items: center;
+        padding: 10px 18px 22px;
+    }
+
+
+    .text {
+        font-size: 14px;
+        color: #333;
+    }
+
+    .color-box {
+        width: 20px;
+        height: 20px;
+        
+        margin-right: 10px;
+      }
+  .digital-map-sec{
+    padding: 10px;
+  }
+
+</style>
+
+{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3 ml-1 mr-1">
+
+
+                <div class="col-sm-6">
+
+                </div>
+
+                <div class="col-sm-6 text-right modalright">
+                    <a type="button" href="{% url 'chemical_data:farm_diary_map_create' grower_pk=grower_pk %}"
+                        class="btn bg-success2 text-white pl-3 pr-3">
+                        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i>Back
+                    </a>
+                </div>
+
+            </div>
+            
+            {% if map_area_master_details.is_digital_upload %}
+
+    
+            <div class="digital-map-sec ">
+                <div class="p-0 ">
+                    <div id="marged-boundary" style="height: 300px; border: 2px solid #44ec3e;"></div>
+                    <div id="coordinates"></div>
+                    <input type="hidden" id="total-area" name="total_area">
+                </div>
+
+            </div>
+
+          <div class="row">
+
+            {% for item in map_land_area_list %}
+            <div class="color-box-indicate-section" >
+                <div class="color-box" 
+                {% if item.map_area_name.pk == 1 %}
+                style="background-color: #6CBB45;"
+                {% elif item.map_area_name.pk == 2 %}
+                style="background-color: #0000ff;"
+                {% elif item.map_area_name.pk == 3 %}
+                style="background-color: #ffa500;"
+                {% elif item.map_area_name.pk == 4 %}
+                style="background-color: #6a5acd;"
+                {% endif %}></div>
+                <div class="text">{{ item.map_area_name }}{% if not forloop.last %},{% endif %}&nbsp;&nbsp;&nbsp;</div>
+            </div>
+            {% endfor %}
+
+          </div>
+        {% else %}
+
+        <div class="row ml-2 mr-2">
+            <div class="col-lg-12">
+                <div class="">
+                    <div class="google-map-img-section">
+                        {% if map_area_master_details.map_image %}
+                            <img src="{{ map_area_master_details.map_image.url }}" class="google-map-static"
+                                alt="google-map-img-static">
+                        {% else %}
+                            <img src="https://placehold.co/1780x500" class="google-map-static"
+                            alt="google-map-img-static">
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+
+            <div class="row ml-1 mr-1">
+                <div class="col-lg-12 col-12">
+                    <div class="row">
+                        <div class="white-box">
+
+                            <form method="POST" role="form" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="row">
+                                            <div class="col-sm-12">
+
+
+                                                {% if not map_area_master_details.is_digital_upload %}
+
+                                                <div class="form-group">
+                                                    {% if map_area_master_details.map_image %}
+                                                        <label class="required_field">Update Google Map:</label>
+                                                    {% else %}
+                                                        <label class="required_field">Upload Google Map:</label>
+                                                    {% endif %}
+
+                                                    <input type="file" name="map_image" class="form-control"  id="id_map_image">
+                                                    {{ form.map_image.errors }}
+                                                </div>
+                                                {% endif %}
+
+
+
+
+                                            </div>
+                                        </div>
+
+ 
+                                        <div class="row">
+                                            {% for item in land_item_list_dict %}
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">{{ item.land_name }} (Total Area in acres):</label>
+                                                    <input type="hidden" value="{{ item.land_master_id }}" name="map_area_name_id_{{ item.land_master_id }}">
+<<<<<<< HEAD
+                                                    <input type="number" class="form-control" value="{{ item.total_areas }}" name="total_areas_{{ item.land_master_id }}"  step="any" pattern="[0-9]+(\.[0-9]+)?"  required>
+=======
+                                                    <input type="number" class="form-control" value="{{ item.total_areas }}" name="total_areas_{{ item.land_master_id }}" min="0.1" step="any" required>
+>>>>>>> cbc30afbf1cc7f46ebf5c751873b3c9b76cdf41d
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+
+
+                                        <!-- <div class="row">
+                                            
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">{{ item.land_name }} (Total Area in acres):</label>
+                                                    <input type="" value="{{ item.land_master_id }}" name="map_area_name_id_{{ item.land_master_id }}">
+                                                    <input type="number" class="form-control" value="{{ item.total_areas }}" name="total_areas_{{ item.land_master_id }}" min="0.1" step="any" >
+                                                </div>
+                                            </div>
+                                           
+
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">{{ item.land_name }} (Total Area in acres):</label>
+                                                    <input type="" value="{{ item.land_master_id }}" name="map_area_name_id_{{ item.land_master_id }}">
+                                                    <input type="number" class="form-control" value="{{ item.total_areas }}" name="total_areas_{{ item.land_master_id }}" min="0.1" step="any" >
+                                                </div>
+                                            </div>
+                                            
+
+                                           
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">{{ item.land_name }} (Total Area in acres):</label>
+                                                    <input type="" value="{{ item.land_master_id }}" name="map_area_name_id_{{ item.land_master_id }}">
+                                                    <input type="number" class="form-control" value="{{ item.total_areas }}" name="total_areas_{{ item.land_master_id }}" min="0.1" step="any" >
+                                                </div>
+                                            </div>
+                                           
+
+                                           
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">{{ item.land_name }} (Total Area in acres):</label>
+                                                    <input type="" value="{{ item.land_master_id }}" name="map_area_name_id_{{ item.land_master_id }}">
+                                                    <input type="number" class="form-control" value="{{ item.total_areas }}" name="total_areas_{{ item.land_master_id }}" min="0.1" step="any" >
+                                                </div>
+                                            </div>
+                                           
+                                        </div> -->
+
+
+
+
+
+
+
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">water source:</label>
+                                                    <textarea name="water_source" class="form-control" required="" id="id_water_source">{{ map_area_master_details.water_source|default:"" }}</textarea>
+                                                    {{ form.water_source.errors }}
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label class="required_field">Land Nearby :</label>
+                                                    <textarea name="land_near_by" class="form-control" required="" id="id_land_near_by">{{ map_area_master_details.land_near_by|default:"" }}</textarea>
+                                                    {{ form.land_near_by.errors }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-3 white-box-submit">
+                                                <button type="submit"
+                                                    class="btn btn-block btn-success pt-2 pb-2">Update</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrRtkwvBcSh3_uISG8CVAX2IqykHdQEP4&libraries=drawing"></script>
+
+
+<!-- VIEW DETAILS MAP -->
+<script>
+
+  {% if land_details_data_1 %}
+    var coordinates = {{ land_details_data_1.coordinate|safe }};
+  {% endif %}
+
+  {% if land_details_data_2 %}
+    var coordinates2 = {{ land_details_data_2.coordinate|safe }};
+  {% endif %}
+
+  {% if land_details_data_3 %}
+    var coordinates3 = {{ land_details_data_3.coordinate|safe }};
+  {% endif %}
+  {% if land_details_data_4 %}
+    var coordinates4 = {{ land_details_data_4.coordinate|safe }};
+  {% endif %}
+
+  function initDrawingMap() {
+
+      const map = new google.maps.Map(document.getElementById("marged-boundary"), {
+        center: {
+              lat: coordinates[0].lat,
+              lng: coordinates[0].lng
+          },
+        zoom: 15,
+      });
+
+      {% if land_details_data_1 %}
+
+      // Construct the polygon.
+      const bermudaTriangle = new google.maps.Polygon({
+          paths: coordinates,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#6CBB45",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+      bermudaTriangle.setMap(map);
+
+      {% endif %}
+
+      {% if land_details_data_2 %}
+
+        const bermudaTriangle2 = new google.maps.Polygon({
+            paths: coordinates2,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#0000ff",
+            fillOpacity: 0.45,
+            editable: false,
+            draggable: false,
+        });
+
+        bermudaTriangle2.setMap(map);
+
+      {% endif %}
+
+      {% if land_details_data_3 %}
+
+      const bermudaTriangle3 = new google.maps.Polygon({
+          paths: coordinates3,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#ffa500",
+          fillOpacity: 0.45,
+          editable: false,
+          draggable: false,
+      });
+
+      bermudaTriangle3.setMap(map);
+      {% endif %}
+
+      {% if land_details_data_4 %}
+        const bermudaTriangle4 = new google.maps.Polygon({
+            paths: coordinates4,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "#6a5acd",
+            fillOpacity: 0.45,
+            editable: false,
+            draggable: false,
+        });
+        bermudaTriangle4.setMap(map);
+      {% endif %}
+  }
+  window.initDrawingMap = initDrawingMap;
+</script>
+
+
+
+<script async defer 
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrRtkwvBcSh3_uISG8CVAX2IqykHdQEP4&callback=initDrawingMap&libraries=drawing&v=weekly">
+</script>
+
+
+
+
+{% endblock %}
+
+{% block js %}
+
+{% endblock %}

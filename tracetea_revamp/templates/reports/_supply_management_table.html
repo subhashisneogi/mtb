@@ -1,0 +1,102 @@
+<div class="col-lg-12">
+    <div class="card report-page">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Sr. No</th>
+                            <th>Supply Challan ID</th>
+                            <th>Date Of Supply</th>
+                            <th>Created At</th>
+                            <th>Created By</th>
+                            <th>Supply To</th>
+                            <th>Suppllier Name</th>
+                            <th>Supply Quantity</th>
+                            <th>Vehicle Number</th>
+                            <th>Weighment Proceed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if supply_list %}
+                            {% for item in supply_list %}
+                            <tr>
+                                <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                                <td>
+                                    <a href="{% url 'user_profile:supply_management_report_detail' id=item.id %}?next={{ current_list_url|urlencode }}"
+                                       class="text-success font-weight-bold">
+                                    {% if item.supply_challan_id %}
+                                            {{ item.supply_challan_id }}
+                                    {% else %}
+                                        NA
+                                    {% endif %}
+                                    </a>
+                                </td>
+                                <td>{{ item.created_at|date:"d-m-Y" }}</td>
+                                <td>{{ item.date_of_supply|date:"d-m-Y"|default:"NA" }}</td>
+                                <td> {{item.created_by.profile.full_name|default:"NA"}}({{ item.created_by.username|default:"NA" }}) </td>
+                                <!-- <td class="text-capitalize">{{ item.created_by.profile.user_type|default:"NA" }}</td> -->
+                                <td>{{ item.supply_to|default:"NA" }}</td>
+                                <td>{{ item.consumer.profile.full_name|default:"NA" }} ({{ item.consumer.username|default:"NA" }})</td>
+                                <td>{{ item.gross_leaf|default:"NA" }}</td>
+                                <td>{{ item.alloted_vehicle.vehicle_number|default:"NA" }}</td>
+                                <td>
+                                    {% if item.is_weighment_proceed %}
+                                        <span class="text-success font-weight-bold">Yes</span>
+                                    {% else %}
+                                        <span class="text-muted font-weight-bold">No</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="16" class="text-center text-danger">Sorry! No Record Found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if is_paginated %}
+    <nav>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ search_query }}&date_of_supply_from={{ date_of_supply_from }}&date_of_supply_to={{ date_of_supply_to }}&page={{ page_obj.previous_page_number }}"
+                   data-page="{{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for i in paginator.page_range %}
+                {% if page_obj.number == i %}
+                <li class="page-item active">
+                    <a class="page-link" href="#">{{ i }} <span class="sr-only">(current)</span></a>
+                </li>
+                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ search_query }}&date_of_supply_from={{ date_of_supply_from }}&date_of_supply_to={{ date_of_supply_to }}&page={{ i }}" data-page="{{ i }}">{{ i }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ search_query }}&date_of_supply_from={{ date_of_supply_from }}&date_of_supply_to={{ date_of_supply_to }}&page={{ page_obj.next_page_number }}"
+                   data-page="{{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>

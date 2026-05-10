@@ -1,0 +1,409 @@
+
+{% block content %}
+
+<div class="content-wrapper">
+	<section class="content">
+		<div class="container-fluid">
+			<div class="row mb-3 ml-1 mr-1">
+				<div class="col-sm-6">
+					<h6 class="font-weight-bold mt-3 text-muted"></h6>
+				</div>
+				<div class="col-sm-6 text-right modalright">
+					
+				</div>
+			</div>
+			<div class="row ml-1 mr-1">
+				<div class="col-lg-12 col-12">
+					<div class="row">
+
+						<div class="white-box">
+
+							<div id="printableArea">
+
+								<!-- <h1 style="text-align:center; margin:10px 0px;">Grower  Profile</h1> -->
+								<!-- Include grower details here -->
+								<table  style="width: 100%;border-collapse:collapse;border:1;background:#ffffff;">
+                <!-- <table style="width:100%;border-collapse:collapse;border:0;border-spacing:0; font-size: 14px;"> -->
+ 
+								<!-- Grower details content -->
+                                <tr style="margin: 0px 0px; padding: 0px 0px;">
+                                    <td colspan="2"><img src="http://43.204.201.209:8000/static/dist/img/trustea_banner.png" style="width:100%"></td>
+                                  </tr>
+                                  <tr style="margin: 0px 0px; padding: 0px 0px;">
+                                    <td colspan="2" style="text-align: center;"><a href="#"><img src="http://43.204.201.209:8000/static/dist/img/trustea_Logo.png" title="Trustea"></a> </td>
+                                  </tr>
+                        
+                                  <tr style="margin: 0px 0px; padding: 0px 0px;">
+                                    <td colspan="2" style="text-align: center;color: #548235;font-size: 43px;font-weight: 600;padding: 15px 0px 35px 0px;">MY FARM DIARY</td>
+                                  </tr>
+                                  
+                                  <tr>
+                                    <td colspan="2" style="padding:16px 30px 42px 30px;">
+                                      <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 20px;color: #4472c4;">GROWER</td>
+                                          <td style="width: 50%; text-align: right; padding: 7px; font-weight: 600; font-size: 20px;color: #000;"> {{grower_details.name |capfirst | default:"NA"}} </td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 20px;color: #4472c4;">TRACETEA ID</td>
+                                          <td style="width: 50%; text-align: right; padding: 7px; font-weight: 600; font-size: 20px;color: #000;"> {{grower_details.user | default:"NA"}} </td>
+                                        </tr>
+                                      </table>
+                                    </td>
+                                  </tr>
+                                  <br>
+                                  <br>
+                                  <br>
+                                  <tr >
+                                    <td colspan="2" style="width: 100%; text-align: center; padding: 14px 0px 0px 0px; font-weight: 600; font-size: 20px; color: #000;">Growers Profile</td></tr>
+                                  <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                      <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top">Name:{{grower_details.name | default:"NA"}}</td>
+                                          <!-- <td style="width: 50%; text-align: center; padding: 0px 7px; font-weight: 600; font-size: 20px;"><img src="http://43.205.105.142:9000/static/dist/img/userimg.png" title="" style="width: 40%;"></td> -->
+                                          <td style="width: 50%; text-align: center; padding: 0px 7px; font-weight: 600; font-size: 20px;">
+                                            {% if grower_details_photo_url %}
+                                                  <img  src="{{ grower_details_photo_url }}" title="" style="width: 40%;">
+                                            {% else %}
+                                              <img src="http://43.204.201.209:8000/static/dist/img/userimg.png" title="" style="width: 40%;">
+                                              <!-- <img src="https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg" title="" style="width: 30%;"> -->
+                                            {% endif %}
+                                          </td>  
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px 7px 22px 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Type:{{grower_details.grower_type | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding:  7px 7px 22px 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Address:{{grower_details.address | default:"NA"}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Region:{{grower_details.region.region_name | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">State:{{grower_details.district.name | default:"NA"}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">District:{{grower_details.state.name | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Village/Town:{{grower_details.village_or_town | default:"NA"}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Post Office:{{grower_details.postoffice | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Pin Code:{{grower_details.pincode | default:"NA"}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Fathers' name:{{grower_details.father_name | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">DOB:{{grower_details.date_of_birth | default:"NA"}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Age:{{grower_details.age | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Gender:{{grower_details.gender | default:"NA"}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Mobile No.:{{grower_details.mobile_number | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Aadhar No.:{{grower_details.aadhar_no | default:"NA"}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Voter ID:{{grower_details.voter_id | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Tea Board ID:{{grower_details.trustea_id | default:"NA"}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td colspan="2" style="width: 50%; text-align: left;padding: 15px 7px; border-right:#373737 0px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;"></td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Total Male Worker:{{grower_details.total_male_worker | default:0}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Total Female Worker:{{grower_details.total_female_worker | default:0}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px 7px 17px 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Estimated Production of Green Leaves per<br> annum:{{grower_details.estimated_production_of_green_tea | default:0}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px 7px 17px 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Estimated Production of Made Tea per<br> annum:{{grower_details.estimated_production_of_made_tea | default:0}}</td>
+                                        </tr>
+                                        <tr style="background:#ffffff; border: #373737 1px solid;">
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Land Type:{{garden_details.land_type.name | default:"NA"}}</td>
+                                          <td style="width: 50%; text-align: left;padding: 7px; border-right:#373737 1px solid; font-weight: 600; font-size: 15px; color: #000000;vertical-align: top;">Production Area:{{garden_details.production_area | default:0}}</td>
+                                        </tr> 
+                                      </table>
+                                    </td>
+                                  </tr>
+                                <tr >
+                                    <td colspan="2" style="width: 100%; text-align:left; padding: 14px 0px 0px 0px; font-weight: 600; font-size: 20px; color: #000;">Fertilizer Application</td>
+                                   
+                                </tr>
+                                <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                        <table style="width:100%; border-collapse: collapse;" border="1">    
+                                            <tr>
+                                            
+                                              <th style="text-align:left; padding:5px;font-size: 12px">Date</td>
+                                              <th style="text-align:left; padding:5px;font-size: 12px">Name of<br> Fertilizer</td>
+                                              <th style="text-align:left; padding:5px;font-size: 12px">Section /<br> Plot</td>
+                                              <th style="text-align:left; padding:5px;font-size: 12px">Section /<br> Plot Area<br> (ha)</td>
+                                              <th style="text-align:left; padding:5px;font-size: 12px">Worker<br> Name</td>
+                                              <th style="text-align:left; padding:5px;font-size: 12px">Qty </td>
+                                            </tr>
+
+                                            {% if fertilizer_chemical_list %}
+                                                {% for data in fertilizer_chemical_list %}	
+                                                <tr >
+                                                <!-- <tr>   -->
+                                                  <td style="padding: 5px;">{{ data.date | default:"NA" }}</td>
+                                                  <td style="padding: 5px;">{{ data.chemical.brand_local_name | default:"NA" }}({{data.chemical.chemical_name| default:"NA"}})</td>
+                                                  <td style="padding: 5px; ">{{ data.plot.name | default:"NA"}}</td>
+                                                  <td style="padding: 5px;">{{ data.plot.plot_area | default:"NA"}}</td>
+                                                  <td style="padding: 5px;">{{ data.labour.name | default:"NA" }}</td>
+                                                  <td style="padding: 5px;">{{ data.quantity | default:0}}({{data.unit| default:"Kg"}})</td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr><td style="padding: 5px;" class="text-center text-danger"  colspan=6>No Record Found</td></tr>
+                                            {% endif %}
+                                            
+                                        </table>
+                                    </td>
+                                </tr> 
+                                <tr >
+                                    <td colspan="2" style="width: 100%; text-align:left; padding: 14px 0px 0px 0px; font-weight: 600; font-size: 20px; color: #000;">Herbicide Application</td>
+                                   
+                                </tr>
+                                <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                        <table style="width:100%; border-collapse: collapse;" border="1">    
+                                            <tr>
+                                            
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Date</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Name of<br> Herbicides</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Section /<br> Plot</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Section /<br> Plot Area<br> (ha)</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Worker<br> Name</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Qty </td>
+                                            </tr>
+                                        
+                                            {% if herbicides_chemical_list %}
+                                            {% for data in herbicides_chemical_list %}	
+                                                <tr >
+                                                    <td style="padding: 5px;">{{ data.date | default:"NA" }}</td>
+                                                    <td style="padding: 5px;">{{ data.chemical.brand_local_name | default:"NA" }}({{data.chemical.chemical_name| default:"NA"}})</td>
+                                                    <td style="padding: 5px;">{{ data.plot.name | default:"NA"}}</td>
+                                                    <td style="padding: 5px;">{{ data.plot.plot_area | default:"NA"}}</td>
+                                                    <td style="padding: 5px;">{{ data.labour.name | default:"NA" }}</td>
+                                                    <td style="padding: 5px;">{{ data.quantity | default:0}}({{data.unit| default:"Ltr"}})</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr><td style="padding: 5px;" class="text-center text-danger" colspan=6>No Record Found</td></tr>
+                                        {% endif %}
+                                          
+                                            
+                                        </table>
+                                    </td>
+                                </tr> 
+                                <tr >
+                                    <td colspan="2" style="width: 100%; text-align:left; padding: 14px 0px 0px 0px; font-weight: 600; font-size: 20px; color: #000;">Insecticide / Fungicide Application</td>
+                                   
+                                </tr>
+                                <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                        <table style="width:100%; border-collapse: collapse;" border="1">    
+                                            <tr>
+                                            
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Date</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Name of<br> Insecticide / Fungicide </td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Section /<br> Plot</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Section /<br> Plot Area<br> (ha)</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Worker<br> Name</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Qty </td>
+                                            </tr>
+                                        
+                                            {% if insecticides_chemical_list %}
+                                            {% for data in insecticides_chemical_list %}	
+                                                <tr >
+                                                    <td style="padding: 5px;">{{ data.date | default:"NA" }}</td>
+                                                    <td style="padding: 5px;">{{ data.chemical.brand_local_name | default:"NA" }}({{data.chemical.chemical_name| default:"NA"}})</td>
+                                                    <td style="padding: 5px;">{{ data.plot.name | default:"NA"}}</td>
+                                                    <td style="padding: 5px;">{{ data.plot.plot_area | default:"NA"}}</td>
+                                                    <td style="padding: 5px;">{{ data.labour.name | default:"NA" }}</td>
+                                                    <td style="padding: 5px;">{{ data.quantity | default:0}}({{data.unit| default:"Ltr"}})</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr><td style="padding: 5px;" class="text-center text-danger" colspan=6>No Record Found</td></tr>
+                                        {% endif %}
+                                          
+                                            
+                                        </table>
+                                    </td>
+                                </tr>   
+                                <tr >
+                                    <td colspan="2" style="width: 100%; text-align:left; padding: 14px 0px 0px 0px; font-weight: 600; font-size: 20px; color: #000;">Acaricides Application</td>
+                                   
+                                </tr>
+                                <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                        <table style="width:100%; border-collapse: collapse;" border="1">    
+                                            <tr>
+                                            
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Date</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Name of<br> Acaricides </td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Section /<br> Plot</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Section /<br> Plot Area<br> (ha)</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Worker<br> Name</td>
+                                                <th style="text-align:left; padding:5px;font-size: 12px">Qty </td>
+                                            </tr>
+                                        
+                                            {% if acaricides_chemical_list %}
+                                            {% for data in acaricides_chemical_list %}	
+                                                <tr >
+                                                    <td style="padding: 5px;">{{ data.date | default:"NA" }}</td>
+                                                    <td style="padding: 5px;">{{ data.chemical.brand_local_name | default:"NA" }}({{data.chemical.chemical_name| default:"NA"}})</td>
+                                                    <td style="padding: 5px;">{{ data.plot.name | default:"NA"}}</td>
+                                                    <td style="padding: 5px;">{{ data.plot.plot_area | default:"NA"}}</td>
+                                                    <td style="padding: 5px;">{{ data.labour.name | default:"NA" }}</td>
+                                                    <td style="padding: 5px;">{{ data.quantity | default:0}}({{data.unit| default:"Ltr"}})</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr><td style="padding: 5px;" class="text-center text-danger"  colspan=6>No Record Found</td></tr>
+                                        {% endif %}
+                                          
+                                            
+                                        </table>
+                                    </td>
+                                </tr> 
+                                  <tr>
+                                    <td colspan="2" style="width: 100%; text-align: left; padding: 14px 0px 0px 0px; font-weight: 600; font-size: 20px; color: #000;">Plucking Details</td>
+                                  </tr>
+                                  <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                        <table style="width:100%; border-collapse: collapse;" border="1">  
+                                         <tr>                                       
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Plucking <br>Date</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Plucking <br> Start Time</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Plucking <br> End Time</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Division <br>Name</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Plot <br>Name</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Area <br> Plucked <br>(ha)</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Qty <br> Plucked <br>(kg)</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Worker <br> Name</td>
+    
+                                        </tr>
+                                        {% if plucking_data_list %}
+                                            {% for data in plucking_data_list %}	
+                                            <tr >
+                                              <td style="padding: 5px;">{{ data.date| default:"NA" }}</td>
+                                              <td style="padding: 5px;">{{ data.start_time  | default:"NA"}}</td>
+                                              <td style="padding: 5px;">{{ data.end_time  | default:"NA"}}</td>
+                                              <td style="padding: 5px;">{{ data.division.name | default:"NA" }}</td>
+                                              <td style="padding: 5px;">{{ data.plot.name | default:"NA" }}</td>
+                                              <td style="padding: 5px;">{{ data.area_plucked | default:"NA"}}</td>
+                                              <td style="padding: 5px;">{{ data.quantity_plucked | default:"NA" }}</td>
+                                              <td style="padding: 5px;">{{ data.labour.name | default:"NA" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}  
+                                            <tr><td style="padding: 5px;" class="text-center text-danger" colspan=8>No Record Found</td></tr>
+                                        {% endif %}
+                                                
+                                          
+                                      </table>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td colspan="2" style="width: 100%; text-align: left; padding: 14px 0px 0px 0px; font-weight: 600; font-size: 20px; color: #000;">Labour List</td>
+                                  </tr>
+                                  <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                        <table style="width:100%; border-collapse: collapse;" border="1">  
+                                            <tr style="background:#ffffff; border: #373737 1px solid;">
+                                            <th style="text-align:left; padding:5px;font-size: 12px">SL No</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Labour <br>Name</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Type</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Gender</td>
+                                            <th style="text-align:left; padding:5px;font-size: 12px">Age</td> 
+                                        </tr>
+                                        {% if labour_list %}
+                                            {% for data in labour_list %}	
+                                            <tr >
+                                            <td style="padding: 5px;">{{ forloop.counter }}</td>
+                                            <td style="padding: 5px;">{{ data.name | default:"NA" }}</td>
+                                            <td style="padding: 5px;">{{ data.type | default:"NA"}}</td>
+                                            <td style="padding: 5px;">{{ data.gender | default:"NA" }}</td>
+                                            <td style="padding: 5px;">{{ data.age | default:"NA"}}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr><td style="padding: 5px;" class="text-center text-danger" colspan=5>No Record Found</td></tr>
+                                        {% endif %}  
+                                           
+                                      </table>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td colspan="2" style="width: 100%; text-align: left; padding: 14px 0px 0px 0px; font-weight: 600; font-size: 20px; color: #000;">Monthly Schedule of Work</td>
+                                  </tr>
+                                  <tr>
+                                    <td colspan="2" style="padding:16px 0px 42px 0px;">
+                                        <table style="width:100%; border-collapse: collapse;" border="1">  
+                                        <tr >
+                                          <th style="text-align:left; padding:5px;font-size: 12px">SL No.</td>
+                                          <th style="text-align:left; padding:5px;font-size: 12px">Month / Year</td>
+                                          <th style="text-align:left; padding:5px;font-size: 12px">Total No. of<br> working days</td>
+                                          <th style="text-align:left; padding:5px;font-size: 12px">Average monthly<br> wages (Rs.)</td>
+                                        </tr>
+                                        {% if schedule_list %}
+                                            {% for data in schedule_list %}	
+                                                <tr >
+                                                  <td style="padding: 5px;">{{ forloop.counter }}</td>
+                                                  <td style="padding: 5px;">{{ data.month | default:"NA" }} / {{ data.year.year| default:"NA" }}</td>
+                                                  <td style="padding: 5px;">{{ data.no_of_working_days | default:"NA"}}</td>
+                                                  <td style="padding: 5px;">{{ data.monthly_wages | default:"NA" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                        {% else %}
+                                            <tr><td style="padding: 5px;" class="text-center text-danger" colspan=4>No Record Found</td></tr>
+                                        {% endif %} 
+                                       
+                                      </table>
+                                    </td>
+                                  </tr>
+								<!-- <p style="page-break-before: always">  -->
+								  
+                                  
+                                        
+									
+								</table>
+									
+									
+
+							</div>
+
+
+
+
+
+						</div>
+
+
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

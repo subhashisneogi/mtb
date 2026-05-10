@@ -1,0 +1,94 @@
+
+{% load static %}
+
+<table class="table table-striped">
+    <thead>
+
+
+        <tr>
+            <th>Sr. No</th>
+            <th>TXN ID</th>
+            <th>Aggregator ID</th>
+            <th>Aggregator Name</th>
+            <th>Supply Date</th>
+            <th>Supply Qty</th>
+            <th>FLC %</th>
+            <th>Deduction %</th>
+            <!-- <th>Net Supplied Qty (Kg.)</th> -->
+            <th>Vehicle No. (if any)</th>
+        </tr>
+
+      
+    </thead>
+    <tbody>
+
+        {% if result %}
+            {% for item in result %}
+            <tr>
+                <td>{{ result.start_index|add:forloop.counter0 }}</td>
+               
+                <td class="text-capitalize">
+                    {{ item.weighment_supply_id }}
+                </td>
+                <td class="text-capitalize">
+                    {% if item.supplier  %}
+                        {{ item.supplier}}
+                    {% else %}
+                        NA
+                    {% endif %}
+                </td>
+                
+                <td class="text-capitalize">
+
+                    {% if item.aggregator.name %}
+                        {{ item.aggregator.name }}
+                    {% elif item.grower.name %}
+                        {{ item.grower.name }}
+                    {% else %}
+                        NA
+                    {% endif %}
+                </td>
+                
+                <td class="text-capitalize">
+                    {% if item.supply_date  %}
+                        {{ item.supply_date|date:'d-m-Y' }}
+                    {% else %}
+                        NA
+                    {% endif %} 
+                </td>
+                <td class="text-capitalize">
+                   {{ item.nt_wght }} Kg
+                </td>
+                
+                <td>
+                   {{ item.leaf_receipt_id.final_leaf_count }}&nbsp;%
+                </td>
+                <td>
+                    {{ item.leaf_receipt_id.deduction }}&nbsp;%
+                </td>
+                <!-- <td>
+                    {{ item.nt_wght }}
+                </td> -->
+                {% if supplier_type == "aggregator" %}
+                <td>
+                    {% if item.supply_id.alloted_vehicle %}
+                        {{ item.supply_id.alloted_vehicle }}
+                    {% else %}
+                        NA
+                    {% endif %}
+                </td>
+                {% endif %}
+               
+                
+            </tr>
+            {% endfor %}
+        {% else %}
+
+        <tr>
+            <td colspan="9" class="text-center text-danger">Sorry! No Record Found.</td>
+        </tr>
+
+        {% endif %}
+
+    </tbody>
+</table>
