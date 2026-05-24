@@ -41,6 +41,7 @@ SELECT
     cst.current_stage AS `cst__current_stage`,
     cst.date AS `cst__date`,
     cst.total_item_item_quantity AS `cst__quantity`,
+    cst.rfq_vendor_id AS rfq_vendor_id,
 
     po.request_code AS `purchase_order__request_code`,
     vendor.vendor_name AS `purchase_order__vendor__vendor_name`,
