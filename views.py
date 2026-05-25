@@ -10,7 +10,6 @@ class JSONArrayAgg(Aggregate):
     function = "JSON_ARRAYAGG"
     output_field = JSONField()
 
-
 class JSONArrayAgg(Aggregate):
     function = "JSON_ARRAYAGG"
     output_field = JSONField()
@@ -135,9 +134,9 @@ class MRToPOReportNewAPIView(APIView):
                         quotation_data=JSONArrayAgg(
                             JSONObject(
                                 id=F('id'),
-                                vendor__name=F('vendor__vendor_name'),
-                                vendor__code=F('vendor__vendor_code'),
-                                date=F('date'),
+                                vendor__name=F('vendor__vendor_name'), #Name
+                                vendor__code=F('vendor__vendor_code'), #sap code
+                                date=F('date'), 
                                 request_code=F('request_code'),
                                 latest=F('latest'),
                                 total_amount=F('total_amount'),
@@ -179,3 +178,151 @@ class MRToPOReportNewAPIView(APIView):
         except Exception as e:
             error_message = str(e)
             raise APIException({'request_status': 0, 'msg': error_message})
+
+
+quotation_details_list=Subquery(
+                    Quotation.cmobjects.filter(
+                        organization_id=1,
+                        latest=True,
+                        rfq_vendor_id=OuterRef(
+                            'procurement_material_indent_item_request__procurement_rfq_vendors_item_indent_item__procurement_cst_item_rfq_vendor_item__cst__rfq_vendor_id'
+                        )
+                    )
+                    .order_by('total_amount')
+                    .values('rfq_vendor_id')
+                    .annotate(
+                        quotation_data=JSONArrayAgg(
+                            JSONObject(
+                                id=F('id'),
+                                vendor__name=F('vendor__vendor_name'), #Name
+                                vendor__code=F('vendor__vendor_code'), #sap code
+                                date=F('date'), 
+                                request_code=F('request_code'),
+                                latest=F('latest'),
+                                total_amount=F('total_amount'),
+                            )
+                        )
+                    )
+quotation_details_list data should be generate as lowest amount to heighest amount
+courently order_by is not working please fixed
+
+if all == 'true' and is_export='true':
+    # please write here data export as excel with proper data  quotation_details_list also
+    return Response({'results': data_list})
+
+#############
+
+
+from django.db.models import Aggregate, JSONField, Value, F
+from django.db.models.functions import JSONObject
+
+
+class JSONArrayAggOrderBy(Aggregate):
+    function = "JSON_ARRAYAGG"
+    template = "%(function)s(%(expressions)s ORDER BY %(ordering)s)"
+    output_field = JSONField()
+
+    def __init__(self, expression, ordering, **extra):
+        super().__init__(
+            expression,
+            ordering=ordering,
+            **extra
+        )
+
+quotation_details_list=Subquery(
+    Quotation.cmobjects.filter(
+        organization_id=1,
+        latest=True,
+        rfq_vendor_id=OuterRef(
+            'procurement_material_indent_item_request__procurement_rfq_vendors_item_indent_item__procurement_cst_item_rfq_vendor_item__cst__rfq_vendor_id'
+        )
+    )
+    .values('rfq_vendor_id')
+    .annotate(
+        quotation_data=JSONArrayAggOrderBy(
+            JSONObject(
+                id=F('id'),
+                vendor__name=F('vendor__vendor_name'),
+                vendor__code=F('vendor__vendor_code'),
+                date=F('date'),
+                request_code=F('request_code'),
+                latest=F('latest'),
+                total_amount=F('total_amount'),
+            ),
+            ordering='total_amount ASC'
+        )
+    )
+    .values('quotation_data')[:1],
+    output_field=JSONField()
+),
+
+
+is_export = request.query_params.get('is_export', 'false')
+
+if all == 'true' and is_export == 'true':
+
+    import pandas as pd
+    from django.http import HttpResponse
+    import json
+
+    export_data = []
+
+    for item in data_list:
+
+        quotation_details = item.get('quotation_details_list', [])
+
+        quotation_details_str = ""
+
+        if quotation_details:
+            quotation_details_str = "\n".join([
+                f"{idx+1}. "
+                f"Vendor: {q.get('vendor__name', '')} | "
+                f"Code: {q.get('vendor__code', '')} | "
+                f"Amount: {q.get('total_amount', 0)}"
+                for idx, q in enumerate(quotation_details)
+            ])
+
+        export_data.append({
+            'MR Code': item.get('material_request__request_code'),
+            'MR Date': item.get('material_request__date'),
+            'Material Code': item.get('requested_material__material_code'),
+            'SAP Code': item.get('requested_material__sap_code'),
+            'Material Name': item.get('requested_material__material_name'),
+            'UOM': item.get('requested_material__unit_of_mesurement__symbol'),
+            'Requested Qty': item.get('quantity_unit'),
+            'Sanctioned Qty': item.get('sanctioned_quantity'),
+
+            'Indent Code': item.get('indent__request_code'),
+            'Indent Qty': item.get('indent__quantity'),
+
+            'RFQ Code': item.get('rfq_vendors__request_code'),
+
+            'CST Code': item.get('cst__request_code'),
+
+            'PO Code': item.get('purchase_order__request_code'),
+            'PO Vendor': item.get('purchase_order__vendor__vendor_name'),
+            'PO Amount': item.get('purchase_order__total_amount'),
+
+            'GRN Qty': item.get('grn__received_quantity'),
+
+            'Quotation Details': quotation_details_str,
+        })
+
+    df = pd.DataFrame(export_data)
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+    response['Content-Disposition'] = (
+        'attachment; filename="mr_to_po_report.xlsx"'
+    )
+
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='MR To PO Report')
+
+    return response
+
+
+if all == 'true':
+    return Response({'results': data_list})
