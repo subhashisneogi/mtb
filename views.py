@@ -2,6 +2,15 @@
 path('procurement-mrtopo-report-new/', views.MRToPOReportNewAPIView.as_view()),
 from django.db.models import Aggregate, JSONField
 from django.db.models.functions import JSONObject
+
+from django.db.models import Aggregate, JSONField
+from django.db.models.functions import JSONObject
+from django.db.models.expressions import Func
+class JSONArrayAgg(Aggregate):
+    function = "JSON_ARRAYAGG"
+    output_field = JSONField()
+
+
 class JSONArrayAgg(Aggregate):
     function = "JSON_ARRAYAGG"
     output_field = JSONField()
