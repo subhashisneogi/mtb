@@ -27,7 +27,7 @@ class JSONArrayAgg(Aggregate):
         )
 
 
-class MRToPOReportNewAPIView(APIView):
+class MRToPOReportNewAPIView22(APIView):
 
     def get(self, request, format=None):
         try:
