@@ -1,0 +1,1842 @@
+class QuotationItems(BaseAbstractStructure):
+    organization = models.ForeignKey(Organization, related_name='procurement_rfq_quotation_item_organizations',
+                                     on_delete=models.CASCADE)
+    quotation = models.ForeignKey(Quotation, related_name='procurement_rfq_quotation_item', on_delete=models.CASCADE,
+                                  null=True, blank=True)
+    requested_material = models.ForeignKey(VendorMaterialMaster,
+                                           related_name='procurement_rfq_quotation_item_requested_material',
+                                           on_delete=models.CASCADE, null=True, blank=True)
+    requested_machine = models.ForeignKey(PlantMachineryMachine,
+                                          related_name='procurement_rfq_quotation_items_requested_machine',
+                                          on_delete=models.CASCADE, null=True, blank=True)
+    wbs_material = models.ForeignKey(WBSMaterial, related_name='procurement_rfq_quotation_items_wbs_material', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_code = models.ForeignKey(BOQChainageExecutiveSummeryData, related_name='procurement_rfq_quotation_items_wbs_code', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_indirect_cost = models.ForeignKey(WbsIndirectCostPlaning, related_name='procurement_rfq_quotation_items_wbs_indirect_cost', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_plantmachinery = models.ForeignKey(WBSPlantMachinery, related_name='procurement_rfq_quotation_items_wbs_plantmachinery', on_delete=models.CASCADE, null=True, blank=True)
+    size_part_number = models.CharField(max_length=200, null=True, blank=True)
+    brand = models.CharField(max_length=200, blank=True, null=True, default="")
+    specification = models.CharField(max_length=500, blank=True, null=True, default="")
+    quantity = models.FloatField(default=0)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='procurement_rfq_quotation_items_uom', on_delete=models.CASCADE, null=True, blank=True)
+    weight = models.FloatField(default=0)
+    rate = models.FloatField(default=0)
+    item_amount = models.FloatField(default=0)
+    disc_percentage = models.FloatField(default=0)
+    disc_amount = models.FloatField(default=0)
+    taxable_amount = models.FloatField(default=0)
+    excise_tax_head = models.ForeignKey(TaxHead, related_name='procurement_rfq_quotation_item_excise_tax_head',
+                                        on_delete=models.CASCADE, null=True, blank=True)
+    excise_tax_percentage = models.FloatField(default=0)
+    excise_tax_amount = models.FloatField(default=0)
+    tax_head = models.ForeignKey(TaxHead, related_name='procurement_rfq_quotation_item_tax_head',
+                                 on_delete=models.CASCADE, null=True, blank=True)
+    tax_percentage = models.FloatField(default=0)
+    tax_amount = models.FloatField(default=0)
+    sgst_percentage = models.FloatField(default=0)
+    cgst_percentage = models.FloatField(default=0)
+    igst_percentage = models.FloatField(default=0)
+    utgst_percentage = models.FloatField(default=0)
+    cess_percentage = models.FloatField(default=0)
+    sgst_amount = models.FloatField(default=0)
+    cgst_amount = models.FloatField(default=0)
+    igst_amount = models.FloatField(default=0)
+    utgst_amount = models.FloatField(default=0)
+    cess_amount = models.FloatField(default=0)
+    total_amount = models.FloatField(default=0)
+    notes = models.TextField(max_length=500, null=True, blank=True)
+    amount_description = models.TextField(max_length=200, null=True, blank=True)
+    last_purchased_rate = models.FloatField(default=0)
+    last_purchased_reference = models.TextField(max_length=500, null=True, blank=True)
+
+    selected_by_cst = models.FloatField(default=0)
+    quantity_by_cst = models.FloatField(default=0)
+    is_selected_by_cst = models.BooleanField(default=False)
+
+    # other model links #
+
+    material_request_item = models.ForeignKey(MaterialRequestMasterItems, related_name="procurement_rfq_quotation_item_material_request_item", on_delete=models.CASCADE, null=True, blank=True)
+    indent_item = models.ForeignKey(IndentItems, related_name="procurement_rfq_quotation_item_indent_item", on_delete=models.CASCADE, null=True, blank=True)
+    rfq_vendor_item = models.ForeignKey(RFQVendorsItems, related_name="procurement_rfq_quotation_item_rfq_vendor_item", on_delete=models.CASCADE, null=True, blank=True)
+    enquiry_at_once_item = models.ForeignKey(EnquiryAtOnceItems, related_name="procurement_rfq_quotation_item_enquiry_at_once_item", on_delete=models.CASCADE, null=True, blank=True)
+    cost_center = models.ForeignKey(CostCenter, related_name='procurement_rfq_quotation_items_cost_center', on_delete=models.CASCADE, null=True, blank=True)
+    gl_account = models.ForeignKey(GLAccount, related_name='procurement_rfq_quotation_items_gl_account', on_delete=models.CASCADE, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if not self.quantity:
+            self.quantity = 0
+        if not self.rate:
+            self.rate = 0
+        if not self.disc_percentage:
+            self.disc_percentage = 0
+        if not self.excise_tax_percentage:
+            self.excise_tax_percentage = 0
+        if not self.tax_percentage:
+            self.tax_percentage = 0
+        if not self.sgst_percentage:
+            self.sgst_percentage = 0
+        if not self.cgst_percentage:
+            self.cgst_percentage = 0
+        if not self.igst_percentage:
+            self.igst_percentage = 0
+        if not self.utgst_percentage:
+            self.utgst_percentage = 0
+        if not self.cess_percentage:
+            self.cess_percentage = 0
+        self.item_amount = float(self.quantity)*float(self.rate)
+        if self.disc_percentage != 0:
+            self.disc_amount = float(self.item_amount)*float(self.disc_percentage)/100
+        else:
+            if not self.disc_amount:
+                self.disc_amount = 0
+        self.taxable_amount = float(self.item_amount)-float(self.disc_amount)
+        if self.excise_tax_percentage != 0:
+            self.excise_tax_amount = float(self.taxable_amount)*float(self.excise_tax_percentage)/100
+        else:
+            if not self.excise_tax_amount:
+                self.excise_tax_amount = 0
+        if self.tax_percentage != 0:
+            self.tax_amount = float(self.taxable_amount)*float(self.tax_percentage)/100
+        else:
+            if not self.tax_amount:
+                self.tax_amount = 0
+        self.sgst_amount = float(self.taxable_amount)*float(self.sgst_percentage)/100
+        self.cgst_amount = float(self.taxable_amount)*float(self.cgst_percentage)/100
+        self.igst_amount = float(self.taxable_amount)*float(self.igst_percentage)/100
+        self.utgst_amount = float(self.taxable_amount)*float(self.utgst_percentage)/100
+        self.cess_amount = float(self.taxable_amount)*float(self.cess_percentage)/100
+        self.total_amount = float(self.taxable_amount)+float(self.excise_tax_amount)+float(self.tax_amount)+float(self.sgst_amount)+float(self.cgst_amount)+float(self.igst_amount)+float(self.utgst_amount)+float(self.cess_amount)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        db_table = "procurement_rfq_quotation_items"
+
+
+class ProcurementMaterialBudgetBreakdown(BaseAbstractStructure):
+    master = models.ForeignKey(ProcurementMaterialProject, related_name='procurement_material_budget_breakdown', on_delete=models.CASCADE, null=True, blank=True)
+    requested_material = models.ForeignKey(VendorMaterialMaster, related_name='procurement_material_budget_breakdown_requested_material', blank=True, null=True, on_delete=models.CASCADE)
+    material_code=models.CharField(max_length=100, blank=True, null=True)
+    requirement_qty = models.FloatField(blank=True, null=True, default=0.)
+    wastage = models.FloatField(blank=True, null=True, default=0.)
+    qty = models.FloatField(blank=True, null=True, default=0.)
+    rate = models.FloatField(blank=True, null=True, default=0.)
+    amount = models.FloatField(blank=True, null=True, default=0.)
+    entry_date = models.DateField(null=True, blank=True)
+    is_zero_budget = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if not self.rate:
+            self.rate = 0
+        if not self.requirement_qty:
+            self.requirement_qty = 0
+        if not self.wastage:
+            self.wastage = 0
+        if not self.qty:
+            self.qty = 0
+        self.qty = float(self.requirement_qty) * (1+(float(self.wastage/100)))
+        self.amount = float(self.rate) * float(self.qty)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return str(self.id)+" ("+str(self.entry_date)+" | "+str(self.is_zero_budget)+") "+str(self.qty)+" * "+str(self.rate)+" = "+str(self.amount)
+
+
+    class Meta:
+        db_table = "procurement_material_budget_breakdown"
+        ordering = ('entry_date', 'id')
+        verbose_name_plural = "8. Procurement Material Budget Breakdown"
+
+class GRN(BaseAbstractStructure):
+    LOADED_VIA = (
+        ('self', 'Self'),
+        ('party', 'Party'),
+    )
+    RECEIVED_FROM = (
+        ('supplier_transfer', 'Supplier/Transfer'),
+        ('customer', 'Customer'),
+    )
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    TAX_TYPE = (
+        ('gst', 'GST'),
+        ('vat', 'VAT'),
+    )
+    STOCK_TYPE = (
+        ('material', 'Material'),
+        ('machinery', 'Machinery'),
+    )
+    organization = models.ForeignKey(Organization, related_name='procurement_grn_organizations',
+                                     on_delete=models.CASCADE)
+    site = models.ForeignKey(SiteMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_grn_site')
+    store = models.ForeignKey(StoreMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_grn_store')
+    project = models.ForeignKey(ProjectMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_grn_project')
+
+    grn_no = models.CharField(max_length=200, null=True, blank=True)
+    request_code = models.CharField(max_length=200, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+    time = models.TimeField(null=True, blank=True)
+    manual_slip_no = models.CharField(max_length=200, null=True, blank=True)
+    unload_date = models.DateField(null=True, blank=True)
+    unload_time = models.TimeField(null=True, blank=True)
+    loaded_via = models.CharField(max_length=50, choices=LOADED_VIA, null=True, blank=True, default="self")
+    job_site = models.ForeignKey(SiteMaster, related_name='procurement_grn_job_site', on_delete=models.CASCADE,
+                                 null=True, blank=True)
+    party_bill_amt = models.FloatField(default=0)
+    lab_report_no = models.CharField(max_length=200, null=True, blank=True)
+    e_way_bill_no = models.CharField(max_length=200, null=True, blank=True)
+    party_bill_no = models.CharField(max_length=200, null=True, blank=True)
+    party_bill_date = models.DateField(null=True, blank=True)
+    bill_date = models.DateField(null=True, blank=True)
+    cash_payment = models.BooleanField(default=False)
+    cash_payment_account = models.ForeignKey(AccountsHead, related_name='procurement_grn_cash_payment_account',
+                                             on_delete=models.CASCADE, null=True, blank=True)
+    challan_no = models.CharField(max_length=200, null=True, blank=True)
+    challan_date = models.DateField(null=True, blank=True)
+    gate_pass_no = models.CharField(max_length=200, null=True, blank=True)
+    rst_no = models.CharField(max_length=200, null=True, blank=True)
+    # transporter = models.CharField(max_length=200, null=True, blank=True)
+    transporter = models.ForeignKey(VendorMasterV2, related_name='procurement_grn_transporter',
+                                             on_delete=models.CASCADE, null=True, blank=True)
+    other = models.CharField(max_length=200, null=True, blank=True)
+    lr_no = models.CharField(max_length=200, null=True, blank=True)
+    lr_date = models.DateField(null=True, blank=True)
+    carrying_vehicle_no = models.CharField(max_length=200, null=True, blank=True)
+    reading = models.CharField(max_length=200, null=True, blank=True)
+    driver_name = models.CharField(max_length=200, null=True, blank=True)
+    receive_location = models.CharField(max_length=200, null=True, blank=True)
+    received_from = models.CharField(max_length=50, choices=RECEIVED_FROM, null=True, blank=True,
+                                     default="supplier_transfer")
+    received_by = models.ForeignKey(PmsUser, related_name='procurement_grn_received_by',
+                                    on_delete=models.CASCADE, null=True, blank=True)
+    arrival_date = models.DateField(null=True, blank=True)
+    arrival_time = models.TimeField(null=True, blank=True)
+    remarks = models.TextField(max_length=500, null=True, blank=True)
+    line_in_bottom = models.TextField(max_length=500, null=True, blank=True)
+    create_material_issue = models.BooleanField(default=False)
+    vendor = models.ForeignKey(VendorMasterV2, related_name='procurement_grn_vendor',
+                               on_delete=models.CASCADE, null=True, blank=True)
+    vendor_currency = models.ForeignKey(VendorCurrencyMaster, related_name='procurement_grn_vendor_currency',
+                                        on_delete=models.CASCADE, null=True, blank=True)
+    exchange_rate = models.FloatField(default=1)
+    stock_type = models.CharField(max_length=100, choices=STOCK_TYPE, blank=True, null=True, default="material")
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    checked_remarks = models.TextField(max_length=500, null=True, blank=True)
+    approved_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rejected_remarks = models.TextField(max_length=500, null=True, blank=True)
+    total_po_pending_quantity = models.FloatField(default=0)
+    total_challan_quantity = models.FloatField(default=0)
+    total_received_quantity = models.FloatField(default=0)
+    total_return_quantity = models.FloatField(default=0)
+    financialyear = models.ForeignKey(FinancialYear, related_name='procurement_grn_financial_year',
+                                      on_delete=models.CASCADE, blank=True, null=True)
+    plant_production = models.ForeignKey(PlantProduction, related_name="procurement_grn_transfer",
+                              on_delete=models.CASCADE, null=True, blank=True)
+    way_bill_form = models.ForeignKey(WayBillForm, related_name="procurement_grn_way_bill_form",
+                              on_delete=models.CASCADE, null=True, blank=True)
+
+    tax_type = models.CharField(max_length=100, choices=TAX_TYPE, blank=True, null=True, default="gst")
+    is_igst = models.BooleanField(default=False)
+
+    total_item_item_quantity = models.FloatField(default=0)
+    total_item_item_amount = models.FloatField(default=0)
+    total_item_disc_amount = models.FloatField(default=0)
+    total_item_taxable_amount = models.FloatField(default=0)
+    total_item_excise_tax_amount = models.FloatField(default=0)
+    total_item_tax_amount = models.FloatField(default=0)
+    total_item_sgst_amount = models.FloatField(default=0)
+    total_item_cgst_amount = models.FloatField(default=0)
+    total_item_igst_amount = models.FloatField(default=0)
+    total_item_utgst_amount = models.FloatField(default=0)
+    total_item_cess_amount = models.FloatField(default=0)
+    total_item_total_amount = models.FloatField(default=0)
+    total_tax_tax_amount = models.FloatField(default=0)
+    total_tax_sgst_amount = models.FloatField(default=0)
+    total_tax_cgst_amount = models.FloatField(default=0)
+    total_tax_igst_amount = models.FloatField(default=0)
+    total_tax_utgst_amount = models.FloatField(default=0)
+    total_tax_cess_amount = models.FloatField(default=0)
+    total_tax_total_tax_amount = models.FloatField(default=0)
+    total_expense_expense_amount = models.FloatField(default=0)
+    total_expense_sgst_amount = models.FloatField(default=0)
+    total_expense_cgst_amount = models.FloatField(default=0)
+    total_expense_igst_amount = models.FloatField(default=0)
+    total_expense_utgst_amount = models.FloatField(default=0)
+    total_expense_cess_amount = models.FloatField(default=0)
+    total_expense_total_expense_amount = models.FloatField(default=0)
+    total_amount = models.FloatField(default=0)
+    
+    material_request = models.ForeignKey(MaterialRequestMaster, related_name="procurement_grn_material_request", on_delete=models.CASCADE, null=True, blank=True)
+    material_requests = models.ManyToManyField(MaterialRequestMaster, related_name="procurement_grn_material_requests",null=True, blank=True)
+
+    indent = models.ForeignKey(Indent, related_name='procurement_grn_indent', on_delete=models.CASCADE, null=True, blank=True)
+    indents= models.ManyToManyField(Indent, related_name="procurement_grn_indents", null=True, blank=True)
+
+    rfq_vendor = models.ForeignKey(RFQVendors, related_name='procurement_grn_rfq_vendor', on_delete=models.CASCADE, null=True, blank=True)
+    enquiry_at_once = models.ForeignKey(EnquiryAtOnce, related_name='procurement_grn_enquiry_at_once', on_delete=models.CASCADE, null=True, blank=True)
+    quotation = models.ForeignKey(Quotation, related_name='procurement_grn_quotation', on_delete=models.CASCADE, null=True, blank=True)
+    cst = models.ForeignKey(CST, related_name='procurement_grn_cst', on_delete=models.CASCADE, null=True, blank=True)
+    purchase_order = models.ForeignKey(PurchaseOrder, related_name='procurement_grn_purchase_orders', on_delete=models.CASCADE, null=True, blank=True)
+
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_grn_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_grn_cancelled_by", on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_grn_close_by", on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_grn_approved_by", on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_grn_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+    scope_of_supply = models.TextField(null=True, blank=True)
+
+    movement_type = models.CharField(max_length=200, null=True, blank=True)
+    batch = models.CharField(max_length=200, null=True, blank=True)
+    sap_code = models.CharField(max_length=200, null=True, blank=True) 
+    reference = models.CharField(max_length=200, null=True, blank=True)
+    entered_on = models.CharField(max_length=200, null=True, blank=True)
+    plant = models.CharField(max_length=200, null=True, blank=True)
+    storage_location = models.CharField(max_length=200, null=True, blank=True)
+    header_text = models.CharField(max_length=200, null=True, blank=True)
+    company_code = models.CharField(max_length=200, null=True, blank=True)
+    material_year = models.CharField(max_length=200, null=True, blank=True)
+    event_type = models.CharField(max_length=200, null=True, blank=True)
+    valuation_type = models.CharField(max_length=200, null=True, blank=True)
+    user_name = models.CharField(max_length=200, null=True, blank=True)
+    name1 = models.CharField(max_length=200, null=True, blank=True)
+    name2 = models.CharField(max_length=200, null=True, blank=True)
+    pur_org = models.CharField(max_length=200, null=True, blank=True)
+    movement_type_text = models.CharField(max_length=200, null=True, blank=True)
+    doc_header_text = models.CharField(max_length=200, null=True, blank=True)
+    time = models.CharField(max_length=200, null=True, blank=True)
+    reason_movement = models.CharField(max_length=200, null=True, blank=True)
+    movement_indicator = models.CharField(max_length=200, null=True, blank=True)
+    currency = models.CharField(max_length=200, null=True, blank=True)
+    cost_center = models.CharField(max_length=200, null=True, blank=True)
+    gl = models.CharField(max_length=200, null=True, blank=True)
+    text = models.CharField(max_length=200, null=True, blank=True)
+
+    sales_order = models.CharField(max_length=200, null=True, blank=True)
+    salesorder = models.CharField(max_length=200, null=True, blank=True)
+    customer = models.CharField(max_length=200, null=True, blank=True)
+    receipt_indicator = models.CharField(max_length=200, null=True, blank=True)
+    gate_entry_no = models.CharField(max_length=200, null=True, blank=True)
+    vehicle_no = models.CharField(max_length=200, null=True, blank=True)
+    name3 = models.CharField(max_length=200, null=True, blank=True)
+    name4 = models.CharField(max_length=200, null=True, blank=True)
+    confirmation_no = models.CharField(max_length=200, null=True, blank=True)
+    confirmation_text1 = models.CharField(max_length=200, null=True, blank=True)
+    confirmation_text2 = models.CharField(max_length=200, null=True, blank=True)
+    confirmation_text3 = models.CharField(max_length=200, null=True, blank=True)
+    confirmation_text4 = models.CharField(max_length=200, null=True, blank=True)
+    gate_entry_date = models.CharField(max_length=200, null=True, blank=True)
+    class Meta:
+        db_table = "procurement_grn"
+
+class GRNItems(BaseAbstractStructure):
+    organization = models.ForeignKey(Organization, related_name='procurement_grn_item_organizations',
+                                     on_delete=models.CASCADE)
+    grn = models.ForeignKey(GRN, related_name='procurement_grn_item',
+                            on_delete=models.CASCADE, null=True, blank=True)
+    item = models.ForeignKey(VendorMaterialMaster, related_name='procurement_grn_item_material',
+                             on_delete=models.CASCADE, null=True, blank=True)
+    requested_machine = models.ForeignKey(PlantMachineryMachine,
+                                          related_name='procurement_grn_items_requested_machine',
+                                          on_delete=models.CASCADE, null=True, blank=True)
+    wbs_material = models.ForeignKey(WBSMaterial, related_name='procurement_grn_items_wbs_material', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_code = models.ForeignKey(BOQChainageExecutiveSummeryData, related_name='procurement_grn_items_wbs_code', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_indirect_cost = models.ForeignKey(WbsIndirectCostPlaning, related_name='procurement_grn_items_wbs_indirect_cost', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_plantmachinery = models.ForeignKey(WBSPlantMachinery, related_name='procurement_grn_items_wbs_plantmachinery', on_delete=models.CASCADE, null=True, blank=True)
+    size_part_no_grade = models.CharField(max_length=200, null=True, blank=True)
+    brand = models.CharField(max_length=200, blank=True, null=True, default="")
+    specification = models.CharField(max_length=500, blank=True, null=True, default="")
+    fill_item_by_party = models.BooleanField(default=False)
+    barcode = models.CharField(max_length=200, null=True, blank=True)
+    quantity = models.FloatField(default=0)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='procurement_grn_items_uom', on_delete=models.CASCADE, null=True, blank=True)
+    tolerance_percentage = models.FloatField(default=0)
+    ordered_item = models.CharField(max_length=200, null=True, blank=True)
+    change_reason = models.TextField(max_length=500, null=True, blank=True)
+    is_royalty = models.BooleanField(default=False)
+    is_warranty = models.BooleanField(default=False)
+    is_istp = models.BooleanField(default=False)
+    po_pending_quantity = models.FloatField(default=0)
+    challan_quantity = models.FloatField(default=0)
+    received_quantity = models.FloatField(default=0)
+    received_weight = models.FloatField(default=0)
+    return_quantity = models.FloatField(default=0)
+    royalty_quantity = models.FloatField(default=0)
+    royalty_bk = models.CharField(max_length=200, null=True, blank=True)
+    royalty_no = models.CharField(max_length=200, null=True, blank=True)
+    royalty_rate = models.FloatField(default=0)
+    royalty_date = models.CharField(max_length=200, null=True, blank=True)
+    royalty_holder = models.CharField(max_length=200, null=True, blank=True)
+    warranty_from_date = models.DateField(null=True, blank=True)
+    warranty_from_time = models.TimeField(null=True, blank=True)
+    warranty_to_date = models.DateField(null=True, blank=True)
+    warranty_to_time = models.TimeField(null=True, blank=True)
+    istp_date = models.DateField(null=True, blank=True)
+    istp_to = models.CharField(max_length=200, null=True, blank=True)
+    istp_royalty_no = models.CharField(max_length=200, null=True, blank=True)
+
+    rate = models.FloatField(default=0)
+    item_amount = models.FloatField(default=0)
+    disc_percentage = models.FloatField(default=0)
+    disc_amount = models.FloatField(default=0)
+    taxable_amount = models.FloatField(default=0)
+    excise_tax_head = models.ForeignKey(TaxHead, related_name='procurement_grn_items_excise_tax_head', on_delete=models.CASCADE, null=True, blank=True)
+    excise_tax_percentage = models.FloatField(default=0)
+    excise_tax_amount = models.FloatField(default=0)
+    tax_head = models.ForeignKey(TaxHead, related_name='procurement_grn_items_tax_head', on_delete=models.CASCADE, null=True, blank=True)
+    tax_percentage = models.FloatField(default=0)
+    tax_amount = models.FloatField(default=0)
+    sgst_percentage = models.FloatField(default=0)
+    cgst_percentage = models.FloatField(default=0)
+    igst_percentage = models.FloatField(default=0)
+    utgst_percentage = models.FloatField(default=0)
+    cess_percentage = models.FloatField(default=0)
+    sgst_amount = models.FloatField(default=0)
+    cgst_amount = models.FloatField(default=0)
+    igst_amount = models.FloatField(default=0)
+    utgst_amount = models.FloatField(default=0)
+    cess_amount = models.FloatField(default=0)
+    total_amount = models.FloatField(default=0)
+    notes = models.TextField(max_length=500, null=True, blank=True)
+    amount_description = models.TextField(max_length=200, null=True, blank=True)
+
+    # other model links #
+
+    material_request_item = models.ForeignKey(MaterialRequestMasterItems, related_name="procurement_grn_item_material_request_item", on_delete=models.CASCADE, null=True, blank=True)
+    indent_item = models.ForeignKey(IndentItems, related_name="procurement_grn_item_indent_item", on_delete=models.CASCADE, null=True, blank=True)
+    rfq_vendor_item = models.ForeignKey(RFQVendorsItems, related_name="procurement_grn_item_rfq_vendor_item", on_delete=models.CASCADE, null=True, blank=True)
+    enquiry_at_once_item = models.ForeignKey(EnquiryAtOnceItems, related_name="procurement_grn_item_enquiry_at_once_item", on_delete=models.CASCADE, null=True, blank=True)
+    quotation_item = models.ForeignKey(QuotationItems, related_name="procurement_grn_item_quotation_item", on_delete=models.CASCADE, null=True, blank=True)
+    cst_item= models.ForeignKey(CSTItems, related_name='procurement_grn_item_cst_item', on_delete=models.CASCADE, null=True, blank=True)
+    purchase_order_item = models.ForeignKey(PurchaseOrderItems, related_name="procurement_grn_item_purchase_order_item", on_delete=models.CASCADE, null=True, blank=True)
+    is_auto_approved = models.BooleanField(default=False)
+    cost_center = models.ForeignKey(CostCenter, related_name='procurement_grn_items_cost_center', on_delete=models.CASCADE, null=True, blank=True)
+    gl_account = models.ForeignKey(GLAccount, related_name='procurement_grn_items_gl_account', on_delete=models.CASCADE, null=True, blank=True)
+    
+    unit_of_entry = models.CharField(max_length=255, null=True, blank=True)
+    material_description = models.CharField(max_length=255, null=True, blank=True)
+    qty_unit_entry = models.CharField(max_length=255, null=True, blank=True)
+    po_item = models.CharField(max_length=255, null=True, blank=True)
+    material_doc_item = models.CharField(max_length=255, null=True, blank=True)
+    asset = models.CharField(max_length=255, null=True, blank=True)
+    order = models.CharField(max_length=255, null=True, blank=True)
+    order_price_unit = models.CharField(max_length=255, null=True, blank=True)
+    order_unit = models.CharField(max_length=255, null=True, blank=True)
+    qty_order_unit = models.CharField(max_length=255, null=True, blank=True)
+    ext_amount = models.CharField(max_length=255, null=True, blank=True)
+    sales_value = models.CharField(max_length=255, null=True, blank=True)
+    sales_order_schedule = models.CharField(max_length=255, null=True, blank=True)
+    sales_order_item = models.CharField(max_length=255, null=True, blank=True)
+    del_note_quantity = models.CharField(max_length=255, null=True, blank=True)
+    salesorderitem = models.CharField(max_length=255, null=True, blank=True)
+    wbs_element = models.CharField(max_length=255, null=True, blank=True)
+    network = models.CharField(max_length=255, null=True, blank=True)
+    reservation = models.CharField(max_length=255, null=True, blank=True)
+    item_no_reservation = models.CharField(max_length=255, null=True, blank=True)
+    debit_credit_ind = models.CharField(max_length=255, null=True, blank=True)
+    sales_value_vat = models.CharField(max_length=255, null=True, blank=True)
+    original_line_item = models.CharField(max_length=255, null=True, blank=True)
+
+    delivery_note_unit=models.CharField(max_length=255, null=True, blank=True)
+    qty_op_unit = models.CharField(max_length=255, null=True, blank=True)
+
+    routing_no_operations = models.CharField(max_length=255, null=True, blank=True)
+    smart_number = models.CharField(max_length=255, null=True, blank=True)
+    activity = models.CharField(max_length=255, null=True, blank=True)
+    wbselement = models.CharField(max_length=255, null=True, blank=True)
+    stock_segment = models.CharField(max_length=255, null=True, blank=True)
+    issue_slip = models.CharField(max_length=255, null=True, blank=True)
+    item_auto_created = models.CharField(max_length=255, null=True, blank=True)
+    multiple_account_assignment = models.CharField(max_length=255, null=True, blank=True)
+    consumption = models.CharField(max_length=255, null=True, blank=True)
+    sub_number = models.CharField(max_length=255, null=True, blank=True)
+    counter = models.CharField(max_length=255, null=True, blank=True)
+    rr_text = models.CharField(max_length=255, null=True, blank=True)
+    royality_received_qty= models.FloatField(default=0)
+    royality_remarks = models.TextField(null=True,blank=True)
+
+    class Meta:
+        db_table = "procurement_grn_items"
+
+class IndentItems(BaseAbstractStructure):
+    """
+    Indent Items
+    """
+    PRIORITIES = (
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    )
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    TRACKER_STATUS = (
+        ('MR Approval Pending', 'MR Approval Pending'),
+        ('Waitting For Quotation', 'Waitting For Quotation'),
+        ('Quotation awaiting', 'Quotation awaiting'),
+        ('CST under approval', 'CST under approval'),
+    )
+    organization = models.ForeignKey(Organization, related_name='procurement_indent_item_organizations',
+                                     on_delete=models.CASCADE)
+    indent = models.ForeignKey(Indent, related_name='procurement_indent_item_indent',
+                               on_delete=models.CASCADE, null=True, blank=True)
+    requested_material = models.ForeignKey(VendorMaterialMaster,
+                                           related_name='procurement_indent_item_requested_material',
+                                           on_delete=models.CASCADE, null=True, blank=True)
+    requested_machine = models.ForeignKey(PlantMachineryMachine,
+                                           related_name='procurement_indent_item_requested_machine',
+                                           on_delete=models.CASCADE, null=True, blank=True)
+    wbs_material = models.ForeignKey(WBSMaterial, related_name='procurement_indent_items_wbs_material', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_code = models.ForeignKey(BOQChainageExecutiveSummeryData, related_name='procurement_indent_items_wbs_code', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_indirect_cost = models.ForeignKey(WbsIndirectCostPlaning, related_name='procurement_indent_items_wbs_indirect_cost', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_plantmachinery = models.ForeignKey(WBSPlantMachinery, related_name='procurement_indent_items_wbs_plantmachinery', on_delete=models.CASCADE, null=True, blank=True)
+
+    size_part_grade = models.CharField(max_length=100, null=True, blank=True)
+    quantity = models.FloatField(default=0)
+    sanctioned_quantity = models.FloatField(default=0)
+    rejected_quantity = models.FloatField(default=0)
+    closed_quantity = models.FloatField(default=0)
+    po_closed_quantity = models.FloatField(default=0)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='procurement_indent_items_uom', on_delete=models.CASCADE, null=True, blank=True)
+    weight = models.FloatField(default=0)
+    requested_for_type = models.CharField(max_length=100, blank=True, null=True)
+    requested_for = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(max_length=100, null=True, blank=True)
+    charge_type = models.CharField(max_length=100, null=True, blank=True)
+    is_returnable = models.BooleanField(default=False)
+    priority = models.CharField(max_length=100, choices=PRIORITIES, blank=True, null=True, default="low")
+    due_date = models.DateField(null=True, blank=True)
+    tracker_status = models.CharField(max_length=100, choices=TRACKER_STATUS, blank=True, null=True)
+    tracker_remarks = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    checked_remarks = models.TextField(max_length=500, null=True, blank=True)
+    approved_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rejected_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rate = models.FloatField(default=0)  # not in use
+    amount = models.FloatField(default=0)  # not in use
+
+    ## new
+    brand = models.CharField(max_length=200, blank=True, null=True, default="")
+    specification = models.CharField(max_length=500, blank=True, null=True, default="")
+    budgeted_qty = models.CharField(max_length=200, blank=True, null=True, default="")
+    total_received_uptodate = models.CharField(max_length=200, blank=True, null=True, default="")
+    stock_on_site = models.CharField(max_length=200, blank=True, null=True, default="")
+    application = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule_date = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule_day = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule = models.CharField(max_length=200, blank=True, null=True, default="") # category
+
+    sanctioned_remarks = models.TextField(null=True, blank=True)
+
+    # other model links #
+    material_request_item = models.ForeignKey(MaterialRequestMasterItems, related_name="procurement_material_indent_item_request", on_delete=models.CASCADE, null=True, blank=True)
+    cost_center = models.ForeignKey(CostCenter, related_name='procurement_indent_items_cost_center', on_delete=models.CASCADE, null=True, blank=True)
+    gl_account = models.ForeignKey(GLAccount, related_name='procurement_indent_items_gl_account', on_delete=models.CASCADE, null=True, blank=True)
+
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_indent_items_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_indent_items_cancelled_by", on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_indent_items_close_by", on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_indent_items_approved_by", on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_indent_items_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+
+    def clean(self):
+        # Perform custom validation logic before saving the model
+        if self.sanctioned_quantity > self.quantity:
+            raise ValidationError("Sanctioned quantity is higher than quantity!")
+        return super().clean()
+
+    class Meta:
+        db_table = "procurement_indent_items"
+
+
+class MaterialRequestMasterItems(BaseAbstractStructure):
+    """
+    Material Request Items
+    """
+    PRIORITIES = (
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    )
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+
+    # request date = created at
+    organization = models.ForeignKey(Organization, related_name='procurement_material_item_request_organizations',
+                                     on_delete=models.CASCADE)
+    material_request = models.ForeignKey(MaterialRequestMaster, related_name='procurement_material_item_request',
+                                         on_delete=models.CASCADE, null=True, blank=True)
+    requested_material = models.ForeignKey(VendorMaterialMaster, related_name='procurement_requested_material',
+                                           on_delete=models.CASCADE, null=True, blank=True)
+    requested_machine = models.ForeignKey(PlantMachineryMachine,
+                                          related_name='procurement_material_request_items_requested_machine',
+                                          on_delete=models.CASCADE, null=True, blank=True)
+    wbs_material = models.ForeignKey(WBSMaterial, related_name='procurement_material_request_items_wbs_material', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_code = models.ForeignKey(BOQChainageExecutiveSummeryData, related_name='procurement_material_request_items_wbs_code', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_indirect_cost = models.ForeignKey(WbsIndirectCostPlaning, related_name='procurement_material_request_items_wbs_indirect_cost', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_plantmachinery = models.ForeignKey(WBSPlantMachinery, related_name='procurement_material_request_items_wbs_plantmachinery', on_delete=models.CASCADE, null=True, blank=True)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='procurement_material_request_items_uom_id', on_delete=models.CASCADE, null=True, blank=True)
+    size_part_grade = models.CharField(max_length=100, null=True, blank=True)
+    quantity_unit = models.FloatField(default=0.0)
+    sanctioned_quantity = models.FloatField(default=0)
+    rejected_quantity = models.FloatField(default=0)
+    closed_quantity = models.FloatField(default=0)
+    weight_unit = models.CharField(max_length=100, null=True, blank=True)
+    requested_for_type = models.CharField(max_length=200, blank=True, null=True)
+    requested_for = models.CharField(max_length=200, blank=True, null=True)
+    department = models.CharField(max_length=100, null=True, blank=True)
+    charge_type = models.CharField(max_length=100, null=True, blank=True)
+    is_returnable = models.BooleanField(default=False)
+    priority = models.CharField(max_length=100, choices=PRIORITIES, blank=True, null=True, default="low")
+    due_date = models.DateField(null=True, blank=True)
+    is_fulfilled = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # Store Percentage
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    checked_remarks = models.TextField(max_length=500, null=True, blank=True)
+    approved_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rejected_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rate = models.FloatField(default=0)  # not in use
+    amount = models.FloatField(default=0)  # not in use
+    ## new
+    brand = models.CharField(max_length=200, blank=True, null=True, default="")
+    specification = models.CharField(max_length=500, blank=True, null=True, default="")
+    budgeted_qty = models.CharField(max_length=200, blank=True, null=True, default="")
+    total_received_uptodate = models.CharField(max_length=200, blank=True, null=True, default="")
+    stock_on_site = models.CharField(max_length=200, blank=True, null=True, default="")
+    application = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule_date = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule_day = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule = models.CharField(max_length=200, blank=True, null=True, default="")  # category
+    sanctioned_remarks = models.TextField(null=True, blank=True)
+    # purchase_remarks = models.TextField(null=True, blank=True)
+
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_cancelled_by",  on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_close_by",  on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_approved_by",  on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+    cost_center = models.ForeignKey(CostCenter, related_name='procurement_material_request_items_cost_center', on_delete=models.CASCADE, null=True, blank=True)
+    gl_account = models.ForeignKey(GLAccount, related_name='procurement_material_request_items_gl_account', on_delete=models.CASCADE, null=True, blank=True)
+
+    def clean(self):
+        # Perform custom validation logic before saving the model
+        if self.quantity_unit < self.sanctioned_quantity:
+            raise ValidationError("Sanctioned quantity is higher than quantity!")
+        return super().clean()
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if not self.quantity_unit:
+            self.quantity_unit = 0
+        if not self.sanctioned_quantity:
+            self.sanctioned_quantity = 0
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.id} {self.requested_material.material_code} for {self.material_request} {self.quantity_unit} | {self.weight_unit}"
+
+    class Meta:
+        db_table = "procurement_material_request_items"
+
+class VendorMasterV2(BaseAbstractStructure):
+    SCOPE_CHOICE = (
+        ('piling_work', 'Piling work'),
+        ('foundation_and_sub_structure', 'Foundation and Sub-Structure'),
+        ('super_structure', 'super-structure'),
+        ('deck_installation', 'Deck Installation'),
+        ('station_building', 'Station Building'),
+        ('tunnel_work', 'Tunnel Work'),
+        ('drainage_system_work', 'Drainage System Work'),
+        ('electrical_works', 'Electrical Works'),
+        ('hvac', 'HVAC'),
+        ('other_misc', 'Other Misc'),
+    )
+    VENDOR_TYPE_CLASSIFCATIONS = (
+       ('Work', 'Work'),
+       ('Materials', 'Materials'),
+       ('Labour', 'Labour'), 
+       ('P&E', 'P&E'),
+       ('IDC -Insurance', 'IDC -Insurance'),
+       ('Financing', 'Financing'), 
+       ('Travelling', 'Travelling'),
+       ('Rent', 'Rent'),
+       ('Coveyance', 'Coveyance'),
+    )
+    VENDOR_CATEGORY_CLASSIFICATIONS = (
+        ('PRoW-Piece Rate Workers or Labour Contractor', 'PRoW-Piece Rate Workers or Labour Contractor'),
+        ('Suppliers', 'Suppliers'),
+        ('Hire or Rent', 'Hire or Rent'),
+        ('Subcontract', 'Subcontract'),
+        ('Specialized', 'Specialized'),
+        ('OEM', 'OEM'),
+        ('Distributor', 'Distributor'),
+        ('Retailer', 'Retailer'),
+        ('SITC', 'SITC'),
+        ('Labour Contractor (PRW)', 'Labour Contractor (PRW)'),
+        ('Trader', 'Trader'),
+        ('Others', 'Others'),
+    )
+
+    VENDOR_SPECIALIZATIONS = (
+         ('RE Wall', 'RE Wall'), 
+         ('Presetressing', 'Presetressing'), 
+         ('Fabrications', 'Fabrications'), 
+         ('Piles', 'Piles'), 
+    )
+    VENDOR_TYPE = (
+        ('Service', 'Service'),
+        ('Purchase', 'Purchase'),
+        ('Contractor', 'Contractor'),
+        ('Labour & MP', 'Labour & MP'),
+        ('P & M', 'P & M'),
+        ('Others', 'Others'),
+    )
+    VENDOR_STATUS = (
+        ('Active', 'Active'),
+        ('Temporary', 'Temporary'),
+    )
+    STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    VENDOR_POSITION = (
+        ('Domestic', 'Domestic'),
+        ('International', 'International'),
+        ('Pan India', 'Pan India'),
+        ('Central', 'Central'),
+        ('East', 'East'),
+        ('North East', 'North East'),
+        ('West', 'West'),
+        ('North', 'North'),
+        ('South', 'South'),
+        ('Andhra Pradesh', 'Andhra Pradesh'),
+        ('Arunachal Pradesh', 'Arunachal Pradesh'),
+        ('Assam', 'Assam'),
+        ('Bihar', 'Bihar'),
+        ('Chhattisgarh', 'Chhattisgarh'),
+        ('Goa', 'Goa'),
+        ('Gujarat', 'Gujarat'),
+        ('Haryana', 'Haryana'),
+        ('Himachal Pradesh', 'Himachal Pradesh'),
+        ('Jharkhand', 'Jharkhand'),
+        ('Karnataka', 'Karnataka'),
+        ('Kerala', 'Kerala'),
+        ('Maharashtra', 'Maharashtra'),
+        ('Madhya Pradesh', 'Madhya Pradesh'),
+        ('Manipur', 'Manipur'),
+        ('Meghalaya', 'Meghalaya'),
+        ('Mizoram', 'Mizoram'),
+        ('Nagaland', 'Nagaland'),
+        ('Odisha', 'Odisha'),
+        ('Punjab', 'Punjab'),
+        ('Rajasthan', 'Rajasthan'),
+        ('Sikkim', 'Sikkim'),
+        ('Tamil Nadu', 'Tamil Nadu'),
+        ('Tripura', 'Tripura'),
+        ('Telangana', 'Telangana'),
+        ('Uttar Pradesh', 'Uttar Pradesh'),
+        ('Uttarakhand', 'Uttarakhand'),
+        ('West Bengal', 'West Bengal'),
+        ('Andaman & Nicobar (UT)', 'Andaman & Nicobar (UT)'),
+        ('Chandigarh (UT)', 'Chandigarh (UT)'),
+        ('Dadra & Nagar Haveli and Daman & Diu (UT)', 'Dadra & Nagar Haveli and Daman & Diu (UT)'),
+        ('Delhi [National Capital Territory (NCT)]', 'Delhi [National Capital Territory (NCT)]'),
+        ('Jammu & Kashmir (UT)', 'Jammu & Kashmir (UT)'),
+        ('Ladakh (UT)', 'Ladakh (UT)'),
+        ('Lakshadweep (UT)', 'Lakshadweep (UT)'),
+        ('Puducherry (UT)', 'Puducherry (UT)'),
+    )
+    organization = models.ForeignKey(Organization, related_name='vendor_master_v2_organizations',on_delete=models.CASCADE)
+    vendor_code = models.CharField(max_length=100, blank=True, null=True)
+    vendor_name = models.CharField(max_length=100, blank=True, null=True)
+    vendor_address = models.TextField(blank=True, null=True)
+    vendor_contact_no = models.CharField(max_length=100, blank=True, null=True)
+    vendor_email_id = models.CharField(max_length=100, blank=True, null=True)#default email
+    account_group = models.ForeignKey("misc.AccountsHead", related_name='vendor_master_v2_account_group', on_delete=models.CASCADE, null=True, blank=True)
+    email_address1 = models.CharField(max_length=100, blank=True, null=True)
+    email_address2 = models.CharField(max_length=100, blank=True, null=True)
+    email_address3 = models.CharField(max_length=100, blank=True, null=True)
+    email_address4 = models.CharField(max_length=100, blank=True, null=True)
+    email_address5 = models.CharField(max_length=100, blank=True, null=True)
+    email_address6 = models.CharField(max_length=100, blank=True, null=True)
+    email_address7 = models.CharField(max_length=100, blank=True, null=True)
+    email_address8 = models.CharField(max_length=100, blank=True, null=True)
+    email_address9 = models.CharField(max_length=100, blank=True, null=True)
+    email_address10 = models.CharField(max_length=100, blank=True, null=True)
+    email_address11 = models.CharField(max_length=100, blank=True, null=True)
+    email_address12 = models.CharField(max_length=100, blank=True, null=True)
+    email_address13 = models.CharField(max_length=100, blank=True, null=True)
+    email_address14 = models.CharField(max_length=100, blank=True, null=True)
+    email_address15 = models.CharField(max_length=100, blank=True, null=True)
+    vendor_status = models.CharField(max_length=100, choices=VENDOR_STATUS, blank=True, null=True, default="")
+    vendor_position = models.CharField(max_length=100, choices=VENDOR_POSITION, blank=True, null=True, default="")
+    vendor_type_classifications = models.CharField(max_length=100, choices=VENDOR_TYPE_CLASSIFCATIONS, blank=True, null=True, default="")
+    vendor_category_classifications = models.CharField(max_length=100, choices=VENDOR_CATEGORY_CLASSIFICATIONS, blank=True, null=True, default="")
+    vendor_specialization_if_specilaized_vendor_allotted = models.CharField(max_length=100, choices=VENDOR_SPECIALIZATIONS, blank=True, null=True, default="")
+    vendor_currency = models.ForeignKey("misc.VendorCurrencyMaster", related_name='vendor_master_v2_vendor_currency', on_delete=models.CASCADE, null=True, blank=True)
+    # company_code = models.CharField(max_length=100, blank=True, null=True)
+    company_code = models.ForeignKey("administrations.Company", related_name='vendor_master_v2_company_code', on_delete=models.CASCADE, null=True, blank=True)
+    pur_org = models.CharField(max_length=100, blank=True, null=True)
+    gst_class = models.CharField(max_length=100, blank=True, null=True)# gst_ven_class
+    e_invoice_applicability = models.CharField(max_length=100, blank=True, null=True)
+    type_of_vendor = models.CharField(max_length=100, choices=VENDOR_TYPE, blank=True, null=True, default="")
+    house_no = models.CharField(max_length=100, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    street = models.CharField(max_length=100, blank=True, null=True)
+    street2 = models.CharField(max_length=100, blank=True, null=True)
+    street3 = models.CharField(max_length=100, blank=True, null=True)
+    postal_code = models.CharField(max_length=100, blank=True, null=True)
+    region = models.CharField(max_length=100, blank=True, null=True)#state
+    payment_block = models.CharField(max_length=100, blank=True, null=True)
+    payment_methods = models.CharField(max_length=100, blank=True, null=True)#payment_method1
+    msme_start_date = models.CharField(max_length=100, blank=True, null=True)
+    msme_end_date = models.CharField(max_length=100, blank=True, null=True)
+    search_term1 = models.CharField(max_length=100, blank=True, null=True)
+    search_term2 = models.CharField(max_length=100, blank=True, null=True)
+    created_on = models.CharField(max_length=100, blank=True, null=True)
+    telephone1 = models.CharField(max_length=100, blank=True, null=True)# default telephone
+    telephone2 = models.CharField(max_length=100, blank=True, null=True)# default mobile
+    fax = models.CharField(max_length=100, blank=True, null=True)
+    street4 = models.CharField(max_length=100, blank=True, null=True)
+    location = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    ecc_no = models.CharField(max_length=100, blank=True, null=True)
+    excise_regt_no = models.CharField(max_length=100, blank=True, null=True)
+    excise_range = models.CharField(max_length=100, blank=True, null=True)
+    excise_division = models.CharField(max_length=100, blank=True, null=True)
+    excise_commissionerate = models.CharField(max_length=100, blank=True, null=True)
+    cst_no = models.CharField(max_length=100, blank=True, null=True)
+    lst_no = models.CharField(max_length=100, blank=True, null=True)
+    tan_no = models.CharField(max_length=100, blank=True, null=True)
+    gstin_status_category = models.CharField(max_length=100, blank=True, null=True)
+    gstin_status_change_date = models.CharField(max_length=100, blank=True, null=True)
+    gstin_status = models.CharField(max_length=100, blank=True, null=True)
+    field_description_1 = models.CharField(max_length=100, blank=True, null=True)
+    field_description_2 = models.CharField(max_length=100, blank=True, null=True)
+    field_description_3 = models.CharField(max_length=100, blank=True, null=True)
+    field_description_4 = models.CharField(max_length=100, blank=True, null=True)
+    service_tax_no = models.CharField(max_length=100, blank=True, null=True)
+    excise_tax_indi = models.CharField(max_length=100, blank=True, null=True)
+    ssi_status = models.CharField(max_length=100, blank=True, null=True)
+    cenvat_scheme_participant = models.CharField(max_length=100, blank=True, null=True)
+    bank_address = models.CharField(max_length=100, blank=True, null=True)
+    vendor_classif_text = models.CharField(max_length=100, blank=True, null=True)
+    withholding_tax_type = models.CharField(max_length=100, blank=True, null=True)
+    withholding_tax_code = models.CharField(max_length=100, blank=True, null=True)
+    w_h_tax_code_invoice = models.CharField(max_length=100, blank=True, null=True)
+    w_h_tax_code_payment = models.CharField(max_length=100, blank=True, null=True)
+    threshold_amt_for_exem = models.CharField(max_length=100, blank=True, null=True)
+    irn_last_modify_date = models.CharField(max_length=100, blank=True, null=True)
+    w_h_tax_type_name = models.CharField(max_length=100, blank=True, null=True)
+    last_return_filed_date = models.CharField(max_length=100, blank=True, null=True)
+    periodicity = models.CharField(max_length=100, blank=True, null=True)
+    last_return_filed_period = models.CharField(max_length=100, blank=True, null=True)
+    msme_category = models.CharField(max_length=100, blank=True, null=True)
+    bank_account_no = models.CharField(max_length=100, blank=True, null=True)
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
+    bank_branch_name = models.CharField(max_length=100, blank=True, null=True)
+    bank_branch_address = models.TextField(blank=True, null=True)
+    bank_a_c_type = models.CharField(max_length=100, blank=True, null=True)
+    bank_ifsc_code = models.CharField(max_length=100, blank=True, null=True)
+    upload_document = models.FileField(upload_to='vendor_master/upload_document', null=True, blank=True)
+    mime_type = models.CharField(max_length=200, null=True, blank=True)
+    file_data = models.TextField(null=True, blank=True)
+    bank_code = models.CharField(max_length=100, blank=True, null=True)
+    branch_code = models.CharField(max_length=100, blank=True, null=True)
+    credit_limit = models.FloatField(default=0)
+    credit_days = models.FloatField(default=0)
+    tin_no = models.CharField(max_length=100, blank=True, null=True)
+    tan_no = models.CharField(max_length=100, blank=True, null=True)
+    pan_no = models.CharField(max_length=100, blank=True, null=True)
+    st_no = models.CharField(max_length=100, blank=True, null=True)
+    cst_no = models.CharField(max_length=100, blank=True, null=True)
+    lbt_no = models.CharField(max_length=100, blank=True, null=True)
+    msme_registered = models.BooleanField(default=True, blank=True, null=True)
+    msme_no = models.CharField(max_length=100, blank=True, null=True)#msme_cert
+    is_temporary = models.BooleanField(default=False)
+    is_created_through_sap = models.BooleanField(default=False)
+    supply_brand = models.CharField(max_length=200,null=True, blank=True)
+    worked_with_sinpl=models.CharField(max_length=50,null=True, blank=True)
+    material = models.ManyToManyField("material_master.VendorMaterialMaster", related_name='vendor_master_v2_material', null=True, blank=True)
+    material_type = models.ManyToManyField("material_master.MaterialType", related_name='vendor_master_v2_material_type', null=True, blank=True)
+    primary_contact_person = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=100, choices=STATUS, blank=True, null=True, default='pending')
+     # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="vendor_master_v2_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="vendor_master_v2_cancelled_by",  on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="vendor_master_v2_close_by",  on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="vendor_master_v2_approved_by",  on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="vendor_master_v2_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+    ## SAP Fields ##
+    # supplier_account_group = models.CharField(max_length=255, blank=True, null=True)
+    bp_grouping = models.CharField(max_length=255, blank=True, null=True)  
+    title = models.CharField(max_length=255, blank=True, null=True) 
+    name_2 = models.CharField(max_length=255, blank=True, null=True) 
+    street_5 = models.CharField(max_length=255, blank=True, null=True)
+    language = models.CharField(max_length=255, blank=True, null=True) 
+    tax_number_category = models.CharField(max_length=255, blank=True, null=True) 
+    tax_declaration_type = models.CharField(max_length=255, blank=True, null=True)  
+    last_ext_review = models.CharField(max_length=255, blank=True, null=True) 
+    check_double_invoice = models.CharField(max_length=255, blank=True, null=True)  
+    grbased_invoice_verification = models.CharField(max_length=255, blank=True, null=True)
+    srvbased_invoice_verification = models.CharField(max_length=255, blank=True, null=True)  
+    group_for_calculation_schema = models.CharField(max_length=255, blank=True, null=True) 
+    reconciliation_account_in_gen = models.CharField(max_length=255, blank=True, null=True)  
+    info_number = models.CharField(max_length=255, blank=True, null=True)
+    tax_number = models.CharField(max_length=255, blank=True, null=True)
+    uploaded_by = models.CharField(max_length=255, blank=True, null=True)
+    gst_classification = models.ForeignKey(GSTClassifications, related_name='vendor_master_v2_gst_classification', on_delete=models.CASCADE, null=True, blank=True)
+    irn_applicability = models.CharField(max_length=255, blank=True, null=True)
+    msme_reg_no = models.CharField(max_length=255, blank=True, null=True)
+    gst_number = models.CharField(max_length=100, blank=True, null=True)
+    version = models.IntegerField(default=1)
+    is_archived = models.BooleanField(default=False)
+    posting_blocked_indicator = models.CharField(max_length=200, blank=True, null=True)
+    purchase_blocked_indicator = models.CharField(max_length=200, blank=True, null=True)
+    payment_blocked_indicator = models.CharField(max_length=200, blank=True, null=True)
+    contracting_scope = models.CharField(max_length=50, choices=SCOPE_CHOICE, null=True, blank=True)
+    is_contractor = models.BooleanField(default=False)
+    contracting_scopes = models.ManyToManyField(VendorMasterContractingScope, related_name='vendor_master_v2_contracting_scopes', null=True, blank=True)
+    supplier_group_master = models.ForeignKey(VendorSupplierGroupMaster, related_name='vendor_supplier_group_master', on_delete=models.CASCADE, null=True, blank=True)
+    projects = models.ManyToManyField("project_and_planning.ProjectMaster", related_name='vendor_master_v2_project',
+                                    null=True, blank=True)
+    def __str__(self):
+        return f"PMS-{self.pk} | {self.vendor_code} | {self.vendor_name}"
+    
+    class meta:
+        db_table = "vendor_vendormasterv2"
+
+class VendorMaterialMaster(BaseAbstractStructure):
+    """
+    Vendor Material Master
+    """
+    VALUATIONS = (
+        ('FIFO', 'FIFO'),
+        ('LIFO', 'LIFO'),
+        ('Weighted Average Rate', 'Weighted Average Rate'),
+        ('Average Rate', 'Average Rate'),
+    )
+    VALUE_TYPES = (
+        ('Yes', 'Yes'),
+        ('No', 'No'),
+    )
+    organization = models.ForeignKey(Organization, related_name='material_master_organization',on_delete=models.DO_NOTHING)
+    material_code = models.CharField(max_length=200, blank=True, null=True)
+    material_name = models.CharField(max_length=255)
+    display_name = models.CharField(max_length=200, blank=True, null=True)
+    order_id = models.IntegerField(default=0)
+    material_descriptions = models.TextField(blank=True, null=True)
+    material_type = models.ForeignKey(MaterialType, related_name='material_types_master', on_delete=models.DO_NOTHING, blank=True, null=True)
+    material_sub_type = models.ForeignKey(MaterialSubType, related_name='material_sub_types_master', on_delete=models.DO_NOTHING, null=True, blank=True)
+    material_cost_head = models.ForeignKey(MaterialCostHead, related_name='material_cost_head_master', on_delete=models.DO_NOTHING, null=True, blank=True)
+    material_sub_cost_head = models.ForeignKey(MaterialSubCostHead, related_name='material_cost_head_master', on_delete=models.DO_NOTHING, null=True, blank=True)
+    material_image = models.ImageField(
+        upload_to='vendor_material/material_image', null=True, blank=True)
+    unit_of_mesurement = models.ForeignKey(UnitOfMesurement, related_name='uom_master', on_delete=models.DO_NOTHING)
+    second_unit_applicability = models.CharField(max_length=150, choices=VALUE_TYPES, blank=True, null=True)
+    material_nature = models.TextField(null=True, blank=True)
+    material_lead_time = models.IntegerField(default=1, blank=True, null=True)
+    material_valuation = models.CharField(max_length=150, choices=VALUATIONS, blank=True, null=True)
+    material_tolerance = models.FloatField(null=True, blank=True)
+    material_wastage = models.FloatField(null=True, blank=True)
+    material_short_close_required = models.CharField(max_length=10, blank=True, null=True)
+    gst_applicable = models.CharField(max_length=10, blank=True, null=True)
+    hsncode = models.CharField(max_length=200, blank=True, null=True)
+    hsn_code = models.ForeignKey(HSNMaster, related_name='material_hsn_code', on_delete=models.CASCADE, blank=True, null=True)
+    gst_tax = models.ForeignKey(TaxHead, related_name='material_gst_tax', on_delete=models.DO_NOTHING, blank=True, null=True)
+    # TODO delete after linking with hsn_code
+    # cgst_percentage = models.FloatField(null=True, blank=True)
+    # sgst_percentage = models.FloatField(null=True, blank=True)
+    # igst_percentage = models.FloatField(null=True, blank=True)
+    # =========================
+    sap_code = models.CharField(max_length=12, null=True, blank=True)
+    part_no = models.CharField(max_length=200, null=True, blank=True)
+    is_part_checked = models.BooleanField(blank=True, null=True, default=True)
+    materialtype = models.CharField(max_length=200, blank=True, null=True)
+    remarks = models.TextField(max_length=500, blank=True, null=True)
+    is_created_through_sap = models.BooleanField(default=False)
+    created_on = models.CharField(max_length=200, blank=True, null=True)
+    plant = models.CharField(max_length=200, blank=True, null=True)
+    is_warehouse_material = models.BooleanField(default=False)
+    is_boi_material = models.BooleanField(default=False)
+    is_dsr_material = models.BooleanField(default=False)
+    is_major_material = models.BooleanField(default=False)
+    boi_projects=models.ManyToManyField("project_and_planning.ProjectMaster",related_name="material_boi_projects", null=True, blank=True)
+    extra = models.JSONField(null=True, blank=True)
+    is_asset_material = models.BooleanField(default=False)
+    is_project_material = models.BooleanField(default=False)
+    is_expense_material= models.BooleanField(default=False)
+    blocked_indicator = models.CharField(max_length=200, blank=True, null=True)
+    shelf_life = models.FloatField(default=0)
+    is_royalty = models.BooleanField(default=False)
+    is_shelf_material = models.BooleanField(default=False)
+    def __str__(self):
+        return str(self.id) + ' ' + str(self.material_name) + " (" + str(self.material_code) + ")"
+
+    class Meta:
+        db_table = "material_master_vendormaterialmaster"
+
+class PurchaseOrder(BaseAbstractStructure):
+    TAX_TYPE = (
+        ('gst', 'GST'),
+        ('vat', 'VAT'),
+    )
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    STOCK_TYPE = (
+        ('material', 'Material'),
+        ('machinery', 'Machinery'),
+    )
+    organization = models.ForeignKey(Organization, related_name='procurement_purchase_order_organizations',
+                                     on_delete=models.CASCADE)
+    site = models.ForeignKey(SiteMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_purchase_order_site')
+    store = models.ForeignKey(StoreMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_purchase_order_store')
+    project = models.ForeignKey(ProjectMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_purchase_order_project')
+    billing_site = models.ForeignKey(SiteMaster, related_name='procurement_purchase_order_billing_site',
+                                     on_delete=models.CASCADE, null=True, blank=True)
+    billing_state = models.ForeignKey(State, related_name='procurement_purchase_order_billing_state',
+                                      on_delete=models.CASCADE, null=True, blank=True)
+    delivery_site = models.ForeignKey(SiteMaster, related_name='procurement_purchase_order_delivery_site',
+                                      on_delete=models.CASCADE, null=True, blank=True)
+    delivery_state = models.ForeignKey(State, related_name='procurement_purchase_order_delivery_state',
+                                       on_delete=models.CASCADE, null=True, blank=True)
+    job_site = models.ForeignKey(SiteMaster, related_name='procurement_purchase_order_job_site',
+                                 on_delete=models.CASCADE, null=True, blank=True)
+    vendor = models.ForeignKey(VendorMasterV2, related_name='procurement_purchase_order_vendor',
+                               on_delete=models.CASCADE, null=True, blank=True)
+    vendor_state = models.ForeignKey(State, related_name='procurement_purchase_order_vendor_state',
+                                     on_delete=models.CASCADE, null=True, blank=True)
+    quotation_by = models.ForeignKey(PmsUser, related_name='procurement_purchase_order_quotation_by',
+                                     on_delete=models.CASCADE, null=True, blank=True)
+    quotation_by_text = models.CharField(blank=True, null=True, default='', max_length=100)
+    quotation_text = models.CharField(blank=True, null=True, default='', max_length=100)
+    quotation_date = models.DateField(blank=True, null=True)
+    vendor_currency = models.ForeignKey(VendorCurrencyMaster, related_name='procurement_purchase_order_vendor_currency',
+                                        on_delete=models.CASCADE, null=True, blank=True)
+    tax_type = models.CharField(max_length=100, choices=TAX_TYPE, blank=True, null=True, default="vat")
+    previous_version = models.ForeignKey('self', related_name='procurement_po_previous_version',
+                                on_delete=models.CASCADE, null=True, blank=True)
+    latest = models.BooleanField(default=True)
+    po_code = models.CharField(max_length=200, null=True, blank=True)
+    request_code = models.CharField(max_length=200, null=True, blank=True)
+    version = models.IntegerField(default=1)
+    current_stage = models.IntegerField(default=0)
+    is_draft = models.BooleanField(default=True)
+
+    date = models.DateField(null=True, blank=True)
+    po_for = models.CharField(max_length=200, null=True, blank=True)
+    valid_date_from = models.DateField(null=True, blank=True)
+    valid_date_to = models.DateField(null=True, blank=True)
+    subject = models.TextField(max_length=500, null=True, blank=True)
+    party_bank = models.CharField(max_length=200, null=True, blank=True)
+    line_before_items = models.TextField(max_length=500, null=True, blank=True)
+    exchange_rate = models.FloatField(default=1)
+    purchase_type = models.CharField(max_length=200, null=True, blank=True)
+
+    delivery_address1 = models.TextField(max_length=500, null=True, blank=True)
+    delivery_address2 = models.TextField(max_length=500, null=True, blank=True)
+    delivery_address3 = models.TextField(max_length=500, null=True, blank=True)
+    gst_as_billing_state = models.BooleanField(default=False)
+    line_in_bottom = models.TextField(max_length=500, null=True, blank=True)
+    stock_type = models.CharField(max_length=100, choices=STOCK_TYPE, blank=True, null=True, default="material")
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    checked_remarks = models.TextField(max_length=500, null=True, blank=True)
+    approved_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rejected_remarks = models.TextField(max_length=500, null=True, blank=True)
+    delivery_days = models.IntegerField(null=True, blank=True)
+    for_alerts_delivery_days = models.IntegerField(null=True, blank=True)
+    payment_days = models.IntegerField(null=True, blank=True)
+    for_alerts_payment_days = models.IntegerField(null=True, blank=True)
+    total_before_gst_amount = models.FloatField(default=0)
+    total_after_gst_amount = models.FloatField(default=0)
+    total_tax_amount = models.FloatField(default=0)
+    total_amount_without_gst = models.FloatField(default=0)
+    with_gst = models.BooleanField(default=True)
+    
+    total_item_item_quantity = models.FloatField(default=0)
+    total_item_item_amount = models.FloatField(default=0)
+    total_item_disc_amount = models.FloatField(default=0)
+    total_item_taxable_amount = models.FloatField(default=0)
+    total_item_excise_tax_amount = models.FloatField(default=0)
+    total_item_tax_amount = models.FloatField(default=0)
+    total_item_sgst_amount = models.FloatField(default=0)
+    total_item_cgst_amount = models.FloatField(default=0)
+    total_item_igst_amount = models.FloatField(default=0)
+    total_item_utgst_amount = models.FloatField(default=0)
+    total_item_cess_amount = models.FloatField(default=0)
+    total_item_total_amount = models.FloatField(default=0)
+    total_item_expense_expense_amount = models.FloatField(default=0)
+    total_item_expense_sgst_amount = models.FloatField(default=0)
+    total_item_expense_cgst_amount = models.FloatField(default=0)
+    total_item_expense_igst_amount = models.FloatField(default=0)
+    total_item_expense_utgst_amount = models.FloatField(default=0)
+    total_item_expense_cess_amount = models.FloatField(default=0)
+    total_item_expense_total_expense_amount = models.FloatField(default=0)
+    total_tax_tax_amount = models.FloatField(default=0)
+    total_tax_sgst_amount = models.FloatField(default=0)
+    total_tax_cgst_amount = models.FloatField(default=0)
+    total_tax_igst_amount = models.FloatField(default=0)
+    total_tax_utgst_amount = models.FloatField(default=0)
+    total_tax_cess_amount = models.FloatField(default=0)
+    total_tax_total_tax_amount = models.FloatField(default=0)
+    total_expense_expense_amount = models.FloatField(default=0)
+    total_expense_sgst_amount = models.FloatField(default=0)
+    total_expense_cgst_amount = models.FloatField(default=0)
+    total_expense_igst_amount = models.FloatField(default=0)
+    total_expense_utgst_amount = models.FloatField(default=0)
+    total_expense_cess_amount = models.FloatField(default=0)
+    total_expense_total_expense_amount = models.FloatField(default=0)
+    total_amount = models.FloatField(default=0)
+
+    financialyear = models.ForeignKey(FinancialYear, related_name='procurement_purchase_order_financial_year', on_delete=models.CASCADE, blank=True, null=True)
+
+    ## other model link
+    material_request = models.ForeignKey(MaterialRequestMaster, related_name="procurement_purchase_order_material_request", on_delete=models.CASCADE, null=True, blank=True)
+    material_requests = models.ManyToManyField(MaterialRequestMaster, related_name="procurement_purchase_order_material_requests",null=True, blank=True)
+
+    indent = models.ForeignKey(Indent, related_name='procurement_purchase_order_indent', on_delete=models.CASCADE, null=True, blank=True)
+    indents= models.ManyToManyField(Indent, related_name="procurement_purchase_order_indents", null=True, blank=True)
+
+    rfq_vendor = models.ForeignKey(RFQVendors, related_name='procurement_purchase_order_rfq_vendor', on_delete=models.CASCADE, null=True, blank=True)
+    enquiry_at_once = models.ForeignKey(EnquiryAtOnce, related_name='procurement_purchase_order_enquiry_at_once', on_delete=models.CASCADE, null=True, blank=True)
+    quotation = models.ForeignKey(Quotation, related_name='procurement_purchase_order_quotation', on_delete=models.CASCADE, null=True, blank=True)
+    cst = models.ForeignKey(CST, related_name='procurement_purchase_order_cst', on_delete=models.CASCADE, null=True, blank=True)
+
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_purchase_order_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_purchase_order_cancelled_by", on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_purchase_order_close_by", on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_purchase_order_approved_by", on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_purchase_order_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+    scope_of_supply = models.TextField(null=True, blank=True)
+    
+    sap_code = models.CharField(max_length=200, null=True, blank=True)
+    final_releaser_from_sap = models.CharField(max_length=200, null=True, blank=True)
+    final_release_date_from_sap = models.DateField(null=True, blank=True)
+    final_release_time_from_sap = models.TimeField(null=True, blank=True)
+    release_strategy_from_sap = models.CharField(max_length=200, null=True, blank=True)
+    document_date_from_sap = models.CharField(max_length=200, null=True, blank=True)
+    purchasing_group_from_sap = models.CharField(max_length=200, null=True, blank=True)
+    attachment_from_sap = models.FileField(upload_to='sap/purchase_order', null=True, blank=True)
+    sap_resp = models.JSONField(null=True, blank=True)
+
+    is_asset_for_sap = models.BooleanField(default=False)
+    is_expense_for_sap = models.BooleanField(default=False)
+    is_project_for_sap = models.BooleanField(default=False)
+    refrence_for_sap = models.CharField(max_length=200, null=True, blank=True)
+    sales_person_for_sap = models.CharField(max_length=200, null=True, blank=True)
+    telephone_for_sap = models.CharField(max_length=200, null=True, blank=True)
+    inco_term_two_for_sap = models.CharField(max_length=200, null=True, blank=True)
+    our_reference_for_sap = models.CharField(max_length=200, null=True, blank=True)
+    sales_tax_country_for_sap = models.ForeignKey(Country, blank=True, null=True, related_name="procurement_purchase_order_sales_tax_country_for_sap", on_delete=models.CASCADE)
+    pay_term_for_sap = models.ForeignKey(SAPMasters, blank=True, null=True, related_name="procurement_purchase_order_pay_term_for_sap", on_delete=models.CASCADE)
+    purchase_org_for_sap = models.ForeignKey(SAPMasters, blank=True, null=True, related_name="procurement_purchase_order_purchase_org_for_sap", on_delete=models.CASCADE)
+    purchase_group_for_sap = models.ForeignKey(SAPMasters, blank=True, null=True, related_name="procurement_purchase_order_purchase_group_for_sap", on_delete=models.CASCADE)
+    inco_term_one_for_sap = models.ForeignKey(SAPMasters, blank=True, null=True, related_name="procurement_purchase_order_inco_term_one_for_sap", on_delete=models.CASCADE)
+    # company_code_for_sap = models.ForeignKey(SAPMasters, blank=True, null=True, related_name="procurement_purchase_order_company_code_for_sap", on_delete=models.CASCADE)
+    company_code_for_sap = models.ForeignKey('administrations.Company', blank=True, null=True, related_name="procurement_purchase_order_company_code_for_sap", on_delete=models.CASCADE)
+    extra=models.JSONField(blank=True,null=True)
+    retention = models.CharField(max_length=200, null=True, blank=True)
+    dp_category = models.CharField(max_length=200, null=True, blank=True)
+    dp_amount = models.FloatField(default=0)
+    dp_percent = models.FloatField(default=0)
+    dp_due_date = models.DateField(null=True, blank=True)
+    is_unlinked_po = models.BooleanField(default=False)
+    ref_stage_type = models.ForeignKey("procurement.MultiStageSetting", related_name='procurement_purchase_order_ref_stage_type', blank=True, null=True, on_delete=models.CASCADE)
+    class Meta:
+        db_table = "procurement_purchase_order"
+
+
+class StoreMaster(BaseAbstractStructure):
+    """
+    Store Master Model
+    """
+    # TODO: store manager, How many store managers should be there for one store?
+    organization = models.ForeignKey(Organization, related_name='procurement_store_organizations',
+                                     on_delete=models.CASCADE)
+    store_name = models.CharField(max_length=100)
+    address = models.TextField(max_length=500, null=True, blank=True)
+    site = models.ForeignKey(SiteMaster, related_name='procurement_store_site', on_delete=models.CASCADE,
+                             null=True, blank=True)
+    users = models.ManyToManyField(PmsUser, null=True, blank=True, related_name='procurement_store_user')
+    rack = models.ManyToManyField(StoreSection, null=True, blank=True, related_name='procurement_store_rack')
+
+    # rack = models.ForeignKey(StoreSection, related_name='procurement_store_rack', on_delete=models.CASCADE, null=True, blank=True)
+    sap_plant_id = models.CharField(max_length=300, blank=True, null=True)
+    sap_auth_key_material = models.CharField(max_length=300, blank=True, null=True)
+    sap_auth_key_po = models.CharField(max_length=300, blank=True, null=True)
+    sap_auth_key_grn = models.CharField(max_length=300, blank=True, null=True)
+    sap_auth_key_pr = models.CharField(max_length=300, blank=True, null=True)
+    sap_auth_key_stock = models.CharField(max_length=300, blank=True, null=True)
+    sap_start_codes = models.CharField(max_length=300, blank=True, null=True)
+    purhase_org = models.ForeignKey('procurement.SAPMasters', related_name='procurement_store_purchase_org',null=True, blank=True, on_delete=models.CASCADE)
+    # company_code = models.ForeignKey('procurement.SAPMasters', related_name='procurement_store_company_code',null=True, blank=True, on_delete=models.CASCADE)
+    # company_code = models.ForeignKey('administrations.Company', related_name='procurement_store_company_code',null=True, blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.store_name
+
+    class Meta:
+        db_table = "procurement_store"
+
+class ProjectMaster(BaseAbstractStructure):
+    """
+    Project Master Model
+    """
+    PROJECT_CLASSIFICATION_CHOICES = (
+        ('Infra', 'Infra'),
+        ('Non-Infra', 'Non-Infra'),
+    )
+    CURRENT_STAGE_CHOICES = (
+        ('Under Execution', 'Under Execution'),
+        ('Executed', 'Executed'),
+    )
+    organization = models.ForeignKey(Organization, related_name='organization_project_master',on_delete=models.CASCADE, null=True, blank=True)
+    tender = models.ForeignKey("tender.TenderMasterNew", related_name='project_tender',on_delete=models.CASCADE, null=True, blank=True)
+    project_head = models.ForeignKey("administrations.PmsUser", related_name='project_heads',on_delete=models.CASCADE, null=True, blank=True)
+    planning_head = models.ForeignKey("administrations.PmsUser", related_name='project_planning_heads',on_delete=models.CASCADE, null=True, blank=True)
+    
+    is_project_head_selected = models.BooleanField(default=False)
+    is_planning_head_selected = models.BooleanField(default=False)
+
+    #################### For Risk Approval Matrix in Planning ###########################
+
+    is_planning_risk_approved_by_planning_head = models.BooleanField(default=False)
+    is_planning_risk_approved_by_project_head = models.BooleanField(default=False)
+    is_risk_matrix_rejected = models.BooleanField(default=False)
+    hrms_project_id = models.IntegerField(default=0)
+    hrms_project_site_id = models.IntegerField(default=0)
+    hrms_tender_id = models.IntegerField(default=0)
+    users = models.ManyToManyField("administrations.PmsUser", null=True, blank=True)
+    sap_plant_id = models.CharField(max_length=300, blank=True, null=True)
+    sap_auth_key = models.CharField(max_length=300, blank=True, null=True)
+    extra=models.JSONField(blank=True,null=True)
+    #### newly added fields############
+    project_code = models.CharField(max_length=255, blank=True, null=True)   
+    project_name = models.CharField(max_length=255, blank=True, null=True) 
+    site_address = models.TextField(blank=True, null=True)                
+    project_start_date = models.DateField(blank=True, null=True)          
+    expected_end_date = models.DateField(blank=True, null=True)           
+    current_stage = models.CharField(max_length=255, choices=CURRENT_STAGE_CHOICES, blank=True, null=True) 
+    project_value = models.DecimalField(max_digits=20, decimal_places=2, blank=True, null=True)
+    project_classification = models.CharField(max_length=255, choices=PROJECT_CLASSIFICATION_CHOICES, blank=True, null=True) 
+    # project_company_name = models.CharField(max_length=255, blank=True, null=True)
+    company = models.ForeignKey("administrations.Company", related_name='project_company', on_delete=models.CASCADE, null=True, blank=True)
+    attachment = models.FileField(upload_to='project_and_planning/project_master', null=True, blank=True)
+    mime_type = models.CharField(max_length=200, null=True, blank=True)
+    file_data = models.TextField(null=True, blank=True)
+
+    site_latitude = models.CharField(max_length=255, blank=True, null=True)
+    site_longitude = models.CharField(max_length=255, blank=True, null=True)
+    site_type = models.CharField(max_length=255, blank=True, null=True)
+    office_latitude = models.CharField(max_length=255, blank=True, null=True)
+    office_longitude = models.CharField(max_length=255, blank=True, null=True)
+    gst_number = models.CharField(max_length=255, blank=True, null=True)
+    guest_house_latitude = models.CharField(max_length=255, blank=True, null=True)
+    guest_house_longitude = models.CharField(max_length=255, blank=True, null=True)
+    site_latitude_longitude_details = models.CharField(max_length=255, blank=True, null=True)
+    camp_area_latitude = models.CharField(max_length=255, blank=True, null=True)
+    camp_area_longitude = models.CharField(max_length=255, blank=True, null=True)
+    project_length = models.CharField(max_length=255, blank=True, null=True)
+    start_length_in_kms = models.CharField(max_length=255, blank=True, null=True)
+
+    production_start_date = models.DateField(blank=True, null=True) 
+
+    def __str__(self):
+        return f"{self.pk} | {self.project_code}"
+
+    class Meta:
+        db_table = "project_and_planning_projectmaster"
+
+class MaterialRequestMasterItems(BaseAbstractStructure):
+    """
+    Material Request Items
+    """
+    PRIORITIES = (
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    )
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+
+    # request date = created at
+    organization = models.ForeignKey(Organization, related_name='procurement_material_item_request_organizations',
+                                     on_delete=models.CASCADE)
+    material_request = models.ForeignKey(MaterialRequestMaster, related_name='procurement_material_item_request',
+                                         on_delete=models.CASCADE, null=True, blank=True)
+    requested_material = models.ForeignKey(VendorMaterialMaster, related_name='procurement_requested_material',
+                                           on_delete=models.CASCADE, null=True, blank=True)
+    requested_machine = models.ForeignKey(PlantMachineryMachine,
+                                          related_name='procurement_material_request_items_requested_machine',
+                                          on_delete=models.CASCADE, null=True, blank=True)
+    wbs_material = models.ForeignKey(WBSMaterial, related_name='procurement_material_request_items_wbs_material', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_code = models.ForeignKey(BOQChainageExecutiveSummeryData, related_name='procurement_material_request_items_wbs_code', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_indirect_cost = models.ForeignKey(WbsIndirectCostPlaning, related_name='procurement_material_request_items_wbs_indirect_cost', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_plantmachinery = models.ForeignKey(WBSPlantMachinery, related_name='procurement_material_request_items_wbs_plantmachinery', on_delete=models.CASCADE, null=True, blank=True)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='procurement_material_request_items_uom_id', on_delete=models.CASCADE, null=True, blank=True)
+    size_part_grade = models.CharField(max_length=100, null=True, blank=True)
+    quantity_unit = models.FloatField(default=0.0)
+    sanctioned_quantity = models.FloatField(default=0)
+    rejected_quantity = models.FloatField(default=0)
+    closed_quantity = models.FloatField(default=0)
+    weight_unit = models.CharField(max_length=100, null=True, blank=True)
+    requested_for_type = models.CharField(max_length=200, blank=True, null=True)
+    requested_for = models.CharField(max_length=200, blank=True, null=True)
+    department = models.CharField(max_length=100, null=True, blank=True)
+    charge_type = models.CharField(max_length=100, null=True, blank=True)
+    is_returnable = models.BooleanField(default=False)
+    priority = models.CharField(max_length=100, choices=PRIORITIES, blank=True, null=True, default="low")
+    due_date = models.DateField(null=True, blank=True)
+    is_fulfilled = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # Store Percentage
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    checked_remarks = models.TextField(max_length=500, null=True, blank=True)
+    approved_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rejected_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rate = models.FloatField(default=0)  # not in use
+    amount = models.FloatField(default=0)  # not in use
+    ## new
+    brand = models.CharField(max_length=200, blank=True, null=True, default="")
+    specification = models.CharField(max_length=500, blank=True, null=True, default="")
+    budgeted_qty = models.CharField(max_length=200, blank=True, null=True, default="")
+    total_received_uptodate = models.CharField(max_length=200, blank=True, null=True, default="")
+    stock_on_site = models.CharField(max_length=200, blank=True, null=True, default="")
+    application = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule_date = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule_day = models.CharField(max_length=200, blank=True, null=True, default="")
+    delivery_schedule = models.CharField(max_length=200, blank=True, null=True, default="")  # category
+    sanctioned_remarks = models.TextField(null=True, blank=True)
+    # purchase_remarks = models.TextField(null=True, blank=True)
+
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_cancelled_by",  on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_close_by",  on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_approved_by",  on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_items_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+    cost_center = models.ForeignKey(CostCenter, related_name='procurement_material_request_items_cost_center', on_delete=models.CASCADE, null=True, blank=True)
+    gl_account = models.ForeignKey(GLAccount, related_name='procurement_material_request_items_gl_account', on_delete=models.CASCADE, null=True, blank=True)
+
+    def clean(self):
+        # Perform custom validation logic before saving the model
+        if self.quantity_unit < self.sanctioned_quantity:
+            raise ValidationError("Sanctioned quantity is higher than quantity!")
+        return super().clean()
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if not self.quantity_unit:
+            self.quantity_unit = 0
+        if not self.sanctioned_quantity:
+            self.sanctioned_quantity = 0
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.id} {self.requested_material.material_code} for {self.material_request} {self.quantity_unit} | {self.weight_unit}"
+
+    class Meta:
+        db_table = "procurement_material_request_items"
+
+class MaterialRequestMaster(BaseAbstractStructure):
+    """
+    Material Request
+    """
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    STOCK_TYPE = (
+        ('material', 'Material'),
+        ('machinery', 'Machinery'),
+    )
+    organization = models.ForeignKey(Organization, related_name='procurement_material_request_organizations',
+                                     on_delete=models.CASCADE)
+    requested_by = models.ForeignKey(PmsUser, related_name='procurement_material_requested_by',
+                                     on_delete=models.CASCADE, null=True, blank=True)
+    site = models.ForeignKey(SiteMaster, on_delete=models.CASCADE, null=True)
+    store = models.ForeignKey(StoreMaster, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, related_name='procurement_material_request_department',
+                                   on_delete=models.CASCADE)
+    project = models.ForeignKey(ProjectMaster, related_name='procurement_material_request_project', on_delete=models.CASCADE, null=True)
+    previous_version = models.ForeignKey('self', related_name='procurement_material_request_previous_version',
+                                on_delete=models.CASCADE, null=True, blank=True)
+    latest = models.BooleanField(default=True)
+    request_code = models.CharField(max_length=200, null=True, blank=True)
+    version = models.IntegerField(default=1)
+    date = models.DateField(null=True, blank=True)
+    time = models.TimeField(null=True, blank=True)
+    location = models.CharField(max_length=200, null=True, blank=True)
+    line_in_bottom = models.CharField(max_length=200, null=True, blank=True)
+    already_purchased = models.BooleanField(default=False)
+    is_fulfilled = models.BooleanField(default=False)
+    remarks = models.TextField(max_length=500, null=True, blank=True)
+    stock_type = models.CharField(max_length=100, choices=STOCK_TYPE, blank=True, null=True, default="material")
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    checked_remarks = models.TextField(max_length=500, null=True, blank=True)
+    approved_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rejected_remarks = models.TextField(max_length=500, null=True, blank=True)
+    sanctioned_remarks = models.TextField(null=True, blank=True)
+    financialyear = models.ForeignKey(FinancialYear, related_name='procurement_material_request_financial_year',
+                                      on_delete=models.CASCADE, blank=True, null=True)
+
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_cancelled_by", on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_close_by", on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_approved_by", on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_request_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+    scope_of_supply = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.site} Site Requested {self.store} Store"
+
+    class Meta:
+        db_table = "procurement_material_request"
+
+class PurchaseOrderItems(BaseAbstractStructure):
+    ExpiryDateInd = (
+        ('D', 'D'),
+        ('M', 'M'),
+        ('W', 'W'),
+        ('Y', 'Y'),
+    )
+    TRACKER_CODE = (
+        ('TRA', 'TRA'),
+        ('UA', 'UA'),
+        ('GR', 'GR'),
+        ('PGR', 'PGR'),
+        ('HOLD', 'HOLD'),
+    )
+    EXCESS_ACTION = (
+        ('Required a PO','Required a PO'),
+        ('Within tolerance','Within tolerance'),
+    )
+    purchase_order = models.ForeignKey(PurchaseOrder, related_name='procurement_purchase_order_item',
+                                       on_delete=models.CASCADE, null=True, blank=True)
+    organization = models.ForeignKey(Organization, related_name='procurement_purchase_order_item_organizations',
+                                     on_delete=models.CASCADE)
+    item = models.ForeignKey(VendorMaterialMaster, related_name='procurement_purchase_order_item_material',
+                             on_delete=models.CASCADE, null=True, blank=True)
+    requested_machine = models.ForeignKey(PlantMachineryMachine,
+                                          related_name='procurement_purchase_order_items_requested_machine',
+                                          on_delete=models.CASCADE, null=True, blank=True)
+    wbs_material = models.ForeignKey(WBSMaterial, related_name='procurement_purchase_order_items_wbs_material', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_code = models.ForeignKey(BOQChainageExecutiveSummeryData, related_name='procurement_purchase_order_items_wbs_code', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_indirect_cost = models.ForeignKey(WbsIndirectCostPlaning, related_name='procurement_purchase_order_items_wbs_indirect_cost', on_delete=models.CASCADE, null=True, blank=True)
+    wbs_plantmachinery = models.ForeignKey(WBSPlantMachinery, related_name='procurement_purchase_order_items_wbs_plantmachinery', on_delete=models.CASCADE, null=True, blank=True)
+    size_part_no_grade = models.CharField(max_length=200, null=True, blank=True)
+    brand = models.CharField(max_length=200, blank=True, null=True, default="")
+    specification = models.CharField(max_length=500, blank=True, null=True, default="")
+    weight = models.FloatField(default=0)
+    quantity = models.FloatField(default=0)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='procurement_purchase_order_items_gl_uom', on_delete=models.CASCADE, null=True, blank=True)
+    tolerance_percentage = models.FloatField(default=0)
+    rate = models.FloatField(default=0)
+    item_amount = models.FloatField(default=0)
+    disc_percentage = models.FloatField(default=0)
+    disc_amount = models.FloatField(default=0)
+    taxable_amount = models.FloatField(default=0)
+    excise_tax_head = models.ForeignKey(TaxHead, related_name='procurement_purchase_order_items_excise_tax_head', on_delete=models.CASCADE, null=True, blank=True)
+    excise_tax_percentage = models.FloatField(default=0)
+    excise_tax_amount = models.FloatField(default=0)
+    tax_head = models.ForeignKey(TaxHead, related_name='procurement_purchase_order_items_tax_head', on_delete=models.CASCADE, null=True, blank=True)
+    tax_percentage = models.FloatField(default=0)
+    tax_amount = models.FloatField(default=0)
+    sgst_percentage = models.FloatField(default=0)
+    cgst_percentage = models.FloatField(default=0)
+    igst_percentage = models.FloatField(default=0)
+    utgst_percentage = models.FloatField(default=0)
+    cess_percentage = models.FloatField(default=0)
+    sgst_amount = models.FloatField(default=0)
+    cgst_amount = models.FloatField(default=0)
+    igst_amount = models.FloatField(default=0)
+    utgst_amount = models.FloatField(default=0)
+    cess_amount = models.FloatField(default=0)
+    total_amount = models.FloatField(default=0)
+    notes = models.TextField(max_length=500, null=True, blank=True)
+    amount_description = models.TextField(max_length=200, null=True, blank=True)
+
+    
+    # other model links #
+
+    material_request_item = models.ForeignKey(MaterialRequestMasterItems, related_name="procurement_purchase_order_item_material_request_item", on_delete=models.CASCADE, null=True, blank=True)
+    indent_item = models.ForeignKey(IndentItems, related_name="procurement_purchase_order_item_indent_item", on_delete=models.CASCADE, null=True, blank=True)
+    rfq_vendor_item = models.ForeignKey(RFQVendorsItems, related_name="procurement_purchase_order_item_rfq_vendor_item", on_delete=models.CASCADE, null=True, blank=True)
+    enquiry_at_once_item = models.ForeignKey(EnquiryAtOnceItems, related_name="procurement_purchase_order_item_enquiry_at_once_item", on_delete=models.CASCADE, null=True, blank=True)
+
+    quotation_item = models.ForeignKey(QuotationItems, related_name="procurement_purchase_order_item_quotation_item", on_delete=models.CASCADE, null=True, blank=True)
+    cst_item= models.ForeignKey(CSTItems, related_name='procurement_purchase_order_item_cst_item', on_delete=models.CASCADE, null=True, blank=True)
+    cost_center = models.ForeignKey(CostCenter, related_name='procurement_purchase_order_items_gl_cost_center', on_delete=models.CASCADE, null=True, blank=True)
+    gl_account = models.ForeignKey(GLAccount, related_name='procurement_purchase_order_items_gl_account', on_delete=models.CASCADE, null=True, blank=True)
+    business_area = models.CharField(max_length=200, blank=True, null=True, default="")
+
+    asset_no_for_sap = models.CharField(max_length=200, blank=True, null=True, default="")
+    wbs_temp_planning_for_sap = models.ForeignKey(WbsTempPlaning, blank=True, null=True, related_name="procurement_purchase_order_items_wbs_temp_planning_for_sap", on_delete=models.CASCADE)
+    tax_code_for_sap = models.ForeignKey(SAPMasters, blank=True, null=True, related_name="procurement_purchase_order_items_tax_code_for_sap", on_delete=models.CASCADE)
+    goods_receipt_date_for_sap = models.DateField(null=True, blank=True)
+    expiry_date_ind_for_sap = models.CharField(max_length=100, choices=ExpiryDateInd, blank=True, null=True, default="D")
+    delivery_date = models.DateField(null=True, blank=True)
+    storage_location_for_sap = models.ForeignKey(StoreSection, blank=True, null=True, related_name="procurement_purchase_order_items_storage_location_for_sap", on_delete=models.CASCADE)
+
+    status_of_order = models.ForeignKey(ProcurementStatusOfOrder, related_name='procurement_purchase_order_items_status_of_order', on_delete=models.CASCADE, null=True, blank=True)
+    edd = models.DateField(null=True, blank=True)
+    is_delivered = models.BooleanField(blank=True, null=True, default=False)
+    delivered_date = models.DateField(null=True, blank=True)
+    tracker_code = models.CharField(max_length=100, choices=TRACKER_CODE, blank=True, null=True)
+    tracker_remarks = models.TextField(null=True, blank=True)
+    manual_received_quantity = models.FloatField(default=0)
+    manual_return_quantity = models.FloatField(default=0)
+    manual_quantity_remarks = models.TextField(null=True, blank=True)
+    excess_action = models.CharField(max_length=100, choices=EXCESS_ACTION, blank=True, null=True,)
+    sap_item_no = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if not self.quantity:
+            self.quantity = 0
+        if not self.rate:
+            self.rate = 0
+        if not self.disc_percentage:
+            self.disc_percentage = 0
+        if not self.excise_tax_percentage:
+            self.excise_tax_percentage = 0
+        if not self.tax_percentage:
+            self.tax_percentage = 0
+        if not self.sgst_percentage:
+            self.sgst_percentage = 0
+        if not self.cgst_percentage:
+            self.cgst_percentage = 0
+        if not self.igst_percentage:
+            self.igst_percentage = 0
+        if not self.utgst_percentage:
+            self.utgst_percentage = 0
+        if not self.cess_percentage:
+            self.cess_percentage = 0
+        self.item_amount = float(self.quantity)*float(self.rate)
+        if self.disc_percentage != 0:
+            self.disc_amount = float(self.item_amount)*float(self.disc_percentage)/100
+        else:
+            if not self.disc_amount:
+                self.disc_amount = 0
+        self.taxable_amount = float(self.item_amount)-float(self.disc_amount)
+        if self.excise_tax_percentage != 0:
+            self.excise_tax_amount = float(self.taxable_amount)*float(self.excise_tax_percentage)/100
+        else:
+            if not self.excise_tax_amount:
+                self.excise_tax_amount = 0
+        if self.tax_percentage != 0:
+            self.tax_amount = float(self.taxable_amount)*float(self.tax_percentage)/100
+        else:
+            if not self.tax_amount:
+                self.tax_amount = 0
+        self.sgst_amount = float(self.taxable_amount)*float(self.sgst_percentage)/100
+        self.cgst_amount = float(self.taxable_amount)*float(self.cgst_percentage)/100
+        self.igst_amount = float(self.taxable_amount)*float(self.igst_percentage)/100
+        self.utgst_amount = float(self.taxable_amount)*float(self.utgst_percentage)/100
+        self.cess_amount = float(self.taxable_amount)*float(self.cess_percentage)/100
+        self.total_amount = float(self.taxable_amount)+float(self.excise_tax_amount)+float(self.tax_amount)+float(self.sgst_amount)+float(self.cgst_amount)+float(self.igst_amount)+float(self.utgst_amount)+float(self.cess_amount)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        db_table = "procurement_purchase_order_items"
+
+class UnitOfMesurement(BaseAbstractStructure):
+    """
+    UOM Model
+    """
+    organization = models.ForeignKey(Organization, related_name='uom_organization', on_delete=models.CASCADE)
+    formal_name = models.CharField(max_length=255)
+    symbol = models.CharField(max_length=100)
+    decimal_places = models.IntegerField(null=True, blank=True)
+    formula_for_qty_calculation = models.CharField(max_length=200, null=True, blank=True)
+    extra=models.JSONField(blank=True,null=True)
+    def __str__(self):
+        return str(self.formal_name) + " (" + str(self.symbol) + ")"
+    class Meta:
+        db_table = "material_master_unitofmesurement"
+class SiteMaster(BaseAbstractStructure):
+    """
+    Site Master Model
+    """
+    # More fields: site manage
+    # TODO:1. foreign key to lat and long master table. 2. Add zone reference (Nullable), Add state lnk
+    organization = models.ForeignKey(Organization, related_name='procurement_site_organizations',
+                                     on_delete=models.CASCADE)
+    project = models.ForeignKey(ProjectMaster, related_name='procurement_site_project',
+                                on_delete=models.CASCADE)
+    slug = models.CharField(max_length=150, default=None, unique=True)
+    site_name = models.CharField(max_length=100)
+    location = models.CharField(max_length=200, default="")
+    address = models.TextField(max_length=500, null=True, blank=True)
+    # location = models.ForeignKey(SiteLocationMaster, related_name='procurement_site_location',on_delete=models.CASCADE, null=True, blank=True)
+    state = models.ForeignKey(State, related_name='procurement_site_state', on_delete=models.CASCADE)
+    users = models.ManyToManyField(PmsUser, related_name='procurement_site_users', null=True, blank=True)
+    po_tracker_to_users = models.ManyToManyField(PmsUser, related_name='po_tracker_cc_users_po_tracker_to_users_ids', null=True, blank=True)
+    po_tracker_cc_users = models.ManyToManyField(PmsUser, related_name='procurement_site_po_tracker_cc_users', null=True, blank=True)
+
+    def __str__(self):
+        return self.site_name
+
+    class Meta:
+        db_table = "procurement_site"
+
+
+
+
+#SQL---
+SELECT DISTINCT
+    gi.id,
+    g.date AS grn__date,
+    ps.sap_plant_id AS plant_code,
+    pm.project_name AS plant_name,
+
+    -- MR
+    (
+        SELECT GROUP_CONCAT(DISTINCT mr.request_code)
+        FROM procurement_material_request_items mri
+        INNER JOIN procurement_material_request mr 
+            ON mri.material_request_id = mr.id
+        WHERE mri.id = gi.material_request_item_id
+    ) AS material_request__request_code,
+
+    (
+        SELECT GROUP_CONCAT(DISTINCT DATE(mr.created_at))
+        FROM procurement_material_request_items mri
+        INNER JOIN procurement_material_request mr 
+            ON mri.material_request_id = mr.id
+        WHERE mri.id = gi.material_request_item_id
+    ) AS material_request__creation_date,
+
+    (
+        SELECT GROUP_CONCAT(DISTINCT DATE(mri.approved_by_date))
+        FROM procurement_material_request_items mri
+        WHERE mri.id = gi.material_request_item_id
+    ) AS material_request__approved_by_date,
+
+    -- indent
+    (
+        SELECT GROUP_CONCAT(DISTINCT i.request_code)
+        FROM procurement_indent_items ii
+        INNER JOIN procurement_indent i ON ii.indent_id = i.id
+        WHERE ii.id = gi.indent_item_id
+    ) AS indent_request_code,
+
+    (
+        SELECT GROUP_CONCAT(DISTINCT DATE(i.created_at))
+        FROM procurement_indent_items ii
+        INNER JOIN procurement_indent i ON ii.indent_id = i.id
+        WHERE ii.id = gi.indent_item_id
+    ) AS indent_created_at,
+
+    (
+        SELECT GROUP_CONCAT(DISTINCT DATE(ii.approved_by_date))
+        FROM procurement_indent_items ii
+        WHERE ii.id = gi.indent_item_id
+    ) AS indent_approved_by_date,
+
+    g.movement_type AS mvt_type,
+    g.sap_code AS mat_document,
+    
+    v.vendor_code AS vendor_sap_code,
+    v.vendor_name AS vendor_name,
+    m.sap_code AS material_code,
+    m.material_name AS material_name,
+    u.symbol AS uom,
+
+    gi.received_quantity AS received_quantity,
+    gi.quantity AS ordered_quantity,
+
+    gi.rate AS unit_rate,
+    gi.item_amount AS item_amount,
+    gi.taxable_amount AS amt_in_local_curency,
+
+    po.request_code AS purcahse_order,
+    g.request_code AS grn__request_code,
+
+
+    g.doc_header_text,
+    g.header_text,
+
+
+
+    m.material_code AS item__material_code,
+    m.material_descriptions AS item__material_descriptions,
+
+    po.sap_code AS purchase_order_item__purchase_order__sap_code,
+    s.site_name AS grn__site__site_name,
+
+    m.sap_code AS item__sap_code,
+
+    COALESCE((
+        SELECT SUM(b.quantity)
+        FROM procurement_grn_items_batch b
+        WHERE b.grn_item_id = gi.id
+    ), 0.0) AS total_batch_quantity
+
+FROM procurement_grn_items gi
+
+LEFT JOIN procurement_grn g 
+    ON gi.grn_id = g.id
+
+LEFT JOIN procurement_store ps
+    ON g.store_id = ps.id
+
+LEFT JOIN vendor_vendormasterv2 v 
+    ON g.vendor_id = v.id
+
+LEFT JOIN material_master_unitofmesurement u 
+    ON gi.uom_id = u.id
+
+LEFT JOIN material_master_vendormaterialmaster m 
+    ON gi.item_id = m.id
+
+LEFT JOIN procurement_purchase_order_items poi
+    ON gi.purchase_order_item_id = poi.id
+
+LEFT JOIN procurement_purchase_order po
+    ON poi.purchase_order_id = po.id
+
+LEFT JOIN procurement_cst cst
+    ON po.cst_id = cst.id
+--LEFT JOIN procurement_rfq_quotation_items qi
+   -- ON qi.id= 
+
+LEFT JOIN project_and_planning_projectmaster pm
+    ON po.project_id = pm.id
+
+LEFT JOIN procurement_site s
+    ON g.site_id = s.id
+    
+WHERE g.is_deleted = 0
+  AND g.date >= '2026-04-01'
+  AND g.date < '2026-05-31';
+
+
+
+#views
+rfq_vendor_id is from CST models implemented
+total_budget_amount = Coalesce(
+                Sum(
+                    Subquery(
+                        QuotationItems.cmobjects.filter(
+                            rfq_vendor_item__rfq_vendors_id=OuterRef('rfq_vendor_id'),
+                            quotation__is_deleted=False,
+                            quotation__latest=True,
+                            is_selected_by_cst=True,
+                        ).annotate(
+                            budget_rate=Coalesce(
+                                Subquery(
+                                    ProcurementMaterialBudgetBreakdown.cmobjects.filter(
+                                        master__requested_material_id=OuterRef('requested_material_id'),
+                                        master__project_id=OuterRef('quotation__project_id'),
+                                        is_zero_budget=False,
+                                        master__is_deleted=False
+                                    )
+                                    .order_by('-entry_date')
+                                    .values('rate')[:1]
+                                ),
+                                Value(0.0),
+                                output_field=FloatField()
+                            ),
+                            total_item_amount=Cast(
+                                F('budget_rate') * F('quantity_by_cst'),
+                                output_field=FloatField()
+                            )
+                        )
+                        .values('rfq_vendor_item__rfq_vendors_id')
+                        .annotate(total_item_amount=Coalesce(
+                            Sum('total_item_amount'),
+                            Value(0.0),
+                            output_field=FloatField()
+                        ))
+                        .values('total_item_amount'),
+                        output_field=FloatField()
+                    )
+                ),
+                Value(0.0),
+                output_field=FloatField()
+            ),
+
+base on given above models and provided total_budget_amount ORM logic  
+please calculate the total_budget_amount in the given grn item sql 
+please write the sql code properly to get total_budget_amount
