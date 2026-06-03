@@ -1,3 +1,63 @@
+class RFQVendors(BaseAbstractStructure):
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    STOCK_TYPE = (
+        ('material', 'Material'),
+        ('machinery', 'Machinery'),
+    )
+    organization = models.ForeignKey(Organization, related_name='procurement_rfq_vendors_organizations',
+                                     on_delete=models.CASCADE)
+    selected_quotation = models.ForeignKey('Quotation', related_name='procurement_rfq_vendors_selected_quotation', on_delete=models.CASCADE, null=True, blank=True)
+    stock_type = models.CharField(max_length=100, choices=STOCK_TYPE, blank=True, null=True, default="material")
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    # vendor_ids = models.TextField(null=True, blank=True) # Remove
+    vendor = models.ManyToManyField(VendorMasterV2, related_name='procurement_rfq_vendors_vendor', null=True, blank=True)
+    site = models.ForeignKey(SiteMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_rfq_site')
+    store = models.ForeignKey(StoreMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_rfq_store')
+    project = models.ForeignKey(ProjectMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_rfq_project')
+    request_code = models.CharField(max_length=100, null=True, blank=True)
+    manual_slip_number = models.CharField(max_length=200, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+    validity_date = models.DateField(null=True, blank=True)
+    enquiry_subject = models.CharField(max_length=255, null=True, blank=True)
+    jurisdiction = models.TextField(null=True, blank=True)
+    remarks = models.TextField(null=True, blank=True)
+    terms_and_condition = models.TextField(null=True, blank=True)
+    is_repeat_order = models.BooleanField(default=False)
+
+    material_request = models.ForeignKey(MaterialRequestMaster, related_name="procurement_rfq_material_request", on_delete=models.CASCADE, null=True, blank=True)
+    material_requests = models.ManyToManyField(MaterialRequestMaster, related_name="procurement_rfq_material_requests",null=True, blank=True)
+
+    indent = models.ForeignKey(Indent, related_name="procurement_rfq_indent", on_delete=models.CASCADE, null=True, blank=True)
+    indents= models.ManyToManyField(Indent, related_name="procurement_rfq_indents", null=True, blank=True)
+
+    financialyear = models.ForeignKey(FinancialYear, related_name='procurement_rfq_financial_year', on_delete=models.CASCADE, blank=True, null=True)
+
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_vendors_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_vendors_cancelled_by", on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_vendors_close_by", on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_vendors_approved_by", on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_vendors_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+    cst_title = models.CharField(max_length=255, null=True, blank=True)
+    scope_of_supply = models.TextField(null=True, blank=True)
+    is_archived = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "procurement_rfqvendors"
+
 class QuotationItems(BaseAbstractStructure):
     organization = models.ForeignKey(Organization, related_name='procurement_rfq_quotation_item_organizations',
                                      on_delete=models.CASCADE)
@@ -1660,7 +1720,51 @@ class SiteMaster(BaseAbstractStructure):
     class Meta:
         db_table = "procurement_site"
 
+class ProcurementMaterialProject(BaseAbstractStructure):
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    organization = models.ForeignKey(Organization, related_name='procurement_material_project_organization', on_delete=models.CASCADE, blank=True, null=True)
+    requested_material = models.ForeignKey(VendorMaterialMaster, related_name='procurement_material_project_requested_material', blank=True, null=True, on_delete=models.CASCADE)
 
+    group = models.ForeignKey(ProcurementMaterialProjectGroup, related_name='procurement_material_project_grp', blank=True, null=True, on_delete=models.CASCADE)
+    project = models.ForeignKey(ProjectMaster, related_name='procurement_material_project_project', on_delete=models.CASCADE)
+    site = models.ForeignKey(SiteMaster, related_name='procurement_material_project_site', on_delete=models.CASCADE, null=True, blank=True)
+    store = models.ForeignKey(StoreMaster, related_name='procurement_material_project_store', on_delete=models.CASCADE, null=True, blank=True)
+    material_code = models.CharField(max_length=100, blank=True, null=True)
+    uom = models.ForeignKey(UnitOfMesurement, related_name='procurement_material_project_uom', blank=True, null=True, on_delete=models.CASCADE)
+    uom_text = models.CharField(max_length=100, blank=True, null=True)
+    item_desc = models.CharField(max_length=100, blank=True, null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    qty_left = models.FloatField(null=True, blank=True, default=0.)
+    budget_left = models.FloatField(null=True, blank=True, default=0.)
+    ordering = models.IntegerField(default=0)
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_project_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_project_cancelled_by", on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_project_close_by", on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_project_approved_by", on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_material_project_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True,)
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+
+    def __str__(self):
+        return str(self.id) + ' ' + str(self.material_code)
+
+    class Meta:
+        db_table = "procurement_material_project"
+        verbose_name_plural = "7. Procurement Material Projects"
 
 
 #SQL---
@@ -1794,7 +1898,7 @@ WHERE g.is_deleted = 0
 
 
 #views
-rfq_vendor_id is from CST models implemented
+here OuterRef('rfq_vendor_id') is from CST models 
 total_budget_amount = Coalesce(
                 Sum(
                     Subquery(
