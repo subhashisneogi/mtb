@@ -1,3 +1,139 @@
+class Quotation(BaseAbstractStructure):
+    TAX_TYPE = (
+        ('gst', 'GST'),
+        ('vat', 'VAT'),
+    )
+    APPROVE_STATUS = (
+        ('pending', 'Pending'),
+        ('checked', 'Checked'),
+        ('cancelled', 'Cancelled'),
+        ('close', 'Close'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    STOCK_TYPE = (
+        ('material', 'Material'),
+        ('machinery', 'Machinery'),
+    )
+    ADVANCE_PAYMENT = (
+        ('Applicable', 'Applicable'),
+        ('Not Applicable', 'Not Applicable'),
+    )
+    organization = models.ForeignKey(Organization, related_name='procurement_rfq_quotation_organizations',
+                                     on_delete=models.CASCADE)
+    vendor = models.ForeignKey(VendorMasterV2, related_name='procurement_rfq_quotation_vendor', on_delete=models.CASCADE,
+                               null=True, blank=True)
+    vendor_state = models.ForeignKey(State, related_name='procurement_rfq_quotation_vendor_state',
+                                     on_delete=models.CASCADE, null=True, blank=True)
+    gst_number = models.CharField(max_length=200, null=True, blank=True)
+    site = models.ForeignKey(SiteMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_rfq_quotation_site')
+    store = models.ForeignKey(StoreMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_rfq_quotation_store')
+    project = models.ForeignKey(ProjectMaster, on_delete=models.CASCADE, null=True, blank=True, related_name='procurement_rfq_quotation_project')
+    tax_type = models.CharField(max_length=100, choices=TAX_TYPE, blank=True, null=True, default="vat")
+    stock_type = models.CharField(max_length=100, choices=STOCK_TYPE, blank=True, null=True, default="material")
+    status = models.CharField(max_length=100, choices=APPROVE_STATUS, blank=True, null=True, default="pending")
+    checked_remarks = models.TextField(max_length=500, null=True, blank=True)
+    approved_remarks = models.TextField(max_length=500, null=True, blank=True)
+    rejected_remarks = models.TextField(max_length=500, null=True, blank=True)
+    address = models.TextField(max_length=500, null=True, blank=True)
+    previous_version = models.ForeignKey('self', related_name='procurement_quotation_previous_version',
+                                on_delete=models.CASCADE, null=True, blank=True)
+    latest = models.BooleanField(default=True)
+    request_code = models.CharField(max_length=200, null=True, blank=True)
+    version = models.IntegerField(default=1)
+    vendor_quotation_number = models.CharField(max_length=200, null=True, blank=True)
+    delivery_days = models.IntegerField(default=0)
+    delivery_state = models.ForeignKey(State, related_name='procurement_rfq_quotation_delivery_state',
+                                       on_delete=models.CASCADE, null=True, blank=True)
+    payment_mode = models.CharField(max_length=200, null=True, blank=True)
+    payment_days = models.IntegerField(default=0)
+    purchase_type = models.CharField(max_length=200, null=True, blank=True)
+    revised_quotation = models.CharField(max_length=200, null=True, blank=True)
+    remarks = models.TextField(null=True, blank=True)
+    payment_terms = models.TextField(max_length=500, null=True, blank=True)
+    rate_validity = models.TextField(max_length=500, null=True, blank=True)
+    warranty = models.TextField(max_length=500, null=True, blank=True)
+    inco_term = models.TextField(max_length=500, null=True, blank=True)
+
+    date = models.DateField(null=True, blank=True)
+    advance_percentage = models.FloatField(default=0)
+    advance_amount = models.FloatField(default=0)
+    against_c_form = models.BooleanField(default=False)
+
+    total_before_gst_amount = models.FloatField(default=0)
+    total_after_gst_amount = models.FloatField(default=0)
+    total_tax_amount = models.FloatField(default=0)
+
+    total_item_item_quantity = models.FloatField(default=0)
+    total_item_item_amount = models.FloatField(default=0)
+    total_item_disc_amount = models.FloatField(default=0)
+    total_item_taxable_amount = models.FloatField(default=0)
+    total_item_excise_tax_amount = models.FloatField(default=0)
+    total_item_tax_amount = models.FloatField(default=0)
+    total_item_sgst_amount = models.FloatField(default=0)
+    total_item_cgst_amount = models.FloatField(default=0)
+    total_item_igst_amount = models.FloatField(default=0)
+    total_item_utgst_amount = models.FloatField(default=0)
+    total_item_cess_amount = models.FloatField(default=0)
+    total_item_total_amount = models.FloatField(default=0)
+    total_tax_tax_amount = models.FloatField(default=0)
+    total_tax_sgst_amount = models.FloatField(default=0)
+    total_tax_cgst_amount = models.FloatField(default=0)
+    total_tax_igst_amount = models.FloatField(default=0)
+    total_tax_utgst_amount = models.FloatField(default=0)
+    total_tax_cess_amount = models.FloatField(default=0)
+    total_tax_total_tax_amount = models.FloatField(default=0)
+    total_expense_expense_amount = models.FloatField(default=0)
+    total_expense_sgst_amount = models.FloatField(default=0)
+    total_expense_cgst_amount = models.FloatField(default=0)
+    total_expense_igst_amount = models.FloatField(default=0)
+    total_expense_utgst_amount = models.FloatField(default=0)
+    total_expense_cess_amount = models.FloatField(default=0)
+    total_expense_total_expense_amount = models.FloatField(default=0)
+    total_amount = models.FloatField(default=0)
+    is_repeat_order = models.BooleanField(default=False)
+
+    financialyear = models.ForeignKey(FinancialYear, related_name='procurement_rfq_quotation_financial_year',
+                                      on_delete=models.CASCADE, blank=True, null=True)
+
+    ## other model links
+    material_request = models.ForeignKey(MaterialRequestMaster, related_name="procurement_rfq_quotation_material_request", on_delete=models.CASCADE, null=True, blank=True)
+    material_requests = models.ManyToManyField(MaterialRequestMaster, related_name="procurement_rfq_quotation_material_requests",null=True, blank=True)
+
+    indent = models.ForeignKey(Indent, related_name='procurement_rfq_quotation_indent', on_delete=models.CASCADE, null=True, blank=True)
+    indents= models.ManyToManyField(Indent, related_name="procurement_rfq_quotation_indents", null=True, blank=True)
+
+    rfq_vendor = models.ForeignKey(RFQVendors, related_name='procurement_rfq_quotation', on_delete=models.CASCADE, null=True, blank=True)
+    enquiry_at_once = models.ForeignKey(EnquiryAtOnce, related_name='procurement_quotation_enquiry_at_once', on_delete=models.CASCADE, null=True, blank=True)
+
+    # for APPROVED STATUS user
+    checked_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_quotation_checked_by", on_delete=models.CASCADE)
+    cancelled_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_quotation_cancelled_by", on_delete=models.CASCADE)
+    close_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_quotation_close_by", on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_quotation_approved_by", on_delete=models.CASCADE)
+    rejected_by = models.ForeignKey(PmsUser, blank=True, null=True, related_name="procurement_rfq_quotation_rejected_by", on_delete=models.CASCADE)
+    # ts
+    checked_by_date = models.DateTimeField(blank=True, null=True, )
+    cancelled_by_date = models.DateTimeField(blank=True, null=True, )
+    close_by_date = models.DateTimeField(blank=True, null=True, )
+    approved_by_date = models.DateTimeField(blank=True, null=True, )
+    rejected_by_date = models.DateTimeField(blank=True, null=True, )
+    scope_of_supply = models.TextField(null=True, blank=True)
+
+    packing_forwarding_by_cst = models.FloatField(default=0)
+    transportaion_charges_by_cst = models.FloatField(default=0)
+    other_charges_by_cst = models.FloatField(default=0)
+    advance_payment_by_cst = models.CharField(max_length=100, choices=ADVANCE_PAYMENT, blank=True, null=True)
+    inco_term_one_for_sap = models.ForeignKey(SAPMasters, blank=True, null=True, related_name="procurement_rfq_quotation_inco_term_one_for_sap", on_delete=models.CASCADE)
+    location_of_material_source = models.CharField(max_length=255, null=True, blank=True)
+    rfq_vendor_rank = models.IntegerField(default=1)
+    rfq_vendor_count = models.IntegerField(default=1)
+    valid_from = models.DateField(blank=True, null=True,)
+    valid_to = models.DateField(blank=True, null=True,)
+    class Meta:
+        db_table = "procurement_rfq_quotation"
+        ordering = ('total_amount', )
+
 class RFQVendors(BaseAbstractStructure):
     APPROVE_STATUS = (
         ('pending', 'Pending'),
